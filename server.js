@@ -234,8 +234,11 @@ async function sendEmail({ to, subject, html }) {
   console.log("Intentando enviar email con Resend a:", to);
 
   if (!resend) {
-    console.error("RESEND_API_KEY no está configurada en Vercel.");
-    return { ok: false, error: "RESEND_API_KEY no configurada" };
+    console.error("RESEND_API_KEY no está configurada.");
+    return {
+      ok: false,
+      error: "RESEND_API_KEY no configurada"
+    };
   }
 
   try {
@@ -246,12 +249,27 @@ async function sendEmail({ to, subject, html }) {
       html
     });
 
-    console.log("Email enviado por Resend:", result);
+    if (result?.error) {
+      console.error("Resend rechazó el envío:", result.error);
+      return {
+        ok: false,
+        error: result.error.message || "Resend rechazó el envío",
+        details: result.error
+      };
+    }
 
-    return { ok: true, result };
+    console.log("Email enviado correctamente por Resend:", result.data);
+
+    return {
+      ok: true,
+      result: result.data
+    };
   } catch (error) {
     console.error("Error enviando email con Resend:", error);
-    return { ok: false, error: error.message || error };
+    return {
+      ok: false,
+      error: error.message || "Error desconocido enviando email"
+    };
   }
 }
 
@@ -428,7 +446,7 @@ app.post('/api/contact', async (req, res) => {
   const emailTo = CONTACT_TO_EMAIL;
 
   // FIX SEGURIDAD: todos los valores del usuario se escapan antes de insertar en HTML
-  await sendEmail({
+  const emailResult = await sendEmail({
     to:      emailTo,
     subject: `Nueva consulta web - ${escapeHtml(fullName)}`,
     html: `
@@ -458,6 +476,14 @@ app.post('/api/contact', async (req, res) => {
       </div>
     `
   });
+
+  if (!emailResult.ok) {
+    return res.status(500).json({
+      ok: false,
+      message: "No pudimos enviar la consulta por email. Revisá la configuración de Resend.",
+      email_error: emailResult.error
+    });
+  }
 
   let crmOk     = false;
   let crmStatus = null;
@@ -529,6 +555,14 @@ app.post('/api/newsletter', async (req, res) => {
       </div>
     `
   });
+
+  if (!emailResult.ok) {
+    return res.status(500).json({
+      ok: false,
+      message: "No pudimos procesar la suscripción. Revisá la configuración de Resend.",
+      email_error: emailResult.error
+    });
+  }
 
   console.log('Resultado email newsletter:', emailResult);
 
