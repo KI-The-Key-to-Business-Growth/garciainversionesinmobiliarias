@@ -478,7 +478,7 @@ app.post('/api/contact', async (req, res) => {
 });
 
 // ── Newsletter ───────────────────────────────────────────────────────────────
-app.post('/api/newsletter', (req, res) => {
+app.post('/api/newsletter', async (req, res) => {
   if (!checkRate(req._clientIp, 'newsletter', 3, 60_000)) {
     return res.status(429).json({ ok: false, message: 'Demasiadas solicitudes. Intentá de nuevo en unos minutos.' });
   }
@@ -504,7 +504,7 @@ app.post('/api/newsletter', (req, res) => {
   }
 
   // FIX SEGURIDAD: email escapado
-  sendEmail({
+  const emailResult = await sendEmail({
     to:      CONTACT_TO_EMAIL,
     subject: 'Nueva suscripción al newsletter',
     html: `
@@ -523,6 +523,8 @@ app.post('/api/newsletter', (req, res) => {
       </div>
     `
   });
+
+  console.log('Resultado email newsletter:', emailResult);
 
   res.json({ ok: true, event_id: eventId, message: 'Suscripción recibida correctamente.' });
 });
