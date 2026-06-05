@@ -255,20 +255,6 @@ async function sendEmail({ to, subject, html }) {
   }
 }
 
-  try {
-    const result = await resend.emails.send({
-      from: CONTACT_FROM_EMAIL,
-      to,
-      subject,
-      html
-    });
-    return { ok: true, result };
-  } catch (error) {
-    console.error('Error enviando email con Resend:', error.message);
-    return { ok: false, error };
-  }
-
-
 function pickTrackingFields(body = {}) {
   const keys = [
     'utm_source','utm_medium','utm_campaign','utm_content','utm_term',
