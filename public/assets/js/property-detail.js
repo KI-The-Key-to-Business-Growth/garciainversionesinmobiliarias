@@ -74,7 +74,7 @@
         property.productor?.email||
         property.raw?.productorEmail ||
         property.raw?.productor_email||
-        "contacto@garciainversiones.com.ar"
+        "spoltoreluciano0@gmail.com"
     };
   }
 
