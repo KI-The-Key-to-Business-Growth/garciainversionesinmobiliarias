@@ -74,7 +74,7 @@
         property.productor?.email||
         property.raw?.productorEmail ||
         property.raw?.productor_email||
-        "spoltoreluciano0@gmail.com"
+        ""
     };
   }
 
@@ -351,6 +351,8 @@
             <p>Dejanos tus datos y te contactamos con información completa.</p>
 
             <form class="property-contact-form" data-property-contact>
+              <!-- honeypot anti-bot -->
+              <div class="hp-field" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off" /></div>
               <input type="hidden" name="property_id"    value="${escapeHtml(property.id     || "")}" />
               <input type="hidden" name="property_app_id"value="${escapeHtml(property.app_id || property.id || "")}" />
               <input type="hidden" name="property_title" value="${escapeHtml(property.titulo  || "")}" />
@@ -358,11 +360,11 @@
               <input type="hidden" name="destinatario"   value="${escapeHtml(producer.email)}" />
               <input type="hidden" name="productor"      value="${escapeHtml(producer.name)}" />
 
-              <input type="text"  name="name"    placeholder="Nombre y apellido" required />
-              <input type="tel"   name="phone"   placeholder="WhatsApp"          required />
-              <input type="email" name="email"   placeholder="Email"             required />
+              <input type="text"  name="name"    placeholder="Nombre y apellido" required maxlength="120" />
+              <input type="tel"   name="phone"   placeholder="WhatsApp"          required maxlength="30" />
+              <input type="email" name="email"   placeholder="Email"             required maxlength="254" />
 
-              <textarea name="message" rows="5">Hola, quisiera recibir más información sobre ${escapeHtml(property.titulo || "esta propiedad")}.</textarea>
+              <textarea name="message" rows="5" maxlength="2000">Hola, quisiera recibir más información sobre ${escapeHtml(property.titulo || "esta propiedad")}.</textarea>
 
               <button class="btn btn-primary" type="submit">
                 Enviar consulta

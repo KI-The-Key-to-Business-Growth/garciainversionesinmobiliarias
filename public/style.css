@@ -2320,7 +2320,28 @@ body[data-page-type="thank_you"] {
 }
 
 /* ─────────────────────────────────────────────────────────
-   33. Performance / Accesibilidad
+   33. Honeypot anti-bot
+   ───────────────────────────────────────────────────────── */
+/*
+  El campo .hp-field es INVISIBLE para humanos pero los bots lo encuentran
+  y lo llenan. El servidor lo rechaza si está completo.
+  NO usar display:none ni visibility:hidden — algunos bots los detectan.
+  Se saca del flujo visual con posición absoluta fuera de pantalla.
+*/
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  tab-size: 0;
+}
+
+/* ─────────────────────────────────────────────────────────
+   34. Performance / Accesibilidad
    ───────────────────────────────────────────────────────── */
 .section,
 .section-sm,
