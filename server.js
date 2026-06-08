@@ -753,25 +753,81 @@ app.post('/api/newsletter', async (req, res) => {
     writeJson(NEWSLETTER_FILE, subscribers);
   }
 
-  // FIX SEGURIDAD: email escapado
+  const nlSource   = escapeHtml(req.body?.utm_source   || '');
+  const nlMedium   = escapeHtml(req.body?.utm_medium   || '');
+  const nlCampaign = escapeHtml(req.body?.utm_campaign || '');
+  const nlPage     = escapeHtml(req.body?.page_location || '');
+  const nlDateStr  = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+
   const emailResult = await sendEmail({
     to:      CONTACT_TO_EMAIL,
     subject: 'Nueva suscripción al newsletter',
-    html: `
-      <div style="font-family: Arial, sans-serif; color: #0c2948; line-height: 1.6; max-width: 600px;">
-        <h2>Nueva suscripción al newsletter</h2>
+    html: `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8" /></head>
+<body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
-        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-        <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-AR')}</p>
-        <p><strong>Origen:</strong> ${escapeHtml(req.body?.page_location || '')}</p>
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#071628 0%,#0c2948 100%);padding:28px 36px;">
+            <p style="margin:0;font-size:13px;color:#cd9f4f;letter-spacing:2px;text-transform:uppercase;">García Inversiones Inmobiliarias</p>
+            <h1 style="margin:8px 0 0;font-size:20px;color:#ffffff;font-weight:600;">📩 Nueva suscripción al newsletter</h1>
+          </td>
+        </tr>
 
-        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 36px;">
 
-        <p><strong>UTM Source:</strong>   ${escapeHtml(req.body?.utm_source   || '')}</p>
-        <p><strong>UTM Medium:</strong>   ${escapeHtml(req.body?.utm_medium   || '')}</p>
-        <p><strong>UTM Campaign:</strong> ${escapeHtml(req.body?.utm_campaign || '')}</p>
-      </div>
-    `
+            <!-- Bloque email suscriptor -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="background:#f0f4f8;border-left:4px solid #cd9f4f;padding:16px 20px;border-radius:0 8px 8px 0;">
+                  <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;">Nuevo suscriptor</p>
+                  <p style="margin:0;font-size:17px;font-weight:700;color:#071628;">${escapeHtml(email)}</p>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Detalles -->
+            <p style="margin:0 0 14px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999;">Detalle de la suscripción</p>
+            <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px;">
+              <tr style="border-bottom:1px solid #f0f0f0;">
+                <td style="width:140px;color:#666;font-size:14px;">Fecha</td>
+                <td style="font-size:14px;font-weight:600;color:#071628;">${nlDateStr}</td>
+              </tr>
+              ${nlPage ? `
+              <tr style="border-bottom:1px solid #f0f0f0;">
+                <td style="color:#666;font-size:14px;">Página de origen</td>
+                <td style="font-size:14px;color:#071628;">${nlPage}</td>
+              </tr>` : ''}
+            </table>
+
+            ${(nlSource || nlMedium || nlCampaign) ? `
+            <!-- Origen y tracking -->
+            <p style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999;">Origen del lead</p>
+            <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;color:#555;margin-bottom:16px;">
+              ${nlSource   ? `<tr><td style="width:140px;">UTM Source</td><td>${nlSource}</td></tr>`   : ''}
+              ${nlMedium   ? `<tr><td>UTM Medium</td><td>${nlMedium}</td></tr>`                         : ''}
+              ${nlCampaign ? `<tr><td>UTM Campaign</td><td>${nlCampaign}</td></tr>`                     : ''}
+            </table>` : ''}
+
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f9f9f9;padding:16px 36px;border-top:1px solid #eee;">
+            <p style="margin:0;font-size:12px;color:#aaa;">Recibido el ${nlDateStr} · García Inversiones Inmobiliarias</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body></html>`
   });
 
   if (!emailResult.ok) {
