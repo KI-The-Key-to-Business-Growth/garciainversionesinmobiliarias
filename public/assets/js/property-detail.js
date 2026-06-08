@@ -383,7 +383,13 @@
                 href="${escapeHtml(whatsappLink)}"
                 target="_blank"
                 rel="noopener"
-                data-whatsapp-property>
+                data-whatsapp-number="${escapeHtml(WHATSAPP_DEFAULT)}"
+                data-property-id="${escapeHtml(String(property.id || ''))}"
+                data-property-name="${escapeHtml(property.titulo || '')}"
+                data-property-country="${escapeHtml(property.pais || '')}"
+                data-estimated-value="${escapeHtml(String(property.precio_numero || ''))}"
+                data-currency="${escapeHtml(property.moneda || 'USD')}"
+                data-lead-type="whatsapp_propiedad">
                 Consultar por WhatsApp
               </a>
             </form>
@@ -395,7 +401,7 @@
 
     setupGallery(images);
     setupPropertyForm(property, producer);
-    setupWhatsappTracking(property);
+    // click_whatsapp lo captura tracking.js globalmente via data-* attributes del link
   }
 
   function setupGallery(images) {
@@ -538,18 +544,6 @@
       } finally {
         if (button) { button.disabled = false; button.textContent = originalText; }
       }
-    });
-  }
-
-  function setupWhatsappTracking(property) {
-    const whatsappButton = document.querySelector("[data-whatsapp-property]");
-
-    whatsappButton?.addEventListener("click", () => {
-      pushDataLayer("click_whatsapp", property, {
-        button_text:      "Consultar por WhatsApp",
-        whatsapp_number:  WHATSAPP_DEFAULT,
-        lead_type:        "whatsapp_propiedad"
-      });
     });
   }
 

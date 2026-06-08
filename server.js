@@ -93,7 +93,9 @@ app.use((req, res, next) => {
         + " https://stats.g.doubleclick.net"
         + " https://www.googleadservices.com"
         + " https://googleads.g.doubleclick.net"
+        + " https://connect.facebook.net"
         + " https://www.facebook.com"
+        + " https://facebook.com"
         + " https://api.2clics.com.ar",
       // iframes: Google Maps + YouTube + GTM noscript
       "frame-src"
