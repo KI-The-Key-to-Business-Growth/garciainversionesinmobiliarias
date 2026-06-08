@@ -98,7 +98,7 @@
           const meta = [p.ambientes, p.banos, p.superficie].filter(Boolean);
           return `
             <article class="property-card reveal">
-              <a href="propiedad.html?id=${encodeURIComponent(p.id)}" class="property-card-link">
+              <a href="/propiedad?id=${encodeURIComponent(p.id)}" class="property-card-link">
                 <div class="property-image">
                   <img src="${p.imagen}" alt="${p.titulo}" loading="lazy" decoding="async" />
                   <span class="property-tag">${p.tag || p.operacion || "Propiedad"}</span>
@@ -243,7 +243,7 @@
       if (leadType === "newsletter") {
         showNewsletterSuccess(form);
       } else {
-        window.location.href = "gracias-consulta.html";
+        window.location.href = "/gracias-consulta";
       }
     } catch (error) {
       alert(error.message || "Hubo un error. Intentá nuevamente.");

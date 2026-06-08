@@ -168,7 +168,7 @@
 
   function getPropertyDetailUrl(property) {
     const id = property.id || property.app_id || "";
-    return `propiedad.html?id=${encodeURIComponent(id)}`;
+    return `/propiedad?id=${encodeURIComponent(id)}`;
   }
 
   function getPropertyImage(property) {

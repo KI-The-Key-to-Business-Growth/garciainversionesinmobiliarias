@@ -170,7 +170,7 @@
     if (!propertyId) {
       detailRoot.innerHTML = `
         <div class="container" style="padding: 60px 0;">
-          <p class="properties-empty">No encontramos la propiedad solicitada. <a href="propiedades.html">Ver todas las propiedades</a></p>
+          <p class="properties-empty">No encontramos la propiedad solicitada. <a href="/propiedades">Ver todas las propiedades</a></p>
         </div>
       `;
       return;
@@ -208,7 +208,7 @@
 
     detailRoot.innerHTML = `
       <div class="container" style="padding: 60px 0;">
-        <p class="properties-empty">No pudimos cargar esta ficha. <a href="propiedades.html">Ver todas las propiedades</a></p>
+        <p class="properties-empty">No pudimos cargar esta ficha. <a href="/propiedades">Ver todas las propiedades</a></p>
       </div>
     `;
   }
@@ -488,12 +488,14 @@
       const originalText = button ? button.textContent : "";
       const payload     = Object.fromEntries(new FormData(form).entries());
 
-      payload.destinatario = producer.email;
-      payload.productor    = producer.name;
-      payload.lead_type    = "consulta_propiedad";
-      payload.form_type    = "consulta_propiedad";
-      payload.source       = "web";
-      payload.page_location= window.location.href;
+      payload.destinatario    = producer.email;
+      payload.productor       = producer.name;
+      payload.lead_type       = "consulta_propiedad";
+      payload.form_type       = "property";
+      payload.property_title  = property.titulo || "";
+      payload.property_url    = window.location.href;
+      payload.source          = "web";
+      payload.page_location   = window.location.href;
 
       if (button) { button.disabled = true; button.textContent = "Enviando..."; }
 
@@ -521,7 +523,7 @@
         });
 
         form.reset();
-        window.location.href = "gracias-consulta.html";
+        window.location.href = "/gracias-consulta";
 
       } catch (error) {
         alert(error.message || "No pudimos enviar la consulta. Probá nuevamente o escribinos por WhatsApp.");

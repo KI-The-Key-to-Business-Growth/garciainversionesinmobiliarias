@@ -205,7 +205,7 @@
       if (!link) return;
       const text = (link.textContent || '').trim();
 
-      if (link.matches('[href="propiedades.html"], [href*="propiedades.html"]')) {
+      if (link.matches('[href="/propiedades"], [href*="/propiedades"]')) {
         pushEvent('select_service', {
           service_name: 'Propiedades',
           button_text: text || 'Propiedades'
