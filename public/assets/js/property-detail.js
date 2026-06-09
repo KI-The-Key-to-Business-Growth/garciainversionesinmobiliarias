@@ -378,8 +378,8 @@
 
               <!-- Timestamp anti-bot -->
               <input type="hidden" name="_form_loaded_at" class="js-form-loaded-at" value="" />
-              <!-- Cloudflare Turnstile -->
-              <div class="cf-turnstile cf-turnstile--property" data-theme="auto" data-language="es"></div>
+              <!-- Turnstile invisible: contenedor oculto, sin widget visible -->
+              <div id="ts-property" aria-hidden="true" style="display:none"></div>
 
               <p class="form-legal">Al enviar este formulario aceptás que García Inversiones Inmobiliarias utilice tus datos para responder tu consulta comercial. <a href="/privacidad">Ver Política de Privacidad</a>.</p>
 
@@ -409,7 +409,6 @@
     // click_whatsapp lo captura tracking.js globalmente via data-* attributes del link
 
     // Timestamp anti-bot: marcar cuándo se renderizó el formulario
-    // Se actualiza al primer focus real para mayor precisión
     document.querySelectorAll('.js-form-loaded-at').forEach(el => {
       el.value = Date.now();
       const form = el.closest('form');
@@ -420,14 +419,10 @@
       }
     });
 
-    // Cloudflare Turnstile: render explícito del widget en el formulario de propiedad
-    const turnstileContainer = document.querySelector('.cf-turnstile--property');
-    if (turnstileContainer && window.turnstile) {
-      const siteKey = document.querySelector('.cf-turnstile[data-sitekey]')?.dataset?.sitekey
-        || turnstileContainer.dataset?.sitekey || '';
-      if (siteKey && siteKey !== 'TURNSTILE_SITE_KEY') {
-        window.turnstile.render(turnstileContainer, { sitekey: siteKey, theme: 'auto', language: 'es' });
-      }
+    // Turnstile invisible: registrar widget en el contenedor oculto del form
+    const propertyForm = detailRoot.querySelector('[data-property-contact]');
+    if (propertyForm) {
+      window.GarciaTurnstile?.init(propertyForm, 'ts-property');
     }
   }
 
@@ -525,20 +520,34 @@
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const button      = form.querySelector("button[type='submit']");
+      const button       = form.querySelector("button[type='submit']");
       const originalText = button ? button.textContent : "";
-      const payload     = Object.fromEntries(new FormData(form).entries());
 
-      payload.destinatario    = producer.email;
-      payload.productor       = producer.name;
-      payload.lead_type       = "consulta_propiedad";
-      payload.form_type       = "property";
-      payload.property_title  = property.titulo || "";
-      payload.property_url    = window.location.href;
-      payload.source          = "web";
-      payload.page_location   = window.location.href;
+      // Bloquear mientras obtenemos token Turnstile
+      if (button) { button.disabled = true; button.textContent = "Verificando..."; }
 
-      if (button) { button.disabled = true; button.textContent = "Enviando..."; }
+      // Obtener token Turnstile invisible
+      let tsToken = '';
+      try {
+        tsToken = await (window.GarciaTurnstile?.getToken(form) || Promise.resolve(''));
+      } catch (e) {
+        console.warn('[Turnstile] Error al obtener token:', e.message);
+      }
+
+      // Armar payload con token ya disponible
+      const payload = Object.fromEntries(new FormData(form).entries());
+      payload['cf-turnstile-response'] = tsToken || payload['cf-turnstile-response'] || '';
+
+      payload.destinatario   = producer.email;
+      payload.productor      = producer.name;
+      payload.lead_type      = "consulta_propiedad";
+      payload.form_type      = "property";
+      payload.property_title = property.titulo || "";
+      payload.property_url   = window.location.href;
+      payload.source         = "web";
+      payload.page_location  = window.location.href;
+
+      if (button) button.textContent = "Enviando...";
 
       pushDataLayer("form_submit", property, {
         form_name: "consulta_propiedad",
@@ -547,9 +556,9 @@
 
       try {
         const response = await fetch("/api/contact", {
-          method: "POST",
+          method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body:    JSON.stringify(payload)
         });
 
         const result = await response.json().catch(() => ({}));
@@ -558,18 +567,19 @@
           throw new Error(result.message || "No se pudo enviar.");
         }
 
+        // Solo dispara generate_lead tras confirmación del backend
         pushDataLayer("generate_lead", property, {
           form_name: "consulta_propiedad",
           lead_type: "consulta_propiedad"
         });
 
         form.reset();
-        // Reset Turnstile para que no quede token inválido si el usuario vuelve
-        if (window.turnstile) window.turnstile.reset();
+        window.GarciaTurnstile?.reset(form); // regenerar token para próximo uso
         window.location.href = "/gracias-consulta";
 
       } catch (error) {
         alert(error.message || "No pudimos enviar la consulta. Probá nuevamente o escribinos por WhatsApp.");
+        window.GarciaTurnstile?.reset(form);
       } finally {
         if (button) { button.disabled = false; button.textContent = originalText; }
       }

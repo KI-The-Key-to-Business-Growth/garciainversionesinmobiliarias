@@ -1276,7 +1276,6 @@ body.menu-open .hdr-cta-btn {
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
-  position: relative; /* contiene el Turnstile off-screen */
 }
 
 .newsletter-input {
@@ -2363,30 +2362,10 @@ body[data-page-type="thank_you"] {
 }
 
 /* ─────────────────────────────────────────────────────────
-   35. Cloudflare Turnstile
+   35. Cloudflare Turnstile Invisible
    ───────────────────────────────────────────────────────── */
-/* Contenedor del widget en formularios estándar */
-.turnstile-field {
-  margin-top: -4px;
-  margin-bottom: 4px;
-}
-
-/* Widget newsletter: fuera de pantalla pero funcional.
-   position:absolute + off-screen es la forma segura de ocultar Turnstile
-   sin bloquear su ejecución ni la generación del token. */
-.cf-turnstile--newsletter {
-  position: absolute;
-  left: -9999px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
-/* Widget en formulario de propiedad */
-.cf-turnstile--property {
-  margin: 12px 0 8px;
-}
+/* Los contenedores Turnstile son divs ocultos (display:none en HTML).
+   No hay widgets visibles — toda la verificación ocurre en segundo plano. */
 
 /* ─────────────────────────────────────────────────────────
    37. Aviso legal bajo formularios (.form-legal)

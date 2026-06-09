@@ -32,8 +32,14 @@
   <link rel="preload" as="image" href="assets/propiedades/condor-resort.jpeg" />
 
   <link rel="stylesheet" href="style.css?v=8" />
-  <!-- Cloudflare Turnstile — antispam invisible (no hardcodear Meta Pixel aquí) -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <!-- Cloudflare Turnstile invisible — render explícito vía JS -->
+  <script>
+    window.onTurnstileReady = function () {
+      window._tsReady = true;
+      document.dispatchEvent(new Event('ts:ready'));
+    };
+  </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileReady" async defer></script>
 
   <!-- Google Tag Manager: reemplazar GTM-XXXXXXX por el ID real del contenedor -->
   <script>
@@ -350,10 +356,8 @@
               <div class="field full"><label for="mensaje">Mensaje</label><textarea id="mensaje" name="mensaje" placeholder="Contanos qué estás buscando..." maxlength="2000"></textarea></div>
               <!-- Timestamp anti-bot (oculto) -->
               <input type="hidden" name="_form_loaded_at" class="js-form-loaded-at" value="" />
-              <!-- Cloudflare Turnstile: reemplazar data-sitekey con tu clave pública de Turnstile -->
-              <div class="field full turnstile-field">
-                <div class="cf-turnstile" data-sitekey="0x4AAAAAADhZ9AUzLRzsy14F" data-theme="auto" data-language="es"></div>
-              </div>
+              <!-- Turnstile invisible: contenedor oculto asociado al formulario -->
+              <div id="ts-contact-0" aria-hidden="true" style="display:none"></div>
               <div class="field full"><button class="btn btn-dark" type="submit">Enviar consulta</button></div>
               <div class="field full"><p class="form-legal">Al enviar este formulario aceptás que García Inversiones Inmobiliarias utilice tus datos para responder tu consulta comercial. <a href="/privacidad">Ver Política de Privacidad</a>.</p></div>
             </div>
@@ -374,8 +378,8 @@
         <div class="hp-field" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off" /></div>
         <input class="newsletter-input" type="email" name="email" placeholder="Tu correo electrónico" required maxlength="254" />
         <input type="hidden" name="_form_loaded_at" class="js-form-loaded-at" value="" />
-        <!-- Cloudflare Turnstile: reemplazar data-sitekey con tu clave pública de Turnstile -->
-        <div class="cf-turnstile cf-turnstile--newsletter" data-sitekey="0x4AAAAAADhZ9AUzLRzsy14F" data-theme="dark" data-size="compact" data-language="es"></div>
+        <!-- Turnstile invisible: contenedor oculto -->
+        <div id="ts-newsletter-0" aria-hidden="true" style="display:none"></div>
         <button class="newsletter-btn" type="submit">Suscribirme</button>
       </form>
       <p class="form-legal form-legal--light">Al suscribirte aceptás que García Inversiones Inmobiliarias utilice tu email para enviarte novedades del mercado. <a href="/privacidad">Ver Política de Privacidad</a>.</p>
