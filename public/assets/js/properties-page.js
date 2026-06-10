@@ -14,21 +14,34 @@
   let activeOperation = "todas";
 
   const COUNTRY_ALIASES = {
-    argentina:       "argentina",
-    arg:             "argentina",
-    usa:             "usa",
-    eeuu:            "usa",
-    "ee-uu":         "usa",
-    "estados unidos":"usa",
-    "united states": "usa",
-    dubai:           "dubai",
-    "dubái":         "dubai",
-    mexico:          "mexico",
-    "méxico":        "mexico",
-    uruguay:         "uruguay",
-    espana:          "espana",
-    "españa":        "espana",
-    spain:           "espana"
+    argentina:                    "argentina",
+    arg:                          "argentina",
+    usa:                          "usa",
+    eeuu:                         "usa",
+    "ee-uu":                      "usa",
+    "estados unidos":             "usa",
+    "united states":              "usa",
+    miami:                        "usa",
+    orlando:                      "usa",
+    dubai:                        "dubai",
+    "dubái":                      "dubai",
+    "dubai city":                 "dubai",
+    "emiratos arabes unidos":     "dubai",
+    "emiratos arabes":            "dubai",
+    "emiratos":                   "dubai",
+    eau:                          "dubai",
+    uae:                          "dubai",
+    "united arab emirates":       "dubai",
+    mexico:                       "mexico",
+    "méxico":                     "mexico",
+    uruguay:                      "uruguay",
+    "punta del este":             "uruguay",
+    montevideo:                   "uruguay",
+    espana:                       "espana",
+    "españa":                     "espana",
+    spain:                        "espana",
+    madrid:                       "espana",
+    barcelona:                    "espana",
   };
 
   function escapeHtml(value) {
@@ -422,6 +435,23 @@
     applyFilters();
   };
 
+  function syncFilterVisibility() {
+    const activeCountries  = new Set(properties.map(p => getPropertyCountry(p)));
+    const activeOperations = new Set(properties.map(p => getPropertyOperation(p)));
+
+    countryButtons.forEach(btn => {
+      const country = btn.dataset.country;
+      if (country === "todas") return;
+      btn.style.display = activeCountries.has(country) ? "" : "none";
+    });
+
+    operationButtons.forEach(btn => {
+      const filter = btn.dataset.filter;
+      if (filter === "todas") return;
+      btn.style.display = activeOperations.has(filter) ? "" : "none";
+    });
+  }
+
   async function loadProperties() {
     const sources = [
       "/api/properties",
@@ -444,6 +474,7 @@
           page_location: window.location.href
         });
 
+        syncFilterVisibility();
         applyFilters();
         return;
       } catch (_) {
