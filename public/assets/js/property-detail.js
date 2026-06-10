@@ -97,36 +97,50 @@
     return all.length ? all.slice(0, 20) : [FALLBACK_IMAGE];
   }
 
-  function getDetailRows(property) {
-    const raw = property.raw || {};
-
+  // Datos principales: resumen clave visible en card superior
+  function getKeySummary(property) {
     if (property.mostrar_como_inversion) {
       return [
         ["Ticket mínimo",      property.ticket_minimo],
-        ["Modelo",             property.modelo_inversion],
         ["Horizonte estimado", property.horizonte_inversion],
         ["Retorno estimado",   property.retorno_estimado],
-        ["Riesgo",             property.riesgo_inversion],
+        ["Modelo",             property.modelo_inversion],
+        ["Tipo de oportunidad",property.tag || property.categoria],
         ["Ubicación",          property.ubicacion],
-        ["País",               property.pais],
-        ["Código",             property.crm_code || property.app_id || property.id]
-      ].filter(([, value]) => value && value !== "null");
+      ].filter(([, v]) => v && v !== "null");
     }
-
+    const raw = property.raw || {};
     return [
-      ["Valor",              property.precio],
-      ["Operación",          property.operacion],
-      ["Tipo",               property.tipo],
-      ["Ubicación",          property.ubicacion],
-      ["País",               property.pais],
-      ["Ambientes",          property.ambientes || raw.ambientes_propiedad],
-      ["Dormitorios",        raw.dormitorios],
-      ["Baños",              property.banos || raw.banos],
-      ["Superficie total",   property.superficie || (raw.superficie_total ? `${raw.superficie_total} m²` : "")],
-      ["Superficie cubierta",raw.superficie_cubierta ? `${raw.superficie_cubierta} m²` : ""],
-      ["Antigüedad",         raw.antiguedad],
-      ["Código",             property.crm_code || property.app_id || property.id]
-    ].filter(([, value]) => value && value !== "Consultar" && value !== "null");
+      ["Precio",      property.precio],
+      ["Ambientes",   property.ambientes  || raw.ambientes_propiedad],
+      ["Dormitorios", raw.dormitorios     || property.dormitorios],
+      ["Baños",       property.banos      || raw.banos],
+      ["Superficie",  property.superficie || (raw.superficie_total ? `${raw.superficie_total} m²` : "")],
+      ["Código",      property.crm_code  || property.app_id || property.id],
+    ].filter(([, v]) => v && v !== "Consultar" && v !== "null");
+  }
+
+  // Datos complementarios: card secundaria debajo de la descripción
+  function getSecondaryDetails(property) {
+    if (property.mostrar_como_inversion) {
+      return [
+        ["País",        property.pais],
+        ["Ciudad / Zona", property.zona_web || property.raw?.ciudad || ""],
+        ["Riesgo",      property.riesgo_inversion],
+        ["Moneda",      property.moneda],
+        ["Código",      property.crm_code || property.app_id || property.id],
+      ].filter(([, v]) => v && v !== "null");
+    }
+    const raw = property.raw || {};
+    return [
+      ["Operación",     property.operacion],
+      ["Tipo",          property.tipo],
+      ["País",          property.pais],
+      ["Dirección",     property.direccion || property.direccion_completa],
+      ["Sup. cubierta", raw.superficie_cubierta ? `${raw.superficie_cubierta} m²` : ""],
+      ["Antigüedad",    raw.antiguedad || property.antiguedad],
+      ["Gastos",        property.expenses],
+    ].filter(([, v]) => v && v !== "null" && v !== "Consultar");
   }
 
   function getAmenities(property) {
@@ -335,13 +349,15 @@
   }
 
   function renderProperty(property) {
-    const images       = normalizeImages(property);
-    const details      = getDetailRows(property);
-    const amenities    = getAmenities(property);
-    const producer     = getProducer(property);
-    const whatsappLink = getWhatsAppLink(property, producer.name);
-    const mapEmbedUrl  = getMapEmbedUrl(property);
-    const mapExternalUrl = getMapExternalUrl(property);
+    const images           = normalizeImages(property);
+    const keySummary       = getKeySummary(property);
+    const secondaryDetails = getSecondaryDetails(property);
+    const amenities        = getAmenities(property);
+    const producer         = getProducer(property);
+    const whatsappLink     = getWhatsAppLink(property, producer.name);
+    const isInversion      = !!property.mostrar_como_inversion;
+    const mapEmbedUrl      = isInversion ? "" : getMapEmbedUrl(property);
+    const mapExternalUrl   = isInversion ? "" : getMapExternalUrl(property);
 
     const address =
       property.direccion         ||
@@ -349,15 +365,23 @@
       property.ubicacion         ||
       "Ubicación a consultar";
 
+    const heroTag   = property.tag || (isInversion ? "Inversión" : property.operacion) || "Propiedad";
+    const heroPrice = isInversion && property.ticket_minimo
+      ? `Desde ${property.ticket_minimo}`
+      : (!isInversion && property.precio && property.precio !== "Consultar")
+        ? property.precio
+        : "";
+
+    const disclaimerText = property.disclaimer_inversion ||
+      "La información publicada no constituye asesoramiento financiero, legal ni fiscal. Las proyecciones son estimadas y no representan una garantía de rentabilidad. Toda inversión implica riesgos y está sujeta a condiciones comerciales, legales, financieras y de mercado.";
+
     document.title = `${property.titulo || "Propiedad"} | García Inversiones`;
 
     detailRoot.innerHTML = `
       <section class="property-detail-hero">
         <div class="container property-detail-hero-inner">
-          <div>
-            <span class="eyebrow">
-              ${escapeHtml(property.tag || (property.mostrar_como_inversion ? "Inversión" : property.operacion) || "Propiedad")}
-            </span>
+          <div class="property-detail-hero-text">
+            <span class="eyebrow">${escapeHtml(heroTag)}</span>
 
             <h1 class="property-detail-title">
               ${escapeHtml(property.titulo || "Propiedad destacada")}
@@ -370,6 +394,10 @@
             <p class="property-detail-location">
               ${escapeHtml(property.ubicacion || "Ubicación a consultar")}
             </p>
+
+            ${heroPrice
+              ? `<p class="property-detail-price">${escapeHtml(heroPrice)}</p>`
+              : ""}
           </div>
 
           <div class="property-share-wrapper">
@@ -407,101 +435,99 @@
 
           <div class="property-detail-main">
 
+            <!-- Galería -->
             <div class="property-gallery"></div>
 
-            <article class="property-info-card">
-              <span class="eyebrow">${property.mostrar_como_inversion ? "Sobre la oportunidad" : "Sobre la propiedad"}</span>
-              <h2>${property.mostrar_como_inversion ? "Descripción de la inversión" : "Información sobre la propiedad"}</h2>
-              <p>
-                ${escapeHtml(property.descripcion || "Consultanos para recibir información completa sobre esta propiedad.")}
-              </p>
-
-              ${property.mostrar_como_inversion && property.ticket_minimo ? `
-              <div class="inversion-highlights">
-                ${property.ticket_minimo       ? `<div class="inversion-highlight-item"><small>Ticket mínimo</small><strong>${escapeHtml(property.ticket_minimo)}</strong></div>` : ""}
-                ${property.horizonte_inversion ? `<div class="inversion-highlight-item"><small>Horizonte estimado</small><strong>${escapeHtml(property.horizonte_inversion)}</strong></div>` : ""}
-                ${property.retorno_estimado    ? `<div class="inversion-highlight-item"><small>Retorno estimado</small><strong>${escapeHtml(property.retorno_estimado)}</strong></div>` : ""}
-                ${property.modelo_inversion    ? `<div class="inversion-highlight-item"><small>Modelo</small><strong>${escapeHtml(property.modelo_inversion)}</strong></div>` : ""}
-              </div>` : ""}
-
-              ${property.mostrar_como_inversion && property.disclaimer_inversion ? `
-              <p class="inversion-disclaimer">
-                <small>${escapeHtml(property.disclaimer_inversion)}</small>
-              </p>` : ""}
-            </article>
-
-            ${
-              details.length
-                ? `
-                  <article class="property-info-card">
-                    <span class="eyebrow">Información clave</span>
-                    <div class="property-key-grid">
-                      ${details.map(([label, value]) => `
-                        <div>
-                          <small>${escapeHtml(label)}</small>
-                          <strong>${escapeHtml(value)}</strong>
-                        </div>
-                      `).join("")}
+            <!-- 1. Resumen clave -->
+            ${keySummary.length ? `
+              <article class="property-info-card">
+                <span class="eyebrow">${isInversion ? "Datos de la oportunidad" : "Resumen"}</span>
+                <div class="property-key-grid">
+                  ${keySummary.map(([label, value]) => `
+                    <div>
+                      <small>${escapeHtml(label)}</small>
+                      <strong>${escapeHtml(String(value))}</strong>
                     </div>
-                  </article>
-                `
-                : ""
-            }
+                  `).join("")}
+                </div>
+              </article>
+            ` : ""}
 
-            ${
-              amenities.length
-                ? `
-                  <article class="property-info-card">
-                    <span class="eyebrow">Características</span>
-                    <h2>Amenities</h2>
-                    <div class="property-amenities">
-                      ${amenities.map(item => `<span>${escapeHtml(item)}</span>`).join("")}
+            <!-- 2. Descripción editorial -->
+            ${property.descripcion ? `
+              <article class="property-info-card">
+                <span class="eyebrow">${isInversion ? "Sobre la oportunidad" : "Sobre la propiedad"}</span>
+                <h2>${isInversion ? "Descripción de la inversión" : "Información sobre la propiedad"}</h2>
+                <p>${escapeHtml(property.descripcion)}</p>
+              </article>
+            ` : ""}
+
+            <!-- 3. Detalle complementario -->
+            ${secondaryDetails.length ? `
+              <article class="property-info-card">
+                <span class="eyebrow">Detalle</span>
+                <div class="property-key-grid">
+                  ${secondaryDetails.map(([label, value]) => `
+                    <div>
+                      <small>${escapeHtml(label)}</small>
+                      <strong>${escapeHtml(String(value))}</strong>
                     </div>
-                  </article>
-                `
-                : ""
-            }
+                  `).join("")}
+                </div>
+              </article>
+            ` : ""}
 
-            ${
-              mapEmbedUrl
-                ? `
-                  <article class="property-info-card">
-                    <span class="eyebrow">Ubicación</span>
-                    <h2>Ubicación de la propiedad</h2>
-                    <p>${escapeHtml(address)}</p>
+            <!-- 4. Amenities -->
+            ${amenities.length ? `
+              <article class="property-info-card">
+                <span class="eyebrow">Características</span>
+                <h2>Amenities</h2>
+                <div class="property-amenities">
+                  ${amenities.map(item => `<span>${escapeHtml(item)}</span>`).join("")}
+                </div>
+              </article>
+            ` : ""}
 
-                    <div class="property-map">
-                      <iframe
-                        src="${escapeHtml(mapEmbedUrl)}"
-                        loading="lazy"
-                        referrerpolicy="no-referrer-when-downgrade"
-                        allowfullscreen>
-                      </iframe>
-                    </div>
+            <!-- 5. Mapa (solo fichas tradicionales) -->
+            ${mapEmbedUrl ? `
+              <article class="property-info-card">
+                <span class="eyebrow">Ubicación</span>
+                <h2>Ubicación de la propiedad</h2>
+                <p>${escapeHtml(address)}</p>
+                <div class="property-map">
+                  <iframe
+                    src="${escapeHtml(mapEmbedUrl)}"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allowfullscreen>
+                  </iframe>
+                </div>
+                ${mapExternalUrl ? `
+                  <div class="property-map-actions">
+                    <a class="btn btn-dark" href="${escapeHtml(mapExternalUrl)}" target="_blank" rel="noopener">
+                      Ver en Google Maps
+                    </a>
+                  </div>
+                ` : ""}
+              </article>
+            ` : ""}
 
-                    ${
-                      mapExternalUrl
-                        ? `
-                          <div class="property-map-actions">
-                            <a class="btn btn-dark" href="${escapeHtml(mapExternalUrl)}" target="_blank" rel="noopener">
-                              Ver en Google Maps
-                            </a>
-                          </div>
-                        `
-                        : ""
-                    }
-                  </article>
-                `
-                : ""
-            }
-
+            <!-- 6. Video y tour -->
             ${buildVideoTourBlock(property)}
+
+            <!-- 7. Disclaimer (solo inversiones) -->
+            ${isInversion ? `
+              <p class="inversion-disclaimer">${escapeHtml(disclaimerText)}</p>
+            ` : ""}
 
           </div>
 
           <aside class="property-contact-box">
-            <h3>Consultar por esta propiedad</h3>
-            <p>Dejanos tus datos y te contactamos con información completa.</p>
+            <h3>${isInversion ? "Quiero más información" : "Consultar por esta propiedad"}</h3>
+            <p>${isInversion
+              ? "Completá tus datos y nuestro equipo te contacta con información completa sobre esta oportunidad."
+              : "Dejanos tus datos y te contactamos con información completa."
+            }</p>
 
             <form class="property-contact-form" data-property-contact>
               <!-- honeypot anti-bot -->
@@ -542,7 +568,7 @@
                 data-estimated-value="${escapeHtml(String(property.precio_numero || ''))}"
                 data-currency="${escapeHtml(property.moneda || 'USD')}"
                 data-lead-type="whatsapp_propiedad">
-                Consultar por WhatsApp
+                ${isInversion ? "Consultar por WhatsApp" : "Consultar por WhatsApp"}
               </a>
             </form>
           </aside>
