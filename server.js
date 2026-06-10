@@ -3,6 +3,7 @@ const fs      = require('fs');
 const path    = require('path');
 const { Resend } = require('resend');
 const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+const WebSocket = require('ws');
 
 // v4.0 — Supabase como base persistente, leads solo a 2Clics, newsletter separado
 // ── Variables de entorno ─────────────────────────────────────────────────────
@@ -23,7 +24,8 @@ loadEnvFile();
 // ── Supabase client (service role — server-side only, nunca exponer al front) ─
 const supabase = (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
   ? createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false }
+      auth:     { persistSession: false, autoRefreshToken: false },
+      realtime: { transport: WebSocket }
     })
   : null;
 
