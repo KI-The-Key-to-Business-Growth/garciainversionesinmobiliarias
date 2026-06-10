@@ -364,12 +364,40 @@ function normalizeOperation(operation = '') {
 
 const INSTITUTIONAL_FALLBACK = 'assets/propiedades/condor-resort.jpeg';
 
+// ── Validación de URLs externas (anti-SSRF) ──────────────────────────────────
+// Rechaza: no-https, localhost, IPs privadas/cloud, extensiones peligrosas.
+// CDNs sin extensión son permitidos (URL sin path final como .jpg).
+const _ALLOWED_IMG_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif']);
+const _PRIVATE_IP_RE    = /^(10\.|192\.168\.|169\.254\.|100\.64\.|172\.(1[6-9]|2\d|3[01])\.)/;
+const _CLOUD_META_HOSTS = new Set(['169.254.169.254', 'metadata.google.internal', '169.254.169.253', 'metadata.azure.com']);
+
+function isPublicHttpsUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  let parsed;
+  try { parsed = new URL(url.trim()); } catch (_) { return false; }
+  if (parsed.protocol !== 'https:') return false;
+  const host = parsed.hostname.toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return false;
+  if (_PRIVATE_IP_RE.test(host)) return false;
+  if (_CLOUD_META_HOSTS.has(host)) return false;
+  const ext = parsed.pathname.toLowerCase().match(/\.\w{2,5}$/)?.[0];
+  if (ext && !_ALLOWED_IMG_EXTS.has(ext)) return false;
+  return true;
+}
+
+// Devuelve la URL si es pública y válida, de lo contrario vacío
+function sanitizeImageUrl(url) {
+  return isPublicHttpsUrl(url) ? url.trim() : '';
+}
+
 function getFeaturedImage(prop) {
   // Prioridad: manual principal → CRM destacada → primera CRM → galería manual → fallback
-  if (prop.imagen_manual) return prop.imagen_manual;
+  // Las URLs externas del CRM se validan con sanitizeImageUrl (anti-SSRF)
+  if (prop.imagen_manual) return prop.imagen_manual; // campo manual: confianza interna
   const images  = Array.isArray(prop.imagenes_propiedad) ? prop.imagenes_propiedad : [];
   const featured = images.find(img => img && img.featured_image) || images[0];
-  if (featured?.source) return featured.source;
+  const crmSrc  = sanitizeImageUrl(featured?.source || '');
+  if (crmSrc) return crmSrc;
   if (Array.isArray(prop.galeria_manual) && prop.galeria_manual[0]) return prop.galeria_manual[0];
   return INSTITUTIONAL_FALLBACK;
 }
@@ -405,12 +433,21 @@ function isVisible(prop) {
   return estado === 'activa';
 }
 
+// Campos manuales que el CRM NUNCA debe poder sobreescribir.
+// Aunque vengan en el payload se ignoran en crmToWebProperty y el merge
+// en el webhook hace { ...existing, ...mapped } preservando los del JSON.
+const MANUAL_ONLY_FIELDS = new Set(['imagen_manual', 'og_image_manual', 'galeria_manual']);
+
 function crmToWebProperty(prop) {
   const appId         = String(prop.app_id || prop.id_prop_houzez_cli || prop.codigo_propiedad || Date.now());
   const id            = String(prop.id_prop_houzez_cli || appId);
   const isDevelopment = String(prop.tipo || '').toLowerCase() === 'emprendimiento';
   const operation     = isDevelopment ? 'proyecto' : normalizeOperation(prop.operacion);
   const city          = [prop.barrio, prop.ciudad || prop.provincia].filter(Boolean).join(' · ');
+
+  // Sanitizar URLs externas de video/tour para evitar SSRF
+  const rawVideo = String(prop.prop_video_url || '').trim();
+  const rawTour  = String(prop.virtual_tour  || '').trim();
 
   return {
     id,
@@ -434,13 +471,16 @@ function crmToWebProperty(prop) {
     linkWhatsapp:    `https://wa.me/5491167240353?text=${encodeURIComponent(`Hola, me interesa ${prop.titulo || 'esta propiedad'}`)}`,
     linkMercadoLibre:'',
     linkZonaprop:    '',
-    video:           prop.prop_video_url && prop.prop_video_url !== 'null' ? prop.prop_video_url : '',
-    tour:            prop.virtual_tour   && prop.virtual_tour   !== 'null' ? prop.virtual_tour   : '',
+    // Video y tour: solo https público (YouTube, Vimeo, etc.)
+    video:           (rawVideo && rawVideo !== 'null' && isPublicHttpsUrl(rawVideo)) ? rawVideo : '',
+    tour:            (rawTour  && rawTour  !== 'null' && isPublicHttpsUrl(rawTour))  ? rawTour  : '',
     productorNombre: prop.productorNombre || prop.productor_nombre || '',
     productorEmail:  prop.productorEmail  || prop.productor_email  || CONTACT_TO_EMAIL || '',
     amenities:       Array.isArray(prop.amenities) ? prop.amenities.map(a => a.name).filter(Boolean) : [],
     raw:             prop,
     updated_at:      new Date().toISOString()
+    // NOTA: imagen_manual, og_image_manual, galeria_manual NO se incluyen aquí.
+    // Se preservan del registro existente en el merge del webhook.
   };
 }
 
@@ -776,12 +816,17 @@ app.post('/api/2clics/property', (req, res) => {
   }
 
   const mapped = crmToWebProperty(prop);
+
+  // Eliminar campos manuales del mapped por si el CRM los envió — nunca deben sobreescribirse
+  for (const field of MANUAL_ONLY_FIELDS) delete mapped[field];
+
   const index  = properties.findIndex(item =>
     String(item.app_id) === String(mapped.app_id) ||
     String(item.id)     === String(mapped.id)     ||
     (mapped.crm_code && item.crm_code === mapped.crm_code)
   );
 
+  // El spread preserva campos manuales del registro existente (imagen_manual, etc.)
   if (index >= 0) properties[index] = { ...properties[index], ...mapped };
   else properties.unshift(mapped);
 
