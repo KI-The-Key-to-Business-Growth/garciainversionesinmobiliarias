@@ -2,8 +2,9 @@ const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
 const { Resend } = require('resend');
+const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
 
-// v3.0 — privacy page, GTM events, SEO canonical, 404 page, newsletter_signup event
+// v4.0 — Supabase como base persistente, leads solo a 2Clics, newsletter separado
 // ── Variables de entorno ─────────────────────────────────────────────────────
 function loadEnvFile() {
   const envPath = path.join(__dirname, '.env');
@@ -18,6 +19,15 @@ function loadEnvFile() {
 }
 
 loadEnvFile();
+
+// ── Supabase client (service role — server-side only, nunca exponer al front) ─
+const supabase = (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+  ? createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    })
+  : null;
+
+if (!supabase) console.warn('[db] Supabase no configurado — usando JSON local como fallback.');
 
 const app = express();
 app.disable('x-powered-by');
@@ -101,11 +111,14 @@ app.use((req, res, next) => {
         + " https://facebook.com"
         + " https://challenges.cloudflare.com"
         + " https://api.2clics.com.ar",
-      // iframes: Google Maps + YouTube + GTM noscript
+      // iframes: Google Maps + YouTube + Vimeo + GTM noscript
       "frame-src"
         + " https://www.google.com"
         + " https://maps.google.com"
         + " https://www.youtube.com"
+        + " https://www.youtube-nocookie.com"
+        + " https://player.vimeo.com"
+        + " https://my.matterport.com"
         + " https://www.googletagmanager.com"
         + " https://td.doubleclick.net"
         + " https://challenges.cloudflare.com",
@@ -390,6 +403,50 @@ function sanitizeImageUrl(url) {
   return isPublicHttpsUrl(url) ? url.trim() : '';
 }
 
+// ── Validación de URLs de video/tour ─────────────────────────────────────────
+// Igual que isPublicHttpsUrl pero sin restricción de extensión de imagen.
+// Solo permite https, bloquea IPs privadas y metadatos cloud.
+const _ALLOWED_VIDEO_HOSTS = new Set([
+  'youtube.com', 'www.youtube.com', 'youtu.be',
+  'youtube-nocookie.com', 'www.youtube-nocookie.com',
+  'vimeo.com', 'player.vimeo.com',
+  'matterport.com', 'my.matterport.com',
+]);
+
+function sanitizeVideoUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  let parsed;
+  try { parsed = new URL(url.trim()); } catch (_) { return ''; }
+  if (parsed.protocol !== 'https:') return '';
+  const host = parsed.hostname.toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return '';
+  if (_PRIVATE_IP_RE.test(host)) return '';
+  if (_CLOUD_META_HOSTS.has(host)) return '';
+  return url.trim();
+}
+
+// Extrae el video ID de una URL de YouTube (watch, youtu.be, embed) → '' si no es YouTube
+function extractYouTubeId(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(url.trim());
+    const h = u.hostname.replace('www.', '');
+    if (h === 'youtu.be') return u.pathname.slice(1).split('/')[0] || '';
+    if (h === 'youtube.com' || h === 'youtube-nocookie.com') {
+      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2] || '';
+      return u.searchParams.get('v') || '';
+    }
+  } catch (_) { /* invalid URL */ }
+  return '';
+}
+
+// Genera URL de embed privacy-enhanced desde ID o URL de YouTube
+function toYouTubeEmbed(urlOrId) {
+  const id = urlOrId.length < 15 ? urlOrId : extractYouTubeId(urlOrId);
+  if (!id) return '';
+  return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
+}
+
 function getFeaturedImage(prop) {
   // Prioridad: manual principal → CRM destacada → primera CRM → galería manual → fallback
   // Las URLs externas del CRM se validan con sanitizeImageUrl (anti-SSRF)
@@ -431,6 +488,211 @@ function normalizeEstado(prop) {
 function isVisible(prop) {
   const estado = prop.estado || 'activa';
   return estado === 'activa';
+}
+
+// ── DB: normalizar fila de Supabase al formato que usa el resto del código ────
+// property_overrides llega como array (FK inversa en PostgREST) → tomamos [0]
+function normalizeDbRow(row) {
+  if (!row) return null;
+  const ov = Array.isArray(row.property_overrides)
+    ? (row.property_overrides[0] || {})
+    : (row.property_overrides   || {});
+  const imagesCrm = Array.isArray(row.imagenes_crm) ? row.imagenes_crm : [];
+  const sourceRaw = row.source_raw_json || {};
+
+  return {
+    id:              row.id,
+    app_id:          row.crm_app_id || row.id,
+    crm_app_id:      row.crm_app_id || '',
+    crm_code:        row.crm_code   || '',
+    estado:          row.estado     || 'activa',
+    titulo:          row.titulo     || 'Propiedad sin título',
+    descripcion:     row.descripcion|| '',
+    operacion:       row.operacion  || '',
+    tipo:            row.tipo       || '',
+    precio:          row.precio     || 'Consultar',
+    precio_numero:   row.precio_numero ?? null,
+    moneda:          row.moneda     || 'USD',
+    pais:            row.pais       || '',
+    ubicacion:       row.ubicacion  || '',
+    imagen:          row.imagen     || '',
+    ambientes:       row.ambientes  || '',
+    banos:           row.banos      || '',
+    superficie:      row.superficie || '',
+    dormitorios:     row.dormitorios  ?? null,
+    tag:             row.tag        || '',
+    prop_featured:   row.prop_featured || false,
+    linkWhatsapp:    row.link_whatsapp     || '',
+    linkMercadoLibre:row.link_mercado_libre|| '',
+    linkZonaprop:    row.link_zonaprop    || '',
+    video:           row.video      || '',
+    tour:            row.tour       || '',
+    productorNombre: row.productor_nombre || '',
+    productorEmail:  row.productor_email  || '',
+    amenities:       Array.isArray(row.amenities) ? row.amenities : [],
+    // Campos manuales — vienen de property_overrides, CRM no los puede tocar
+    imagen_manual:    ov.imagen_manual    || null,
+    og_image_manual:  ov.og_image_manual  || null,
+    galeria_manual:   Array.isArray(ov.galeria_manual) ? ov.galeria_manual : [],
+    video_manual_url: sanitizeVideoUrl(ov.video_manual_url || ''),
+    tour_manual_url:  sanitizeVideoUrl(ov.tour_manual_url  || ''),
+    seo_title:        ov.seo_title        || null,
+    seo_description:  ov.seo_description  || null,
+    // Campos resueltos con prioridad manual → CRM (lo que usa property-detail.js)
+    video: sanitizeVideoUrl(ov.video_manual_url || row.video || ''),
+    tour:  sanitizeVideoUrl(ov.tour_manual_url  || row.tour  || ''),
+    // raw: compatibilidad con property-detail.js (usa raw.imagenes_propiedad, raw.dormitorios, etc.)
+    raw: { ...sourceRaw, imagenes_propiedad: imagesCrm },
+    updated_at: row.updated_at || new Date().toISOString(),
+    created_at: row.created_at || new Date().toISOString(),
+  };
+}
+
+// ── DB: todas las propiedades activas ────────────────────────────────────────
+async function dbGetProperties() {
+  if (!supabase) return readJson(PROPERTIES_FILE, []).filter(isVisible);
+  try {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*, property_overrides(*)')
+      .eq('estado', 'activa')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data.map(normalizeDbRow);
+  } catch (err) {
+    console.error('[db] getProperties:', err.message);
+    return readJson(PROPERTIES_FILE, []).filter(isVisible);
+  }
+}
+
+// ── DB: una propiedad por id interno o crm_app_id ────────────────────────────
+async function dbGetProperty(id) {
+  if (!supabase) {
+    const all = readJson(PROPERTIES_FILE, []);
+    const sid = String(id || '');
+    return all.find(p =>
+      String(p.id)        === sid ||
+      String(p.app_id)    === sid ||
+      String(p.crm_app_id)=== sid ||
+      (sid && (sid.startsWith(`${p.id}-`) || sid.startsWith(`${String(p.app_id)}-`)))
+    ) || null;
+  }
+  try {
+    const safeId = String(id || '').slice(0, 200);
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*, property_overrides(*)')
+      .or(`id.eq.${safeId},crm_app_id.eq.${safeId}`)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    return data && data[0] ? normalizeDbRow(data[0]) : null;
+  } catch (err) {
+    console.error('[db] getProperty:', err.message);
+    return null;
+  }
+}
+
+// ── DB: upsert propiedad desde CRM ───────────────────────────────────────────
+async function dbUpsertProperty(mapped) {
+  if (!supabase) {
+    const properties = readJson(PROPERTIES_FILE, []);
+    const index = properties.findIndex(item =>
+      String(item.app_id) === String(mapped.app_id) ||
+      String(item.id)     === String(mapped.id)     ||
+      (mapped.crm_code && item.crm_code === mapped.crm_code)
+    );
+    if (index >= 0) properties[index] = { ...properties[index], ...mapped };
+    else properties.unshift(mapped);
+    writeJson(PROPERTIES_FILE, properties);
+    return;
+  }
+  const imagesCrm = Array.isArray(mapped.raw?.imagenes_propiedad)
+    ? mapped.raw.imagenes_propiedad : [];
+  const row = {
+    id:                 mapped.id,
+    crm_app_id:         mapped.app_id          || '',
+    crm_code:           mapped.crm_code        || '',
+    estado:             mapped.estado          || 'activa',
+    titulo:             mapped.titulo          || '',
+    descripcion:        mapped.descripcion     || '',
+    operacion:          mapped.operacion       || '',
+    tipo:               mapped.tipo            || '',
+    precio:             mapped.precio          || 'Consultar',
+    precio_numero:      mapped.precio_numero   ?? null,
+    moneda:             mapped.moneda          || 'USD',
+    pais:               mapped.pais            || '',
+    ubicacion:          mapped.ubicacion       || '',
+    imagen:             mapped.imagen          || '',
+    imagenes_crm:       imagesCrm,
+    ambientes:          mapped.ambientes       || '',
+    banos:              mapped.banos           || '',
+    superficie:         mapped.superficie      || '',
+    tag:                mapped.tag             || '',
+    prop_featured:      mapped.raw?.prop_featured || false,
+    link_whatsapp:      mapped.linkWhatsapp    || '',
+    link_mercado_libre: mapped.linkMercadoLibre|| '',
+    link_zonaprop:      mapped.linkZonaprop    || '',
+    video:              mapped.video           || '',
+    tour:               mapped.tour            || '',
+    productor_nombre:   mapped.productorNombre || '',
+    productor_email:    mapped.productorEmail  || '',
+    amenities:          mapped.amenities       || [],
+    source_raw_json:    mapped.raw             || null,
+    updated_at:         new Date().toISOString(),
+  };
+  const { error } = await supabase
+    .from('properties')
+    .upsert(row, { onConflict: 'id' });
+  if (error) { console.error('[db] upsertProperty:', error.message); throw error; }
+}
+
+// ── DB: marcar propiedad como eliminada (soft delete) ────────────────────────
+async function dbDeleteProperty(propId) {
+  if (!supabase) {
+    const properties = readJson(PROPERTIES_FILE, []);
+    writeJson(PROPERTIES_FILE, properties.filter(item =>
+      String(item.id) !== propId && String(item.app_id) !== propId
+    ));
+    return;
+  }
+  const safeId = String(propId || '').slice(0, 200);
+  const { error } = await supabase
+    .from('properties')
+    .update({ estado: 'eliminada', deleted_at: new Date().toISOString() })
+    .or(`id.eq.${safeId},crm_app_id.eq.${safeId}`);
+  if (error) { console.error('[db] deleteProperty:', error.message); throw error; }
+}
+
+// ── DB: log de integración técnica (sin datos personales) ────────────────────
+async function dbLogIntegration({ provider = '2clics', event_type = '', crm_app_id = '', status, error_message = null }) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('integration_logs')
+    .insert({ provider, event_type, crm_app_id: String(crm_app_id).slice(0, 100), status, error_message });
+  if (error) console.error('[db] logIntegration:', error.message);
+}
+
+// ── DB: suscriptor de newsletter ─────────────────────────────────────────────
+async function dbInsertNewsletter({ email, origen = '', utm_source = '', utm_medium = '', utm_campaign = '' }) {
+  if (!supabase) {
+    const subscribers = readJson(NEWSLETTER_FILE, []);
+    const isNew = !subscribers.some(s => s.email.toLowerCase() === email.toLowerCase());
+    if (isNew) {
+      subscribers.unshift({ email, origen, utm_source, utm_medium, utm_campaign, created_at: new Date().toISOString() });
+      writeJson(NEWSLETTER_FILE, subscribers);
+    }
+    return { isNew };
+  }
+  const { error } = await supabase
+    .from('newsletter_subscribers')
+    .insert({ email: email.toLowerCase(), origen, utm_source, utm_medium, utm_campaign });
+  if (error) {
+    if (error.code === '23505') return { isNew: false }; // unique_violation — ya existe
+    console.error('[db] insertNewsletter:', error.message);
+    throw error;
+  }
+  return { isNew: true };
 }
 
 // Campos manuales que el CRM NUNCA debe poder sobreescribir.
@@ -577,7 +839,7 @@ function escHtml(str) {
 // Este endpoint lee propiedad.html, inyecta meta tags específicos de la
 // propiedad pedida y devuelve el HTML completo. El resto de la app sigue
 // funcionando con JS igual que antes.
-app.get('/propiedad', (req, res) => {
+app.get('/propiedad', async (req, res) => {
   const BASE     = 'https://www.garciainversionesinmobiliarias.com.ar';
   const id       = String(req.query.id || '').trim().slice(0, 200);
   const htmlPath = path.join(PUBLIC_DIR, 'propiedad.html');
@@ -593,12 +855,7 @@ app.get('/propiedad', (req, res) => {
   const FALLBACK_IMG = `${BASE}/${INSTITUTIONAL_FALLBACK}`;
   let ogBlock = '';
 
-  const properties = id ? readJson(PROPERTIES_FILE, []) : [];
-  let property     = properties.find(p =>
-    String(p.id)     === id ||
-    String(p.app_id) === id ||
-    (id && (id.startsWith(`${p.id}-`) || id.startsWith(`${p.app_id}-`)))
-  );
+  let property = id ? await dbGetProperty(id) : null;
 
   if (property && property.estado === 'eliminada') {
     // Propiedad dada de baja: 301 al listado (mejor para SEO que 404 directo)
@@ -726,11 +983,11 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'garcia-web', timestamp: new Date().toISOString() });
 });
 
-app.get('/sitemap.xml', (_req, res) => {
+app.get('/sitemap.xml', async (_req, res) => {
   const base  = 'https://www.garciainversionesinmobiliarias.com.ar';
   const today = new Date().toISOString().slice(0, 10);
 
-  const properties = readJson(PROPERTIES_FILE, []).filter(isVisible);
+  const properties = await dbGetProperties();
 
   const propertyUrls = properties.map(p => {
     const id      = escHtml(encodeURIComponent(String(p.id || p.app_id || '')));
@@ -747,21 +1004,15 @@ ${propertyUrls}
 </urlset>`);
 });
 
-app.get('/api/properties', (_req, res) => {
-  const all = readJson(PROPERTIES_FILE, []);
-  res.json(all.filter(isVisible));
+app.get('/api/properties', async (_req, res) => {
+  const properties = await dbGetProperties();
+  res.json(properties);
 });
 
-app.get('/api/properties/:id', (req, res) => {
-  const properties  = readJson(PROPERTIES_FILE, []);
-  const requestedId = String(req.params.id || '');
-  const property    = properties.find(item =>
-    String(item.id)     === requestedId ||
-    String(item.app_id) === requestedId ||
-    requestedId.startsWith(`${item.id}-`) ||
-    requestedId.startsWith(`${item.app_id}-`)
-  );
-  if (!property)          return res.status(404).json({ ok: false, message: 'Propiedad no encontrada.' });
+app.get('/api/properties/:id', async (req, res) => {
+  const requestedId = String(req.params.id || '').slice(0, 200);
+  const property    = await dbGetProperty(requestedId);
+  if (!property)            return res.status(404).json({ ok: false, message: 'Propiedad no encontrada.' });
   if (!isVisible(property)) return res.status(404).json({ ok: false, message: 'Propiedad no disponible.' });
   res.json(property);
 });
@@ -780,7 +1031,9 @@ app.get('/propiedad/:id', (req, res) => {
 });
 
 // ── Webhook CRM 2Clics ───────────────────────────────────────────────────────
-app.post('/api/2clics/property', (req, res) => {
+// Ruta canónica: /api/2clics/webhook — pasar esta URL a 2Clics
+// /api/2clics/property se mantiene como alias de backward-compatibility
+async function handle2ClicsWebhook(req, res) {
   if (!req.is('application/json')) {
     return res.status(415).send('UNSUPPORTED_MEDIA_TYPE');
   }
@@ -800,14 +1053,16 @@ app.post('/api/2clics/property', (req, res) => {
     return res.status(403).send('INVALID_HASH');
   }
 
-  const properties = readJson(PROPERTIES_FILE, []);
+  const crmAppId = String(prop.prop_id || prop.id_prop_houzez_cli || prop.app_id || '');
 
   if (prop.action === 'del_property') {
-    const propId   = String(prop.prop_id || prop.id_prop_houzez_cli || prop.app_id || '');
-    const filtered = properties.filter(item =>
-      String(item.id) !== propId && String(item.app_id) !== propId
-    );
-    writeJson(PROPERTIES_FILE, filtered);
+    try {
+      await dbDeleteProperty(crmAppId);
+      await dbLogIntegration({ provider: '2clics', event_type: 'del_property', crm_app_id: crmAppId, status: 'ok' });
+    } catch (err) {
+      await dbLogIntegration({ provider: '2clics', event_type: 'del_property', crm_app_id: crmAppId, status: 'error', error_message: err.message });
+      return res.status(500).send('DB_ERROR');
+    }
     return res.type('text/plain').send('SUCCESS');
   }
 
@@ -817,24 +1072,23 @@ app.post('/api/2clics/property', (req, res) => {
 
   const mapped = crmToWebProperty(prop);
 
-  // Eliminar campos manuales del mapped por si el CRM los envió — nunca deben sobreescribirse
+  // Campos manuales protegidos — el CRM nunca puede sobreescribirlos
   for (const field of MANUAL_ONLY_FIELDS) delete mapped[field];
 
-  const index  = properties.findIndex(item =>
-    String(item.app_id) === String(mapped.app_id) ||
-    String(item.id)     === String(mapped.id)     ||
-    (mapped.crm_code && item.crm_code === mapped.crm_code)
-  );
+  try {
+    await dbUpsertProperty(mapped);
+    await dbLogIntegration({ provider: '2clics', event_type: prop.action, crm_app_id: crmAppId, status: 'ok' });
+  } catch (err) {
+    await dbLogIntegration({ provider: '2clics', event_type: prop.action, crm_app_id: crmAppId, status: 'error', error_message: err.message });
+    return res.status(500).send('DB_ERROR');
+  }
 
-  // El spread preserva campos manuales del registro existente (imagen_manual, etc.)
-  if (index >= 0) properties[index] = { ...properties[index], ...mapped };
-  else properties.unshift(mapped);
-
-  writeJson(PROPERTIES_FILE, properties);
-
-  const propertyUrl = `${PUBLIC_BASE_URL}/propiedad/${encodeURIComponent(mapped.id)}-${slugify(mapped.titulo)}`;
+  const propertyUrl = `${PUBLIC_BASE_URL}/propiedad?id=${encodeURIComponent(mapped.id)}`;
   return res.type('text/plain').send(`${mapped.id}|${propertyUrl}`);
-});
+}
+
+app.post('/api/2clics/webhook',  handle2ClicsWebhook); // ← URL canónica para 2Clics
+app.post('/api/2clics/property', handle2ClicsWebhook); // ← alias backward-compat
 
 // ── Formulario de contacto ───────────────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
@@ -1133,17 +1387,31 @@ app.post('/api/newsletter', async (req, res) => {
     return res.status(400).json({ ok: false, message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.' });
   }
 
-  const eventId     = req.body?.event_id || createEventId('newsletter');
-  const subscribers = readJson(NEWSLETTER_FILE, []);
+  const eventId = req.body?.event_id || createEventId('newsletter');
 
-  if (!subscribers.some(item => item.email.toLowerCase() === email.toLowerCase())) {
-    subscribers.unshift({
+  let isNewSubscriber = false;
+  try {
+    const result = await dbInsertNewsletter({
       email,
-      event_id:   eventId,
-      tracking:   pickTrackingFields(req.body),
-      created_at: new Date().toISOString()
+      origen:       String(req.body?.page_location || '').slice(0, 500),
+      utm_source:   String(req.body?.utm_source    || '').slice(0, 200),
+      utm_medium:   String(req.body?.utm_medium    || '').slice(0, 200),
+      utm_campaign: String(req.body?.utm_campaign  || '').slice(0, 200),
     });
-    writeJson(NEWSLETTER_FILE, subscribers);
+    isNewSubscriber = result?.isNew !== false;
+  } catch (err) {
+    const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
+    console.error('[/api/newsletter] Error DB:', err.message);
+    return res.status(500).json({
+      ok: false,
+      message: 'No pudimos procesar la suscripción. Por favor intentá de nuevo más tarde.',
+      ...(isProduction ? {} : { debug_error: err.message })
+    });
+  }
+
+  // Si el email ya existía, responder OK sin enviar Resend de nuevo
+  if (!isNewSubscriber) {
+    return res.json({ ok: true, event_id: eventId, message: 'Suscripción recibida correctamente.' });
   }
 
   const nlSource   = escapeHtml(req.body?.utm_source   || '');

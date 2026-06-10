@@ -19,6 +19,68 @@
 
   const FALLBACK_IMAGE = 'assets/propiedades/condor-resort.jpeg';
 
+  // ── Helpers de video/tour ────────────────────────────────────────────────
+  function extractYouTubeId(url) {
+    if (!url) return '';
+    try {
+      const u = new URL(url);
+      const h = u.hostname.replace('www.', '');
+      if (h === 'youtu.be') return u.pathname.slice(1).split('/')[0] || '';
+      if (h === 'youtube.com' || h === 'youtube-nocookie.com') {
+        if (u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2] || '';
+        return u.searchParams.get('v') || '';
+      }
+    } catch (_) { /* invalid */ }
+    return '';
+  }
+
+  // Construye el bloque de video + tour con lazy embed (facade pattern)
+  function buildVideoTourBlock(property) {
+    const video = property.video || '';
+    const tour  = property.tour  || '';
+    if (!video && !tour) return '';
+
+    const ytId = extractYouTubeId(video);
+    const embedUrl = ytId
+      ? `https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1&autoplay=1`
+      : '';
+    const thumbUrl = ytId
+      ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+      : '';
+
+    const videoBlock = video
+      ? (ytId
+          // YouTube: facade con thumbnail — iframe se carga solo al hacer clic
+          ? `<div class="video-facade" data-embed="${escapeHtml(embedUrl)}" role="button" tabindex="0"
+               aria-label="Reproducir video de la propiedad"
+               style="position:relative;cursor:pointer;background:#000;border-radius:8px;overflow:hidden;aspect-ratio:16/9;">
+               <img src="${escapeHtml(thumbUrl)}" alt="Miniatura del video"
+                 loading="lazy" decoding="async"
+                 style="width:100%;height:100%;object-fit:cover;opacity:.85;" />
+               <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                 <svg width="68" height="48" viewBox="0 0 68 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                   <path d="M66.5 7.7a8.5 8.5 0 0 0-6-6C56 0 34 0 34 0S12 0 7.5 1.7a8.5 8.5 0 0 0-6 6C0 12.2 0 24 0 24s0 11.8 1.5 16.3a8.5 8.5 0 0 0 6 6C12 48 34 48 34 48s22 0 26.5-1.7a8.5 8.5 0 0 0 6-6C68 35.8 68 24 68 24s0-11.8-1.5-16.3z" fill="#f00"/>
+                   <path d="M27 34l18-10-18-10v20z" fill="#fff"/>
+                 </svg>
+               </div>
+             </div>`
+          // Otro proveedor (Vimeo, etc.): link externo
+          : `<a class="btn btn-dark" href="${escapeHtml(video)}" target="_blank" rel="noopener noreferrer">Ver video</a>`)
+      : '';
+
+    const tourBlock = tour
+      ? `<a class="btn btn-dark" href="${escapeHtml(tour)}" target="_blank" rel="noopener noreferrer">Tour virtual</a>`
+      : '';
+
+    return `
+      <article class="property-info-card">
+        <span class="eyebrow">Material adicional</span>
+        <h2>Recorridos y contenido</h2>
+        ${videoBlock}
+        ${tourBlock ? `<div class="detail-links-row" style="margin-top:${video ? '16px' : '0'}">${tourBlock}</div>` : ''}
+      </article>`;
+  }
+
   function normalizeImages(property) {
     // Prioridad: galería manual → imagen manual → imagen CRM principal → imágenes CRM → galería local → fallback institucional
     const manualGallery = Array.isArray(property.galeria_manual)
@@ -402,20 +464,7 @@
                 : ""
             }
 
-            ${
-              property.video || property.tour
-                ? `
-                  <article class="property-info-card">
-                    <span class="eyebrow">Material adicional</span>
-                    <h2>Recorridos y contenido</h2>
-                    <div class="detail-links-row">
-                      ${property.video ? `<a class="btn btn-dark" href="${escapeHtml(property.video)}" target="_blank" rel="noopener">Ver video</a>` : ""}
-                      ${property.tour  ? `<a class="btn btn-dark" href="${escapeHtml(property.tour)}"  target="_blank" rel="noopener">Tour virtual</a>` : ""}
-                    </div>
-                  </article>
-                `
-                : ""
-            }
+            ${buildVideoTourBlock(property)}
 
           </div>
 
@@ -751,6 +800,29 @@
       }
     });
   }
+
+  // ── Video facade: reemplaza thumbnail con iframe al hacer clic ──────────
+  document.addEventListener('click', (e) => {
+    const facade = e.target.closest('.video-facade');
+    if (!facade) return;
+    const embedUrl = facade.dataset.embed;
+    if (!embedUrl) return;
+    const iframe = document.createElement('iframe');
+    iframe.src = embedUrl;
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+    iframe.allowFullscreen = true;
+    iframe.loading = 'lazy';
+    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
+    facade.innerHTML = '';
+    facade.style.cursor = 'default';
+    facade.appendChild(iframe);
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('video-facade')) {
+      e.preventDefault();
+      e.target.click();
+    }
+  });
 
   fetchProperty();
 })();
