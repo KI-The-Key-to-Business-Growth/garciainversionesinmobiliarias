@@ -1167,185 +1167,107 @@ app.post('/api/contact', async (req, res) => {
     return res.status(400).json({ ok: false, message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.' });
   }
 
-  const eventId = req.body?.event_id || createEventId('lead');
+  const eventId    = req.body?.event_id || createEventId('lead');
+  const isPropertyInquiry = !!(property_app_id) ||
+    req.body?.form_type === 'property' ||
+    req.body?.form_type === 'consulta_propiedad' ||
+    !!(req.body?.property_title);
 
-  const payload = {
+  // Construir payload para 2Clics — exactamente una de: property_app_id / development_app_id / agent
+  const crmPayload = {
     name:      fullName,
     phone:     finalPhone,
     email:     finalEmail,
     message:   finalMessage || 'Consulta desde la web García Inversiones Inmobiliarias',
     hash:      CRM_HASH,
     event_id:  eventId,
-    source:    req.body?.utm_source   || '',
-    medium:    req.body?.utm_medium   || '',
-    campaign:  req.body?.utm_campaign || '',
-    gclid:     req.body?.gclid        || '',
-    gbraid:    req.body?.gbraid       || '',
-    wbraid:    req.body?.wbraid       || '',
-    fbclid:    req.body?.fbclid       || '',
-    lead_type: req.body?.lead_type    || (property_app_id ? 'consulta_propiedad' : 'consulta_general'),
-    form_name: req.body?.form_name    || ''
+    source:    String(req.body?.utm_source   || '').slice(0, 200),
+    medium:    String(req.body?.utm_medium   || '').slice(0, 200),
+    campaign:  String(req.body?.utm_campaign || '').slice(0, 200),
+    gclid:     String(req.body?.gclid  || '').slice(0, 200),
+    gbraid:    String(req.body?.gbraid || '').slice(0, 200),
+    wbraid:    String(req.body?.wbraid || '').slice(0, 200),
+    fbclid:    String(req.body?.fbclid || '').slice(0, 200),
+    lead_type: req.body?.lead_type || (isPropertyInquiry ? 'consulta_propiedad' : 'consulta_general'),
+    form_name: String(req.body?.form_name || '').slice(0, 100)
   };
 
-  if (property_app_id)     payload.property_app_id  = Number(property_app_id);
-  else if (development_app_id) payload.development_app_id = Number(development_app_id);
-  else payload.agent = CRM_AGENT_ID;
+  const propId = property_app_id     ? Number(property_app_id)     : null;
+  const devId  = development_app_id  ? Number(development_app_id)  : null;
 
-  const leads = readJson(LEADS_FILE, []);
-  leads.unshift({
-    ...normalizeLeadPayload(req.body),
-    crm_payload:      payload,
-    created_at:       new Date().toISOString(),
-    estado_comercial: 'nuevo'
-  });
-  writeJson(LEADS_FILE, leads);
+  if (propId && !isNaN(propId) && propId > 0)      crmPayload.property_app_id     = propId;
+  else if (devId && !isNaN(devId) && devId > 0)    crmPayload.development_app_id  = devId;
+  else                                              crmPayload.agent               = CRM_AGENT_ID;
 
-  const emailTo = CONTACT_TO_EMAIL;
-
-  // Detectar si es consulta de propiedad específica
-  const isPropertyInquiry =
-    req.body?.form_type === 'property' ||
-    req.body?.form_type === 'consulta_propiedad' ||
-    !!(req.body?.property_title) ||
-    !!property_app_id;
-
-  const propertyTitle = escapeHtml(String(req.body?.property_title || '').trim().slice(0, 200));
-  const propertyUrl   = escapeHtml(String(req.body?.property_url || req.body?.page_location || '').trim());
-
-  // Asunto diferenciado por tipo de consulta
-  const emailSubject = isPropertyInquiry
-    ? propertyTitle
-      ? `Nueva consulta por propiedad — ${propertyTitle}`
-      : 'Nueva consulta por propiedad'
-    : 'Nueva consulta desde la web';
-
-  // Bloque HTML de propiedad (solo si aplica)
-  const propertyBlock = isPropertyInquiry ? `
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-          <tr>
-            <td style="background:#f0f4f8; border-left:4px solid #cd9f4f; padding:16px 20px; border-radius:0 8px 8px 0;">
-              <p style="margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#666;">Propiedad consultada</p>
-              <p style="margin:0 0 4px; font-size:17px; font-weight:700; color:#071628;">${propertyTitle || '<em>Sin título</em>'}</p>
-              ${propertyUrl ? `<p style="margin:6px 0 0;"><a href="${propertyUrl}" style="color:#cd9f4f; font-size:13px;">${propertyUrl}</a></p>` : ''}
-            </td>
-          </tr>
-        </table>` : '';
-
-  const dateStr = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
-
-  // Todos los valores del usuario escapados antes de insertar en HTML
-  const emailResult = await sendEmail({
-    to:      emailTo,
-    subject: emailSubject,
-    html: `<!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8" /></head>
-<body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background:linear-gradient(135deg,#071628 0%,#0c2948 100%);padding:28px 36px;">
-            <p style="margin:0;font-size:13px;color:#cd9f4f;letter-spacing:2px;text-transform:uppercase;">García Inversiones Inmobiliarias</p>
-            <h1 style="margin:8px 0 0;font-size:20px;color:#ffffff;font-weight:600;">${isPropertyInquiry ? '🏠 Nueva consulta por propiedad' : '📬 Nueva consulta desde la web'}</h1>
-          </td>
-        </tr>
-
-        <!-- Body -->
-        <tr>
-          <td style="padding:32px 36px;">
-
-            ${propertyBlock}
-
-            <!-- Datos del interesado -->
-            <p style="margin:0 0 14px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999;">Datos del interesado</p>
-            <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px;">
-              <tr style="border-bottom:1px solid #f0f0f0;">
-                <td style="width:140px;color:#666;font-size:14px;">Nombre</td>
-                <td style="font-size:14px;font-weight:600;color:#071628;">${escapeHtml(fullName)}</td>
-              </tr>
-              <tr style="border-bottom:1px solid #f0f0f0;">
-                <td style="color:#666;font-size:14px;">WhatsApp / Tel.</td>
-                <td style="font-size:14px;font-weight:600;color:#071628;"><a href="https://wa.me/${encodeURIComponent(finalPhone.replace(/\D/g,''))}" style="color:#cd9f4f;">${escapeHtml(finalPhone)}</a></td>
-              </tr>
-              <tr style="border-bottom:1px solid #f0f0f0;">
-                <td style="color:#666;font-size:14px;">Email</td>
-                <td style="font-size:14px;font-weight:600;color:#071628;"><a href="mailto:${escapeHtml(finalEmail)}" style="color:#cd9f4f;">${escapeHtml(finalEmail)}</a></td>
-              </tr>
-              ${motivoVal ? `
-              <tr style="border-bottom:1px solid #f0f0f0;">
-                <td style="color:#666;font-size:14px;">Motivo</td>
-                <td style="font-size:14px;color:#071628;">${escapeHtml(motivoVal)}</td>
-              </tr>` : ''}
-              ${finalMessage ? `
-              <tr>
-                <td style="color:#666;font-size:14px;vertical-align:top;padding-top:10px;">Mensaje</td>
-                <td style="font-size:14px;color:#071628;padding-top:10px;">${escapeHtml(finalMessage)}</td>
-              </tr>` : ''}
-            </table>
-
-            ${(payload.source || payload.medium || payload.campaign || payload.gclid || payload.fbclid) ? `
-            <!-- Origen y tracking -->
-            <p style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999;">Origen del lead</p>
-            <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;color:#555;margin-bottom:16px;">
-              ${payload.source   ? `<tr><td style="width:140px;">UTM Source</td><td>${escapeHtml(payload.source)}</td></tr>` : ''}
-              ${payload.medium   ? `<tr><td>UTM Medium</td><td>${escapeHtml(payload.medium)}</td></tr>` : ''}
-              ${payload.campaign ? `<tr><td>UTM Campaign</td><td>${escapeHtml(payload.campaign)}</td></tr>` : ''}
-              ${payload.gclid    ? `<tr><td>GCLID</td><td>${escapeHtml(payload.gclid)}</td></tr>` : ''}
-              ${payload.fbclid   ? `<tr><td>FBCLID</td><td>${escapeHtml(payload.fbclid)}</td></tr>` : ''}
-            </table>` : ''}
-
-          </td>
-        </tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="background:#f9f9f9;padding:16px 36px;border-top:1px solid #eee;">
-            <p style="margin:0;font-size:12px;color:#aaa;">Recibido el ${dateStr} · García Inversiones Inmobiliarias</p>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
-  });
-
-  if (!emailResult.ok) {
-    // En producción no exponer detalles internos del error de email
-    const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
-    console.error('[/api/contact] Error de email:', emailResult.error);
-    return res.status(500).json({
-      ok: false,
-      message: 'No pudimos procesar tu consulta. Por favor intentá de nuevo más tarde o escribinos por WhatsApp.',
-      ...(isProduction ? {} : { debug_error: emailResult.error })
-    });
+  // Fallback local solo en desarrollo (Vercel no persiste JSON)
+  if (!process.env.VERCEL) {
+    const leads = readJson(LEADS_FILE, []);
+    leads.unshift({ event_id: eventId, lead_type: crmPayload.lead_type, created_at: new Date().toISOString() });
+    writeJson(LEADS_FILE, leads);
   }
 
+  // ── Envío a 2Clics — único destino de leads comerciales ──────────────────
   let crmOk     = false;
   let crmStatus = null;
+  let crmError  = null;
 
   try {
     const controller = new AbortController();
     const timeout    = setTimeout(() => controller.abort(), 8000);
-
-    const response = await fetch(CRM_MESSAGE_URL, {
+    const response   = await fetch(CRM_MESSAGE_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
+      body:    JSON.stringify(crmPayload),
       signal:  controller.signal
     });
-
     clearTimeout(timeout);
     crmOk     = response.ok;
     crmStatus = response.status;
-  } catch (_) {
-    crmOk = false;
+    if (!crmOk) crmError = `HTTP ${crmStatus}`;
+  } catch (err) {
+    crmError = err.name === 'AbortError' ? 'timeout' : 'network_error';
   }
 
-  console.log('[/api/contact] Lead procesado. event_id:', eventId, '| crmOk:', crmOk);
-  res.json({ ok: true, crmOk, crmStatus, event_id: eventId, message: 'Consulta recibida correctamente.' });
+  if (crmOk) {
+    // Lead aceptado por 2Clics — loguear éxito y confirmar al frontend
+    await dbLogIntegration({
+      provider:    '2clics',
+      event_type:  crmPayload.lead_type,
+      crm_app_id:  String(propId || devId || 'general'),
+      status:      'ok'
+    });
+    console.log('[/api/contact] Lead enviado a 2Clics. event_id:', eventId);
+    return res.json({ ok: true, event_id: eventId, message: 'Consulta recibida correctamente.' });
+  }
+
+  // Lead rechazado o timeout — loguear error y enviar alerta técnica sin PII
+  await dbLogIntegration({
+    provider:      '2clics',
+    event_type:    crmPayload.lead_type,
+    crm_app_id:    String(propId || devId || 'general'),
+    status:        'error',
+    error_message: crmError || 'unknown'
+  });
+  console.error('[/api/contact] 2Clics falló. event_id:', eventId, '| error:', crmError);
+
+  // Alerta técnica por Resend — solo datos técnicos, SIN nombre/teléfono/email del usuario
+  sendEmail({
+    to:      CONTACT_TO_EMAIL,
+    subject: '[Alerta técnica] Fallo en envío a 2Clics',
+    html: `<p><b>Evento técnico:</b> lead no pudo ser enviado a 2Clics.<br>
+      <b>event_id:</b> ${escapeHtml(eventId)}<br>
+      <b>form_type:</b> ${escapeHtml(crmPayload.lead_type)}<br>
+      <b>error:</b> ${escapeHtml(crmError || 'desconocido')}<br>
+      <b>timestamp:</b> ${new Date().toISOString()}</p>
+      <p style="color:#999;font-size:12px;">Este aviso no contiene datos personales del usuario.</p>`
+  }).catch(e => console.error('[/api/contact] Alerta técnica Resend falló:', e.message));
+
+  const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
+  return res.status(500).json({
+    ok: false,
+    message: 'No pudimos procesar tu consulta en este momento. Por favor intentá de nuevo o escribinos por WhatsApp.',
+    ...(isProduction ? {} : { debug_error: crmError })
+  });
 });
 
 // ── Newsletter ───────────────────────────────────────────────────────────────
