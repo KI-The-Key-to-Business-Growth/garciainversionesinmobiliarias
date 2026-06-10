@@ -390,6 +390,21 @@ function formatPrice(prop) {
   return `${currency} ${display}`.trim();
 }
 
+// Normaliza el estado del CRM a uno de los tres estados canónicos
+function normalizeEstado(prop) {
+  const raw = String(prop.estado || prop.status || prop.prop_status || '').toLowerCase().trim();
+  if (!raw) return 'activa'; // sin campo → tratamos como activa (compatibilidad retroactiva)
+  if (['eliminada','baja','deleted','removed','trash'].some(v => raw.includes(v))) return 'eliminada';
+  if (['pausada','paused','inactive','draft','oculta','hidden'].some(v => raw.includes(v)))  return 'pausada';
+  return 'activa';
+}
+
+// Devuelve true si la propiedad debe mostrarse públicamente
+function isVisible(prop) {
+  const estado = prop.estado || 'activa';
+  return estado === 'activa';
+}
+
 function crmToWebProperty(prop) {
   const appId         = String(prop.app_id || prop.id_prop_houzez_cli || prop.codigo_propiedad || Date.now());
   const id            = String(prop.id_prop_houzez_cli || appId);
@@ -401,6 +416,7 @@ function crmToWebProperty(prop) {
     id,
     app_id:          appId,
     crm_code:        prop.codigo_propiedad || '',
+    estado:          normalizeEstado(prop),
     titulo:          prop.titulo           || 'Propiedad sin título',
     operacion:       operation,
     tipo:            isDevelopment ? 'emprendimiento' : (prop.tipo || 'propiedad').toLowerCase(),
@@ -538,11 +554,21 @@ app.get('/propiedad', (req, res) => {
   let ogBlock = '';
 
   const properties = id ? readJson(PROPERTIES_FILE, []) : [];
-  const property   = properties.find(p =>
+  let property     = properties.find(p =>
     String(p.id)     === id ||
     String(p.app_id) === id ||
     (id && (id.startsWith(`${p.id}-`) || id.startsWith(`${p.app_id}-`)))
   );
+
+  if (property && property.estado === 'eliminada') {
+    // Propiedad dada de baja: 301 al listado (mejor para SEO que 404 directo)
+    return res.redirect(301, '/propiedades');
+  }
+
+  if (property && !isVisible(property)) {
+    // Pausada: servir con OG genérico (no indexable) para no exponer datos
+    property = null;
+  }
 
   if (property) {
     // ── OG dinámico: datos reales de la propiedad ─────────────────────────────
@@ -607,19 +633,22 @@ app.get('/propiedad', (req, res) => {
 
     ogBlock = [
       `  <!-- OG dinámico: ${escHtml(id)} -->`,
-      `  <meta property="og:type"         content="website" />`,
-      `  <meta property="og:site_name"    content="García Inversiones Inmobiliarias" />`,
-      `  <meta property="og:title"        content="${escHtml(pageTitle)}" />`,
-      `  <meta property="og:description"  content="${escHtml(pageDesc)}" />`,
-      `  <meta property="og:image"        content="${escHtml(pageImage)}" />`,
-      `  <meta property="og:image:width"  content="1200" />`,
-      `  <meta property="og:image:height" content="630" />`,
-      `  <meta property="og:url"          content="${escHtml(pageUrl)}" />`,
-      `  <meta property="og:locale"       content="es_AR" />`,
-      `  <meta name="twitter:card"        content="summary_large_image" />`,
-      `  <meta name="twitter:title"       content="${escHtml(pageTitle)}" />`,
-      `  <meta name="twitter:description" content="${escHtml(pageDesc)}" />`,
-      `  <meta name="twitter:image"       content="${escHtml(pageImage)}" />`,
+      `  <meta property="og:type"              content="website" />`,
+      `  <meta property="og:site_name"         content="García Inversiones Inmobiliarias" />`,
+      `  <meta property="og:title"             content="${escHtml(pageTitle)}" />`,
+      `  <meta property="og:description"       content="${escHtml(pageDesc)}" />`,
+      `  <meta property="og:image"             content="${escHtml(pageImage)}" />`,
+      `  <meta property="og:image:secure_url"  content="${escHtml(pageImage)}" />`,
+      `  <meta property="og:image:type"        content="image/jpeg" />`,
+      `  <meta property="og:image:width"       content="1200" />`,
+      `  <meta property="og:image:height"      content="630" />`,
+      `  <meta property="og:url"               content="${escHtml(pageUrl)}" />`,
+      `  <meta property="og:locale"            content="es_AR" />`,
+      `  <meta name="twitter:card"             content="summary_large_image" />`,
+      `  <meta name="twitter:site"             content="@garciainversiones" />`,
+      `  <meta name="twitter:title"            content="${escHtml(pageTitle)}" />`,
+      `  <meta name="twitter:description"      content="${escHtml(pageDesc)}" />`,
+      `  <meta name="twitter:image"            content="${escHtml(pageImage)}" />`,
       `  <script type="application/ld+json">${JSON.stringify(schema)}</script>`
     ].join('\n');
 
@@ -661,7 +690,7 @@ app.get('/sitemap.xml', (_req, res) => {
   const base  = 'https://www.garciainversionesinmobiliarias.com.ar';
   const today = new Date().toISOString().slice(0, 10);
 
-  const properties = readJson(PROPERTIES_FILE, []);
+  const properties = readJson(PROPERTIES_FILE, []).filter(isVisible);
 
   const propertyUrls = properties.map(p => {
     const id      = escHtml(encodeURIComponent(String(p.id || p.app_id || '')));
@@ -679,7 +708,8 @@ ${propertyUrls}
 });
 
 app.get('/api/properties', (_req, res) => {
-  res.json(readJson(PROPERTIES_FILE, []));
+  const all = readJson(PROPERTIES_FILE, []);
+  res.json(all.filter(isVisible));
 });
 
 app.get('/api/properties/:id', (req, res) => {
@@ -691,7 +721,8 @@ app.get('/api/properties/:id', (req, res) => {
     requestedId.startsWith(`${item.id}-`) ||
     requestedId.startsWith(`${item.app_id}-`)
   );
-  if (!property) return res.status(404).json({ ok: false, message: 'Propiedad no encontrada.' });
+  if (!property)          return res.status(404).json({ ok: false, message: 'Propiedad no encontrada.' });
+  if (!isVisible(property)) return res.status(404).json({ ok: false, message: 'Propiedad no disponible.' });
   res.json(property);
 });
 

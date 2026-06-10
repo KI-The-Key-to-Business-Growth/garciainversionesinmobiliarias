@@ -589,8 +589,7 @@
 
     const shareUrl   = window.location.href;
     const shareTitle = property.titulo || 'Propiedad';
-    const shareText  = [property.tipo, property.ubicacion, property.precio]
-      .filter(Boolean).join(' · ');
+    const shareText  = 'Conocé esta propiedad de García Inversiones Inmobiliarias.';
 
     function trackShare(method) {
       window.dataLayer = window.dataLayer || [];
