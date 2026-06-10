@@ -1508,6 +1508,19 @@ a.footer-contact-item:hover { color: var(--gold); }
   font-size: 0.8rem;
   line-height: 1.6;
 }
+.inversion-disclaimer-title {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--navy);
+  margin-bottom: 8px;
+  opacity: 0.55;
+}
+.inversion-disclaimer p {
+  margin: 0;
+}
 
 /* Clases legacy (no se usan en el JS actual, se mantienen por compatibilidad) */
 .property-detail-hero-grid {

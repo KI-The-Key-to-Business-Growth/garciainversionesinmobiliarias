@@ -126,7 +126,11 @@
       return [
         ["País",        property.pais],
         ["Ciudad / Zona", property.zona_web || property.raw?.ciudad || ""],
-        ["Riesgo",      property.riesgo_inversion],
+        ["Riesgo", property.riesgo_inversion
+          ? (property.riesgo_inversion.length > 80
+              ? property.riesgo_inversion.slice(0, 77) + "…"
+              : property.riesgo_inversion)
+          : ""],
         ["Moneda",      property.moneda],
         ["Código",      property.crm_code || property.app_id || property.id],
       ].filter(([, v]) => v && v !== "null");
@@ -366,11 +370,10 @@
       "Ubicación a consultar";
 
     const heroTag   = property.tag || (isInversion ? "Inversión" : property.operacion) || "Propiedad";
-    const heroPrice = isInversion && property.ticket_minimo
-      ? `Desde ${property.ticket_minimo}`
-      : (!isInversion && property.precio && property.precio !== "Consultar")
-        ? property.precio
-        : "";
+    // En inversiones el ticket va en las cards, no en el hero
+    const heroPrice = !isInversion && property.precio && property.precio !== "Consultar"
+      ? property.precio
+      : "";
 
     const disclaimerText = property.disclaimer_inversion ||
       "La información publicada no constituye asesoramiento financiero, legal ni fiscal. Las proyecciones son estimadas y no representan una garantía de rentabilidad. Toda inversión implica riesgos y está sujeta a condiciones comerciales, legales, financieras y de mercado.";
@@ -517,7 +520,10 @@
 
             <!-- 7. Disclaimer (solo inversiones) -->
             ${isInversion ? `
-              <p class="inversion-disclaimer">${escapeHtml(disclaimerText)}</p>
+              <div class="inversion-disclaimer">
+                <p class="inversion-disclaimer-title">Información importante</p>
+                <p>${escapeHtml(disclaimerText)}</p>
+              </div>
             ` : ""}
 
           </div>
