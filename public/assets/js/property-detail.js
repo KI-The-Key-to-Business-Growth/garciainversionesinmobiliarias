@@ -591,7 +591,6 @@
     setupGallery(images);
     setupPropertyForm(property, producer);
     setupShareButton(property);
-    if (isInversion) moveShareButtonToNav();
     // click_whatsapp lo captura tracking.js globalmente via data-* attributes del link
 
     // Timestamp anti-bot: marcar cuándo se renderizó el formulario
@@ -868,16 +867,6 @@
         if (button) { button.disabled = false; button.textContent = originalText; }
       }
     });
-  }
-
-  function moveShareButtonToNav() {
-    const wrapper = detailRoot.querySelector('.property-share-wrapper');
-    const header  = document.getElementById('siteHeader');
-    if (!wrapper || !header) return;
-    const backBtn = header.querySelector('.hdr-cta-btn');
-    wrapper.classList.add('property-share-wrapper--in-nav');
-    if (backBtn) header.insertBefore(wrapper, backBtn);
-    else header.appendChild(wrapper);
   }
 
   // ── Video facade: reemplaza thumbnail con iframe al hacer clic ──────────

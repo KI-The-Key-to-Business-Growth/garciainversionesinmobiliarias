@@ -1494,13 +1494,10 @@ a.footer-contact-item:hover { color: var(--gold); }
 .property-detail-hero--compact,
 body[data-page-type="property_detail"] .property-detail-hero--compact {
   padding: 14px 0 12px !important;
-  position: relative;
 }
 .property-detail-hero--compact .property-detail-hero-inner {
-  justify-content: center;
-}
-.property-detail-hero--compact .property-detail-hero-text {
-  text-align: center;
+  justify-content: space-between;
+  align-items: center;
 }
 .property-detail-hero--compact .property-detail-title,
 body[data-page-type="property_detail"] .property-detail-hero--compact .property-detail-title {
@@ -1512,11 +1509,11 @@ body[data-page-type="property_detail"] .property-detail-hero--compact .property-
   font-size: 0.6rem;
   margin-bottom: 4px;
 }
-/* Share button dentro del navbar (solo inversiones) */
-.property-share-wrapper--in-nav {
-  position: static !important;
-  transform: none !important;
-  margin-left: 12px;
+/* Share button inline en hero compacto */
+.property-detail-hero--compact .property-share-wrapper {
+  position: static;
+  transform: none;
+  flex-shrink: 0;
 }
 .property-detail-hero--compact .property-share-btn {
   font-size: 0.75rem;
