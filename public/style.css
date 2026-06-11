@@ -2844,39 +2844,57 @@ body[data-page-type="thank_you"] {
 }
 
 @media (max-width: 760px) {
-  /* Navbar mobile: padding 18px, height 68px */
   .property-detail-hero--compact,
   body[data-page-type="property_detail"] .property-detail-hero--compact {
     padding: 10px 0 8px !important;
+    position: relative;
   }
 
-  /* El botón absoluto queda fuera del flujo y superpone el texto en mobile:
-     lo volvemos a flujo normal, apilado debajo del título */
-  .property-detail-hero--compact .property-share-wrapper {
-    position: static;
-    transform: none;
-    right: auto;
-    margin-top: 8px;
-    display: flex;
-    justify-content: center;
-  }
-
+  /* Título centrado, ocupa todo el ancho disponible */
   .property-detail-hero--compact .property-detail-hero-inner {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0;
+    justify-content: center;
+    position: relative;
   }
 
-  /* Neutralizar el clamp grande del media query general */
+  .property-detail-hero--compact .property-detail-hero-text {
+    text-align: center;
+    padding-right: 48px; /* espacio para el ícono */
+  }
+
+  /* Neutraliza el clamp grande del media query general */
   .property-detail-hero--compact .property-detail-title,
   body[data-page-type="property_detail"] .property-detail-hero--compact .property-detail-title {
     font-size: 1rem !important;
     text-align: center;
   }
 
+  /* Ícono cuadrado pequeño, posición absoluta a la derecha */
+  .property-detail-hero--compact .property-share-wrapper {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-top: 0;
+  }
+
+  /* Ocultar texto "Compartir", mostrar solo el ícono */
   .property-detail-hero--compact .property-share-btn {
-    width: auto;
-    font-size: 0.75rem;
-    padding: 6px 14px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 8px;
+    font-size: 0;           /* oculta el texto */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .property-detail-hero--compact .property-share-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
 }
