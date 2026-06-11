@@ -2851,22 +2851,20 @@ body[data-page-type="thank_you"] {
   }
 
   .property-detail-hero--compact .property-detail-hero-inner {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     position: relative;
   }
 
   .property-detail-hero--compact .property-detail-hero-text {
-    text-align: left;
-    padding-right: 48px; /* espacio para el ícono */
+    text-align: center;
+    padding-right: 0;
   }
 
   /* Neutraliza el clamp grande del media query general */
   .property-detail-hero--compact .property-detail-title,
   body[data-page-type="property_detail"] .property-detail-hero--compact .property-detail-title {
     font-size: 1rem !important;
-    text-align: left;
+    text-align: center;
   }
 
   /* Ícono cuadrado pequeño, posición absoluta a la derecha */
