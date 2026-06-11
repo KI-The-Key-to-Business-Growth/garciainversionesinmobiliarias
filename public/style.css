@@ -2832,3 +2832,51 @@ body[data-page-type="thank_you"] {
   .property-share-btn      { width: 100%; justify-content: center; }
   .property-share-menu     { right: auto; left: 0; width: 100%; }
 }
+
+/* ─────────────────────────────────────────────────────────
+   Hero compacto (inversión) — correcciones mobile
+   ───────────────────────────────────────────────────────── */
+@media (max-width: 1120px) {
+  /* Navbar mobile: padding 28px → ajustar right del share button */
+  .property-detail-hero--compact .property-share-wrapper {
+    right: 28px;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Navbar mobile: padding 18px, height 68px */
+  .property-detail-hero--compact,
+  body[data-page-type="property_detail"] .property-detail-hero--compact {
+    padding: 10px 0 8px !important;
+  }
+
+  /* El botón absoluto queda fuera del flujo y superpone el texto en mobile:
+     lo volvemos a flujo normal, apilado debajo del título */
+  .property-detail-hero--compact .property-share-wrapper {
+    position: static;
+    transform: none;
+    right: auto;
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .property-detail-hero--compact .property-detail-hero-inner {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* Neutralizar el clamp grande del media query general */
+  .property-detail-hero--compact .property-detail-title,
+  body[data-page-type="property_detail"] .property-detail-hero--compact .property-detail-title {
+    font-size: 1rem !important;
+    text-align: center;
+  }
+
+  .property-detail-hero--compact .property-share-btn {
+    width: auto;
+    font-size: 0.75rem;
+    padding: 6px 14px;
+  }
+}
