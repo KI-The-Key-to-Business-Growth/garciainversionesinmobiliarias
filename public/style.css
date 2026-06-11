@@ -1492,33 +1492,11 @@ a.footer-contact-item:hover { color: var(--gold); }
 
 /* Hero compacto para fichas de inversión */
 .property-detail-hero--compact {
-  padding: 0;
-  min-height: 500px;
-  position: relative;
-}
-.property-detail-hero--compact .property-detail-hero-inner {
-  min-height: 500px;
-  align-items: center;
-  flex-wrap: nowrap;
-}
-.property-detail-hero--compact .property-detail-hero-text {
-  flex: 1;
-  padding: 52px 0;
+  padding: 28px 0 24px;
 }
 .property-detail-hero--compact .property-detail-title {
-  font-size: clamp(2.4rem, 5vw, 4.4rem);
-  line-height: 1.05;
-}
-.property-detail-hero--compact .property-share-wrapper {
-  align-self: flex-start;
-  padding-top: 28px;
-  margin-left: 32px;
-}
-@media (max-width: 768px) {
-  .property-detail-hero--compact { min-height: 0; }
-  .property-detail-hero--compact .property-detail-hero-inner { min-height: 0; flex-wrap: wrap; padding: 36px 0 28px; }
-  .property-detail-hero--compact .property-detail-hero-text { padding: 0 0 20px; }
-  .property-detail-hero--compact .property-share-wrapper { align-self: auto; margin-left: 0; padding-top: 0; }
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.1;
 }
 
 .property-detail-bajada {
