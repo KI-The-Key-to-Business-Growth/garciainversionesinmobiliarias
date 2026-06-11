@@ -1499,6 +1499,14 @@ a.footer-contact-item:hover { color: var(--gold); }
   font-weight: 400;
 }
 
+.property-description-lead {
+  color: var(--navy);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
 .inversion-disclaimer {
   background: rgba(119, 147, 171, 0.08);
   border: 1px solid var(--line);

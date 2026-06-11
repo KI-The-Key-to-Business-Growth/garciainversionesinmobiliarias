@@ -390,13 +390,13 @@
               ${escapeHtml(property.titulo || "Propiedad destacada")}
             </h1>
 
-            ${property.bajada
+            ${!isInversion && property.bajada
               ? `<p class="property-detail-bajada">${escapeHtml(property.bajada)}</p>`
               : ""}
 
-            <p class="property-detail-location">
-              ${escapeHtml(property.ubicacion || "Ubicación a consultar")}
-            </p>
+            ${!isInversion
+              ? `<p class="property-detail-location">${escapeHtml(property.ubicacion || "Ubicación a consultar")}</p>`
+              : ""}
 
             ${heroPrice
               ? `<p class="property-detail-price">${escapeHtml(heroPrice)}</p>`
@@ -457,11 +457,16 @@
             ` : ""}
 
             <!-- 2. Descripción editorial -->
-            ${property.descripcion ? `
+            ${property.descripcion || (isInversion && property.bajada) ? `
               <article class="property-info-card">
                 <span class="eyebrow">${isInversion ? "Sobre la oportunidad" : "Sobre la propiedad"}</span>
                 <h2>${isInversion ? "Descripción de la inversión" : "Información sobre la propiedad"}</h2>
-                <p>${escapeHtml(property.descripcion)}</p>
+                ${isInversion && property.bajada
+                  ? `<p class="property-description-lead">${escapeHtml(property.bajada)}</p>`
+                  : ""}
+                ${property.descripcion
+                  ? `<p>${escapeHtml(property.descripcion)}</p>`
+                  : ""}
               </article>
             ` : ""}
 
