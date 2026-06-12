@@ -137,6 +137,8 @@
 
     <section class="properties-page">
       <div class="container">
+        <!-- FILTROS Y GRID OCULTOS HASTA QUE EL CRM ESTÉ CONECTADO — quitar display:none para reactivar -->
+        <div style="display:none">
         <div class="property-filter-group" aria-label="Filtros por país">
           <span class="filter-label">País</span>
           <div class="property-filters property-filters-country">
@@ -195,6 +197,19 @@
         <div class="properties-grid" id="propertiesGrid">
           <p class="properties-empty">Cargando propiedades...</p>
         </div>
+        </div><!-- /filtros ocultos -->
+
+        <!-- PLACEHOLDER — reemplazar por filtros+grid cuando el CRM esté conectado -->
+        <div style="padding: 80px 20px; text-align: center;">
+          <div style="max-width: 680px; margin: 0 auto;">
+            <div style="width: 48px; height: 2px; background: #cda04f; margin: 0 auto 28px;"></div>
+            <p style="font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; color: #cda04f; margin: 0 0 16px;">PROPIEDADES</p>
+            <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 300; color: #0c2948; margin: 0 0 20px; line-height: 1.2;">Selección en preparación.</h2>
+            <p style="font-family: 'Jost', sans-serif; font-size: 15px; font-weight: 400; color: #666666; line-height: 1.8; max-width: 520px; margin: 0 auto 36px;">Estamos preparando una selección de propiedades en Argentina y mercados internacionales. Si tenés algo en mente, escribinos y te mostramos opciones antes de que estén publicadas.</p>
+            <a href="https://wa.me/5491167240353" target="_blank" rel="noopener" style="background: #cda04f; color: #ffffff; font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 600; padding: 13px 30px; border-radius: 24px; text-decoration: none; display: inline-block;">Consultar propiedades</a>
+          </div>
+        </div>
+
       </div>
     </section>
   </main>
