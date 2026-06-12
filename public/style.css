@@ -583,9 +583,9 @@ body.menu-open .hdr-cta-btn {
 
 .about-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 46px;
-  align-items: center;
+  grid-template-columns: 380px 1fr;
+  gap: 56px;
+  align-items: start;
 }
 
 .about-media {
