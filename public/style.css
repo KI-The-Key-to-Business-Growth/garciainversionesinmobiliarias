@@ -490,6 +490,7 @@ body.menu-open .hdr-cta-btn {
   background-repeat: no-repeat;
   opacity: 0;
   transition: opacity 1.2s ease;
+  filter: saturate(1.35) brightness(1.05);
 }
 .hero-slide.active {
   opacity: 1;
