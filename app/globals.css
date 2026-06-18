@@ -2549,15 +2549,15 @@ body[data-page-type="thank_you"] {
   opacity: 0.75;
 }
 
-/* Variante sobre fondo oscuro (newsletter) */
+/* Variante en la sección newsletter (fondo claro #eef2f6→#e5ecf3) */
 .form-legal--light {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-soft);
   margin-top: 0.75rem;
   text-align: center;
 }
 
 .form-legal--light a {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--gold);
 }
 
 /* ─────────────────────────────────────────────────────────

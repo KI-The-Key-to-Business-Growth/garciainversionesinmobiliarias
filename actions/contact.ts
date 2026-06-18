@@ -91,6 +91,36 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
 
   const propId = property_app_id ? Number(property_app_id) : null;
   const devId = development_app_id ? Number(development_app_id) : null;
+  const leadType = isPropertyInquiry ? 'consulta_propiedad' : 'consulta_general';
+
+  // ── Fallback: CRM 2Clics aún no configurado ──────────────────────────────
+  // Mientras falten CRM_HASH / CRM_AGENT_ID, no perdemos el lead: lo enviamos
+  // por email (Resend) al negocio y confirmamos al usuario. Cuando se carguen
+  // las credenciales de 2Clics, este branch se salta y vuelve el flujo CRM.
+  const crmConfigured = !!env.CRM_HASH && (!!env.CRM_AGENT_ID || !!propId || !!devId);
+  if (!crmConfigured) {
+    const emailRes = await sendEmail({
+      to: env.CONTACT_TO_EMAIL,
+      subject: `Nueva consulta web — ${fullName}`,
+      html: `<h2 style="font-family:Arial">Nueva consulta desde la web</h2>
+        <p style="font-family:Arial"><b>Nombre:</b> ${escapeHtml(fullName)}<br>
+        <b>Email:</b> ${escapeHtml(finalEmail)}<br>
+        <b>Teléfono:</b> ${escapeHtml(finalPhone)}<br>
+        <b>Motivo:</b> ${escapeHtml(motivoVal || '(no indicado)')}<br>
+        <b>Mensaje:</b> ${escapeHtml(finalMessage || '(sin mensaje)')}</p>
+        <p style="font-family:Arial;color:#999;font-size:12px">event_id: ${escapeHtml(eventId)} · origen: ${escapeHtml(String(body.utm_source || 'directo'))}</p>`,
+    });
+    if (!emailRes.ok) {
+      console.error('[contact] Fallback email falló:', emailRes.error);
+      return {
+        ok: false,
+        message: 'No pudimos procesar tu consulta en este momento. Por favor intentá de nuevo o escribinos por WhatsApp.',
+      };
+    }
+    await dbLogIntegration({ provider: 'email-fallback', event_type: leadType, crm_app_id: 'fallback', status: 'ok' });
+    console.log('[contact] Lead enviado por email (CRM no configurado). event_id:', eventId);
+    return { ok: true, event_id: eventId, message: 'Consulta recibida correctamente.' };
+  }
 
   const built = buildCrmPayload({
     fullName,
@@ -111,7 +141,6 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
   // ── Envío a 2Clics — único destino de leads comerciales ──────────────────
   const result = await sendLeadToCrm(built.payload);
   const crmRef = String(propId || devId || 'general');
-  const leadType = String(built.payload.lead_type);
 
   if (result.ok) {
     await dbLogIntegration({ provider: '2clics', event_type: leadType, crm_app_id: crmRef, status: 'ok' });
