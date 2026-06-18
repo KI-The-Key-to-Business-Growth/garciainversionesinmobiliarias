@@ -256,14 +256,15 @@ export async function dbUpsertProperty(mapped: Record<string, any>): Promise<voi
   }
 }
 
-// ── Soft delete — server.js:682-696 ──────────────────────────────────────────
+// ── DELETE físico (definitivo) — pedido del cliente para del_property ─────────
+// property_overrides se elimina automáticamente por FK ON DELETE CASCADE.
 export async function dbDeleteProperty(propId: string): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
   const safeId = String(propId || '').slice(0, 200);
   const { error } = await supabase
     .from('properties')
-    .update({ estado: 'eliminada', deleted_at: new Date().toISOString() })
+    .delete()
     .or(`id.eq.${safeId},crm_app_id.eq.${safeId}`);
   if (error) {
     console.error('[db] deleteProperty:', error.message);

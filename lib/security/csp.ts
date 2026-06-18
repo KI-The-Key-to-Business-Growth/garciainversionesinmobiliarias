@@ -22,8 +22,9 @@ export function buildCsp(): string {
       ' https://www.google.com' +
       ' https://connect.facebook.net' +
       ' https://challenges.cloudflare.com',
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    // Fuentes self-hosted (next/font) → no se requieren hosts de Google Fonts.
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
     "img-src 'self' data: blob: https:",
     // Fetch/XHR: analytics + CRM + Meta CAPI
     "connect-src 'self'" +

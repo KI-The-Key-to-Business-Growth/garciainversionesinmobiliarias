@@ -1,9 +1,26 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { Jost, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
 import { CANONICAL_BASE_URL } from '@/lib/env';
 
 const GTM_ID = 'GTM-MBNKBBSW';
+
+// Fuentes self-hosted vía next/font (sin request a Google, con métricas de
+// fallback automáticas que evitan layout shift / CLS).
+const jost = Jost({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  variable: '--font-jost',
+  display: 'swap',
+});
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-cormorant',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_BASE_URL),
@@ -81,17 +98,9 @@ const ORG_JSONLD = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" className={`${jost.variable} ${cormorant.variable}`}>
       <body data-page-type="home">
-        {/* Tags hoisted a <head> por React 19 (fuentes, preload, JSON-LD) */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          precedence="default"
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap"
-        />
-        <link rel="preload" as="image" href="/assets/propiedades/condor-resort.jpeg" />
+        {/* JSON-LD (hoisted a <head> por React 19). Las fuentes ahora son self-hosted (next/font). */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}

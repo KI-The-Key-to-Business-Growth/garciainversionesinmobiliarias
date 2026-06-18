@@ -66,7 +66,7 @@ html {
 }
 
 body {
-  font-family: "Jost", sans-serif;
+  font-family: var(--font-jost), sans-serif;
   color: var(--text);
   background: var(--ivory);
   line-height: 1.5;
@@ -110,7 +110,7 @@ button, input, textarea, select {
    ───────────────────────────────────────────────────────── */
 .eyebrow {
   display: inline-block;
-  font-family: "Jost", sans-serif;
+  font-family: var(--font-jost), sans-serif;
   font-size: 11px;
   letter-spacing: 4px;
   text-transform: uppercase;
@@ -120,7 +120,7 @@ button, input, textarea, select {
 }
 
 .section-title {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(2.2rem, 4vw, 4rem);
   line-height: 0.95;
   color: var(--navy);
@@ -145,7 +145,7 @@ button, input, textarea, select {
   min-height: 48px;
   padding: 12px 28px;
   border-radius: 24px;
-  font-family: "Jost", sans-serif;
+  font-family: var(--font-jost), sans-serif;
   font-size: 13px;
   font-weight: 600;
   transition: var(--transition);
@@ -522,7 +522,7 @@ body.menu-open .hdr-cta-btn {
 }
 
 .hero-title {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(3.1rem, 6.3vw, 5.75rem);
   line-height: 0.94;
   font-weight: 600;
@@ -622,7 +622,7 @@ body.menu-open .hdr-cta-btn {
 }
 .stat strong {
   display: block;
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 1.55rem;
   color: var(--navy);
   line-height: 1.1;
@@ -691,7 +691,7 @@ body.menu-open .hdr-cta-btn {
 .service-icon {
   display: block;
   margin-bottom: 16px;
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 48px;
   font-weight: 300;
   color: var(--gold);
@@ -702,13 +702,13 @@ body.menu-open .hdr-cta-btn {
 .service-card h3,
 .property-title,
 .contact-panel h3 {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   color: var(--navy);
   font-weight: 600;
 }
 
 .market-card h3 {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   color: var(--white);
   font-weight: 600;
 }
@@ -786,7 +786,7 @@ body.menu-open .hdr-cta-btn {
   display: inline-block;
   padding: 0;
   background: none;
-  font-family: "Jost", sans-serif;
+  font-family: var(--font-jost), sans-serif;
   color: var(--gold);
   font-size: 10px;
   font-weight: 600;
@@ -818,7 +818,7 @@ body.menu-open .hdr-cta-btn {
 
 .why-stat-number {
   display: block;
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(2.4rem, 4vw, 3.2rem);
   font-weight: 600;
   color: var(--gold);
@@ -875,7 +875,7 @@ body.menu-open .hdr-cta-btn {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .why-point h3 {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 1.8rem;
   margin-bottom: 10px;
   color: var(--gold);
@@ -898,7 +898,7 @@ body.menu-open .hdr-cta-btn {
   box-shadow: 0 25px 70px rgba(12, 41, 72, 0.18);
 }
 .cta-band h3 {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 0.95;
   margin-bottom: 10px;
@@ -1049,7 +1049,7 @@ body.menu-open .hdr-cta-btn {
   pointer-events: none;
 }
 .hero-properties h1 {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(2.8rem, 6vw, 5.6rem);
   line-height: 0.95;
   font-weight: 600;
@@ -1321,7 +1321,7 @@ body.menu-open .hdr-cta-btn {
 }
 
 .newsletter-title {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(2rem, 4vw, 3.3rem);
   line-height: 1;
   color: var(--navy);
@@ -1539,7 +1539,7 @@ a.footer-contact-item:hover { color: var(--gold); }
 }
 
 .property-detail-title {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(3rem, 7vw, 6rem);
   line-height: 0.92;
   font-weight: 600;
@@ -1680,7 +1680,7 @@ body[data-page-type="property_detail"] .property-detail-hero--compact .property-
   box-shadow: 0 12px 36px rgba(12, 41, 72, 0.05);
 }
 .property-info-card h2 {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(1.8rem, 3vw, 2.5rem);
   line-height: 1;
   color: var(--navy);
@@ -1762,7 +1762,7 @@ body[data-page-type="property_detail"] .property-detail-hero--compact .property-
   box-shadow: 0 18px 48px rgba(12, 41, 72, 0.1);
 }
 .property-contact-box h3 {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 2rem;
   line-height: 1;
   color: var(--navy);
@@ -1995,7 +1995,7 @@ body.lightbox-open {
 }
 
 .thank-you-content h1 {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(3.2rem, 6vw, 5.6rem);
   line-height: 0.95;
   font-weight: 600;
@@ -2386,7 +2386,7 @@ body[data-page-type="thank_you"] {
 }
 
 .testimonial-quote {
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 1.22rem;
   line-height: 1.6;
   color: var(--navy);
@@ -2414,7 +2414,7 @@ body[data-page-type="thank_you"] {
   font-weight: 700;
   font-size: 0.92rem;
   flex-shrink: 0;
-  font-family: "Cormorant Garamond", serif;
+  font-family: var(--font-cormorant), serif;
 }
 
 .testimonial-name {
@@ -2584,7 +2584,7 @@ body[data-page-type="thank_you"] {
 }
 
 .privacy-hero h1 {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(2rem, 5vw, 3.2rem);
   font-weight: 600;
   color: var(--ivory, #f5f0e8);
@@ -2662,7 +2662,7 @@ body[data-page-type="thank_you"] {
 }
 
 .privacy-section h2 {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--navy, #0b1628);
@@ -2755,7 +2755,7 @@ body[data-page-type="thank_you"] {
 
 .error-404-code {
   display: block;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(5rem, 15vw, 9rem);
   font-weight: 700;
   color: var(--gold, #c8a96e);
@@ -2769,7 +2769,7 @@ body[data-page-type="thank_you"] {
 }
 
 .error-404-section h1 {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: clamp(1.8rem, 5vw, 2.8rem);
   font-weight: 600;
   color: var(--ivory, #f5f0e8);
@@ -2858,7 +2858,7 @@ body[data-page-type="thank_you"] {
   border: 1px solid rgba(255,255,255,0.35);
   border-radius: 8px;
   color: #fff;
-  font-family: var(--font-body, 'Jost', sans-serif);
+  font-family: var(--font-jost), sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -2895,7 +2895,7 @@ body[data-page-type="thank_you"] {
   background: none;
   border: none;
   color: var(--navy, #0d1b2a);
-  font-family: var(--font-body, 'Jost', sans-serif);
+  font-family: var(--font-jost), sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;

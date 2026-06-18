@@ -7,7 +7,7 @@ export default function PropertiesComingSoon() {
         <div style={{ width: 48, height: 2, background: '#cda04f', margin: '0 auto 28px' }} />
         <p
           style={{
-            fontFamily: "'Jost', sans-serif",
+            fontFamily: 'var(--font-jost), sans-serif',
             fontSize: 11,
             fontWeight: 600,
             letterSpacing: 4,
@@ -20,7 +20,7 @@ export default function PropertiesComingSoon() {
         </p>
         <h2
           style={{
-            fontFamily: "'Cormorant Garamond', serif",
+            fontFamily: 'var(--font-cormorant), serif',
             fontSize: 42,
             fontWeight: 300,
             color: '#0c2948',
@@ -32,7 +32,7 @@ export default function PropertiesComingSoon() {
         </h2>
         <p
           style={{
-            fontFamily: "'Jost', sans-serif",
+            fontFamily: 'var(--font-jost), sans-serif',
             fontSize: 15,
             fontWeight: 400,
             color: '#666666',
@@ -51,7 +51,7 @@ export default function PropertiesComingSoon() {
           style={{
             background: '#cda04f',
             color: '#ffffff',
-            fontFamily: "'Jost', sans-serif",
+            fontFamily: 'var(--font-jost), sans-serif',
             fontSize: 13,
             fontWeight: 600,
             padding: '13px 30px',

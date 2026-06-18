@@ -1,13 +1,22 @@
+import Image from 'next/image';
+
 // HERO — imagen única condor-resort con filtro saturate(1.35) brightness(1.05) (vía .hero-slide en globals.css).
+// next/image con priority (LCP) + fill; el filtro de .hero-slide se aplica sobre la imagen.
 // Título con split de color: línea 1 blanca, "visión estratégica" en dorado (.accent).
 export default function Hero() {
   return (
     <section className="hero" id="inicio">
       <div className="hero-slides" aria-hidden="true">
-        <div
-          className="hero-slide active"
-          style={{ backgroundImage: "url('/assets/propiedades/condor-resort.jpeg')" }}
-        />
+        <div className="hero-slide active">
+          <Image
+            src="/assets/propiedades/condor-resort.jpeg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+          />
+        </div>
       </div>
       <div className="hero-overlay" />
       <div className="container hero-content">
