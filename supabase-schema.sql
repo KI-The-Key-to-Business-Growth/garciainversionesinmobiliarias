@@ -128,3 +128,32 @@ CREATE INDEX IF NOT EXISTS idx_properties_updated_at    ON properties(updated_at
 CREATE INDEX IF NOT EXISTS idx_properties_created_at    ON properties(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_integration_logs_created ON integration_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_integration_logs_status  ON integration_logs(status);
+
+-- ── Unicidad del app_id del CRM (anti-duplicados) ────────────
+-- crm_app_id (app_id de 2Clics) debe ser único entre propiedades no vacías.
+-- Índice parcial: ignora NULL y '' (PostgreSQL permite múltiples NULL en UNIQUE,
+-- y el CRM siempre envía un app_id, así que en la práctica nunca habrá colisión).
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_properties_crm_app_id
+  ON properties(crm_app_id)
+  WHERE crm_app_id IS NOT NULL AND crm_app_id <> '';
+
+-- ── Búsqueda full-text en español (lo usa searchProperties() → textSearch('fts')) ──
+-- Columna generada tsvector (config 'spanish') sobre los campos relevantes + índice GIN.
+-- Coincide con lib/db/properties.ts: .textSearch('fts', q, { type:'websearch', config:'spanish' })
+ALTER TABLE properties
+  ADD COLUMN IF NOT EXISTS fts tsvector
+  GENERATED ALWAYS AS (
+    to_tsvector('spanish',
+      coalesce(titulo, '')      || ' ' ||
+      coalesce(descripcion, '') || ' ' ||
+      coalesce(ubicacion, '')   || ' ' ||
+      coalesce(pais, '')        || ' ' ||
+      coalesce(tipo, '')
+    )
+  ) STORED;
+CREATE INDEX IF NOT EXISTS idx_properties_fts ON properties USING GIN (fts);
+
+-- ── Verificación / limpieza previa al CRM (ejecutar manualmente si hace falta) ──
+-- 1) ¿Está vacía la tabla?   →  SELECT count(*) AS total FROM properties;   (esperado: 0)
+-- 2) Vaciar datos de prueba  →  TRUNCATE properties CASCADE;  -- borra también property_overrides (FK ON DELETE CASCADE)
+-- 3) Confirmar unicidad      →  SELECT crm_app_id, count(*) FROM properties GROUP BY crm_app_id HAVING count(*) > 1;  (esperado: 0 filas)
