@@ -7,7 +7,29 @@
       "PowerShell(Stop-Process -Id 7752 -Force)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(node --check server.js)",
+      "Bash(git reset *)",
+      "Bash(npm audit *)",
+      "Bash(curl -s \"http://localhost:3000/propiedad?id=demo-condor-resort\")",
+      "Bash(findstr \"secure_url\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000\")",
+      "Bash(node -e ' *)",
+      "Bash(npm install *)",
+      "Bash(timeout 5 node server.js)",
+      "Bash(node --check public/assets/js/property-detail.js)",
+      "Bash(awk '/^app\\\\.post\\\\\\(.*\\\\/api\\\\/contact/,/^\\\\}\\\\\\);/' server.js)",
+      "Bash(grep -v \"^$\")",
+      "Bash(node --check public/assets/js/properties-page.js)",
+      "Bash(git commit -m 'Cambiar '\\\\''5'\\\\'' por '\\\\''+8'\\\\'' en mercados internacionales del Diferencial *)",
+      "Bash(find /mnt/c/Users/Administrator/Downloads -iname \"FabianaGarcia*\" 2>/dev/null)",
+      "PowerShell(\\(Get-Command ffmpeg -ErrorAction SilentlyContinue\\).Source; \\(Get-Command ffprobe -ErrorAction SilentlyContinue\\).Source; ffmpeg -version 2>&1 | Select-Object -First 1)",
+      "WebSearch",
+      "WebFetch(domain:www.pexels.com)",
+      "WebFetch(domain:www.garciainversiones.com.ar)",
+      "mcp__visualize__read_me",
+      "Bash(node informe_garcia.js)"
     ]
   }
 }
