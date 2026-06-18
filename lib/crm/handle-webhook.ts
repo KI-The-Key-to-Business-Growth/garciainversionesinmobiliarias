@@ -4,6 +4,7 @@ import { checkRate } from '@/lib/security/ratelimit';
 import { crmToWebProperty, validateHash, MANUAL_ONLY_FIELDS } from '@/lib/crm/twoclics';
 import { dbUpsertProperty, dbDeleteProperty } from '@/lib/db/properties';
 import { dbLogIntegration } from '@/lib/db/logs';
+import { captureError } from '@/lib/observability';
 
 // ── Webhook CRM 2Clics ───────────────────────────────────────────────────────
 // Portado de legacy/server.js handle2ClicsWebhook (1077-1132).
@@ -60,6 +61,7 @@ export async function handle2ClicsWebhook(req: Request): Promise<Response> {
       await dbDeleteProperty(crmAppId);
       await dbLogIntegration({ provider: '2clics', event_type: 'del_property', crm_app_id: crmAppId, status: 'ok' });
     } catch (err) {
+      captureError(err, { source: 'webhook', action: 'del_property', crm_app_id: crmAppId });
       await dbLogIntegration({
         provider: '2clics',
         event_type: 'del_property',
@@ -84,6 +86,7 @@ export async function handle2ClicsWebhook(req: Request): Promise<Response> {
     await dbUpsertProperty(mapped);
     await dbLogIntegration({ provider: '2clics', event_type: prop.action, crm_app_id: crmAppId, status: 'ok' });
   } catch (err) {
+    captureError(err, { source: 'webhook', action: prop.action, crm_app_id: crmAppId });
     await dbLogIntegration({
       provider: '2clics',
       event_type: prop.action,

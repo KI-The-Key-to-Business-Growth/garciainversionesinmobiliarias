@@ -18,8 +18,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Debe ir antes del alias '@' para que matchee primero.
+      // Deben ir antes del alias '@' para que matcheen primero.
       'server-only': path.resolve(__dirname, 'tests/stubs/server-only.ts'),
+      '@sentry/nextjs': path.resolve(__dirname, 'tests/stubs/sentry.ts'),
       '@': path.resolve(__dirname, '.'),
     },
   },

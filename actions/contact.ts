@@ -10,6 +10,7 @@ import { buildCrmPayload, sendLeadToCrm } from '@/lib/crm/leads';
 import { dbLogIntegration } from '@/lib/db/logs';
 import { sendEmail } from '@/lib/resend';
 import { createEventId } from '@/lib/tracking';
+import { captureError } from '@/lib/observability';
 
 // ── Server Action: formulario de contacto ────────────────────────────────────
 // Paridad EXACTA con legacy/server.js POST /api/contact (1135-1316): mismos
@@ -112,6 +113,10 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
     });
     if (!emailRes.ok) {
       console.error('[contact] Fallback email falló:', emailRes.error);
+      captureError(new Error(`contact fallback email failed: ${emailRes.error}`), {
+        source: 'contact-fallback',
+        event_id: eventId,
+      });
       return {
         ok: false,
         message: 'No pudimos procesar tu consulta en este momento. Por favor intentá de nuevo o escribinos por WhatsApp.',
@@ -157,6 +162,11 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
     error_message: result.error || 'unknown',
   });
   console.error('[contact] 2Clics falló. event_id:', eventId, '| error:', result.error);
+  captureError(new Error(`2Clics lead send failed: ${result.error}`), {
+    source: 'contact-crm',
+    event_id: eventId,
+    crm_ref: crmRef,
+  });
 
   sendEmail({
     to: env.CONTACT_TO_EMAIL,

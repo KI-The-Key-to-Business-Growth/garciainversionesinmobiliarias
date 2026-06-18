@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -23,4 +25,12 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// withSentryConfig: instrumenta el build. La subida de source maps se hace solo
+// si hay SENTRY_AUTH_TOKEN (en local/sin token no falla, solo no sube mapas).
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: true,
+  widenClientFileUpload: true,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+});

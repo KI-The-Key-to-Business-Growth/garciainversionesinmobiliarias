@@ -9,6 +9,7 @@ import { verifyTurnstile } from '@/lib/security/turnstile';
 import { dbInsertNewsletter } from '@/lib/db/newsletter';
 import { sendEmail } from '@/lib/resend';
 import { createEventId } from '@/lib/tracking';
+import { captureError } from '@/lib/observability';
 import type { ActionResult } from '@/actions/contact';
 
 // ── Server Action: newsletter ────────────────────────────────────────────────
@@ -71,6 +72,7 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
     isNewSubscriber = result?.isNew !== false;
   } catch (err) {
     console.error('[newsletter] Error DB:', (err as Error).message);
+    captureError(err, { source: 'newsletter-db' });
     return {
       ok: false,
       message: 'No pudimos procesar la suscripción. Por favor intentá de nuevo más tarde.',
@@ -129,6 +131,7 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
 
   if (!emailResult.ok) {
     console.error('[newsletter] Error de email:', emailResult.error);
+    captureError(new Error(`newsletter email failed: ${emailResult.error}`), { source: 'newsletter-email' });
     return {
       ok: false,
       message: 'No pudimos procesar la suscripción. Por favor intentá de nuevo más tarde.',
