@@ -10,6 +10,8 @@ yarn-error.log*
 # Archivos de datos con info sensible de usuarios
 data/leads.json
 data/newsletter.json
+# Config local de Claude Code (por máquina — no versionar)
+.claude/settings.local.json
 # Next.js
 /.next/
 /out/
