@@ -27,6 +27,7 @@ export default function GlobalError(_props: { error: Error & { digest?: string }
         <p style={{ color: '#7793ab', margin: '0 0 28px', maxWidth: 420 }}>
           Tuvimos un problema inesperado. Probá recargar la página o volver al inicio.
         </p>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- la app ya crasheó: el contexto del router de Next puede no estar disponible, así que usamos <a> con recarga completa en lugar de <Link>. */}
         <a
           href="/"
           style={{

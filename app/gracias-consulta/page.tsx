@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Script from 'next/script';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -23,12 +24,12 @@ export default function GraciasPage() {
               a contactar con vos para avanzar con la consulta.
             </p>
             <div className="thank-you-actions">
-              <a href="/propiedades" className="btn btn-primary">
+              <Link href="/propiedades" className="btn btn-primary">
                 Ver propiedades
-              </a>
-              <a href="/" className="btn btn-secondary">
+              </Link>
+              <Link href="/" className="btn btn-secondary">
                 Volver al inicio
-              </a>
+              </Link>
             </div>
           </div>
         </section>

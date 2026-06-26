@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 // Header transparente (home) que se oscurece al scrollear + menú mobile.
 // Porta el comportamiento de legacy/public/assets/js/site.js (menú + is-scrolled).
@@ -54,7 +55,7 @@ export default function Header() {
         >
           <span className="menu-icon">☰</span>
         </button>
-        <a href="/" className="hdr-brand" aria-label="García Inversiones Inmobiliarias">
+        <Link href="/" className="hdr-brand" aria-label="García Inversiones Inmobiliarias">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/logos/Garcia-simple.svg"
@@ -63,17 +64,17 @@ export default function Header() {
             height={1152}
             decoding="async"
           />
-        </a>
+        </Link>
         <nav className="hdr-nav" aria-label="Navegación principal">
           {NAV_LINKS.map((l) => (
-            <a key={l.href} href={l.href}>
+            <Link key={l.href} href={l.href}>
               {l.label}
-            </a>
+            </Link>
           ))}
         </nav>
-        <a href="/propiedades" className="hdr-cta-btn">
+        <Link href="/propiedades" className="hdr-cta-btn">
           Propiedades
-        </a>
+        </Link>
       </header>
 
       <aside
@@ -84,7 +85,7 @@ export default function Header() {
         <div className="mobile-menu-backdrop" id="mobileBackdrop" onClick={close} />
         <div className="mobile-menu-inner">
           <div className="mobile-top">
-            <a href="/" className="mobile-logo" aria-label="Ir al inicio" onClick={close}>
+            <Link href="/" className="mobile-logo" aria-label="Ir al inicio" onClick={close}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/assets/logos/Garcia-simple.svg"
@@ -93,16 +94,16 @@ export default function Header() {
                 height={1152}
                 decoding="async"
               />
-            </a>
+            </Link>
             <button className="menu-close" aria-label="Cerrar menú" onClick={close}>
               ×
             </button>
           </div>
           <nav className="mobile-links" aria-label="Navegación móvil">
             {MOBILE_LINKS.map((l) => (
-              <a key={l.href} href={l.href} onClick={close}>
+              <Link key={l.href} href={l.href} onClick={close}>
                 {l.label}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>
