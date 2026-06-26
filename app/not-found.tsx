@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
@@ -17,12 +18,12 @@ export default function NotFound() {
               disponibles o volver al inicio.
             </p>
             <div className="error-404-actions">
-              <a href="/propiedades" className="btn btn-primary">
+              <Link href="/propiedades" className="btn btn-primary">
                 Ver propiedades
-              </a>
-              <a href="/" className="btn btn-secondary">
+              </Link>
+              <Link href="/" className="btn btn-secondary">
                 Volver al inicio
-              </a>
+              </Link>
             </div>
           </div>
         </section>

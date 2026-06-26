@@ -1,14 +1,16 @@
 // Footer premium — México eliminado, orden de mercados Argentina/EEUU/Uruguay/Dubái/España.
+import Link from 'next/link';
+
 export default function Footer() {
   return (
     <footer className="footer-premium">
       <div className="container">
         <div className="footer-premium-grid">
           <div className="footer-brand-col">
-            <a href="/" className="footer-logo-link">
+            <Link href="/" className="footer-logo-link">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/logos/Garcia.svg" alt="García Inversiones Inmobiliarias" decoding="async" />
-            </a>
+            </Link>
             <p className="footer-tagline">
               Consultora boutique de real estate. Propiedades seleccionadas y asesoramiento
               personalizado en Argentina y mercados internacionales.
@@ -46,12 +48,12 @@ export default function Footer() {
           <div className="footer-col">
             <h4 className="footer-column-title">Navegación</h4>
             <ul className="footer-links">
-              <li><a href="/#inicio">Inicio</a></li>
-              <li><a href="/#nosotros">Nosotros</a></li>
-              <li><a href="/propiedades">Propiedades</a></li>
-              <li><a href="/#servicios">Servicios</a></li>
-              <li><a href="/#mercados">Mercados</a></li>
-              <li><a href="/#contacto">Contacto</a></li>
+              <li><Link href="/#inicio">Inicio</Link></li>
+              <li><Link href="/#nosotros">Nosotros</Link></li>
+              <li><Link href="/propiedades">Propiedades</Link></li>
+              <li><Link href="/#servicios">Servicios</Link></li>
+              <li><Link href="/#mercados">Mercados</Link></li>
+              <li><Link href="/#contacto">Contacto</Link></li>
             </ul>
           </div>
 
@@ -80,8 +82,8 @@ export default function Footer() {
 
         <div className="footer-bottom-bar">
           <span>© 2026 García Inversiones Inmobiliarias. Todos los derechos reservados.</span>
-          <a href="/privacidad" className="footer-privacy-link">Política de Privacidad</a>
-          <a href="/#inicio">↑ Volver al inicio</a>
+          <Link href="/privacidad" className="footer-privacy-link">Política de Privacidad</Link>
+          <Link href="/#inicio">↑ Volver al inicio</Link>
         </div>
       </div>
     </footer>

@@ -25,7 +25,10 @@ vi.mock('@/lib/env', () => ({
 }));
 
 const { sendEmail } = vi.hoisted(() => ({
-  sendEmail: vi.fn(async () => ({ ok: true, result: {} }) as { ok: boolean; error?: string }),
+  sendEmail: vi.fn(
+    async (_args: { to: string; subject: string; html: string }) =>
+      ({ ok: true, result: {} }) as { ok: boolean; error?: string },
+  ),
 }));
 vi.mock('@/lib/resend', () => ({ sendEmail }));
 
