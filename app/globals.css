@@ -158,7 +158,7 @@ select {
 
 .btn-primary {
   background: var(--gold);
-  color: var(--white);
+  color: var(--navy);
   box-shadow: 0 12px 30px rgba(205, 160, 79, 0.24);
 }
 .btn-primary:hover {
@@ -1445,7 +1445,7 @@ body.menu-open .hdr-cta-btn {
 }
 
 .footer-tagline {
-  color: rgba(255, 255, 255, 0.52);
+  color: rgba(255, 255, 255, 0.62);
   font-size: 0.88rem;
   line-height: 1.75;
   margin-bottom: 30px;
@@ -1484,7 +1484,7 @@ a.footer-contact-item:hover {
   font-size: 0.76rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.44);
+  color: rgba(255, 255, 255, 0.62);
   margin-bottom: 22px;
   font-weight: 700;
 }
@@ -1517,11 +1517,11 @@ a.footer-contact-item:hover {
   flex-wrap: wrap;
 }
 .footer-bottom-bar span {
-  color: rgba(255, 255, 255, 0.36);
+  color: rgba(255, 255, 255, 0.62);
   font-size: 0.82rem;
 }
 .footer-bottom-bar a {
-  color: rgba(255, 255, 255, 0.44);
+  color: rgba(255, 255, 255, 0.62);
   font-size: 0.82rem;
   text-decoration: none;
   transition: color 0.2s ease;
