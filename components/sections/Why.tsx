@@ -8,12 +8,17 @@ export default function Why() {
           <div className="reveal">
             <span className="eyebrow">Diferencial</span>
             <h2 className="section-title">¿Por qué García Inversiones?</h2>
-            <p className="section-text">Porque no mostramos todo. Mostramos lo que tiene sentido.</p>
+            <p className="section-text">
+              Porque no mostramos todo. Mostramos lo que tiene sentido.
+            </p>
           </div>
           <div className="why-points">
             <article className="why-point reveal">
               <h3>Selección real</h3>
-              <p>Cada propiedad que presentamos pasó por un análisis previo de mercado, ubicación y proyección.</p>
+              <p>
+                Cada propiedad que presentamos pasó por un análisis previo de mercado, ubicación y
+                proyección.
+              </p>
             </article>
             <article className="why-point reveal">
               <h3>Trato personalizado</h3>

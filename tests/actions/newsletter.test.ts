@@ -37,7 +37,9 @@ describe('submitNewsletter — paridad con server.js', () => {
   });
 
   it('timing demasiado rápido → silencioso', async () => {
-    const r = await submitNewsletter(fd({ email: 'a@b.com', _form_loaded_at: String(Date.now() - 500) }));
+    const r = await submitNewsletter(
+      fd({ email: 'a@b.com', _form_loaded_at: String(Date.now() - 500) }),
+    );
     expect(r).toEqual({ ok: true });
   });
 

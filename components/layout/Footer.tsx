@@ -52,19 +52,31 @@ export default function Footer() {
           </div>
 
           <div className="footer-col">
-            <h4 className="footer-column-title">Navegación</h4>
+            <h3 className="footer-column-title">Navegación</h3>
             <ul className="footer-links">
-              <li><Link href="/#inicio">Inicio</Link></li>
-              <li><Link href="/#nosotros">Nosotros</Link></li>
-              <li><Link href="/propiedades">Propiedades</Link></li>
-              <li><Link href="/#servicios">Servicios</Link></li>
-              <li><Link href="/#mercados">Mercados</Link></li>
-              <li><Link href="/#contacto">Contacto</Link></li>
+              <li>
+                <Link href="/#inicio">Inicio</Link>
+              </li>
+              <li>
+                <Link href="/#nosotros">Nosotros</Link>
+              </li>
+              <li>
+                <Link href="/propiedades">Propiedades</Link>
+              </li>
+              <li>
+                <Link href="/#servicios">Servicios</Link>
+              </li>
+              <li>
+                <Link href="/#mercados">Mercados</Link>
+              </li>
+              <li>
+                <Link href="/#contacto">Contacto</Link>
+              </li>
             </ul>
           </div>
 
           <div className="footer-col">
-            <h4 className="footer-column-title">Mercados</h4>
+            <h3 className="footer-column-title">Mercados</h3>
             <ul className="footer-links">
               <li>Argentina</li>
               <li>Estados Unidos</li>
@@ -75,7 +87,7 @@ export default function Footer() {
           </div>
 
           <div className="footer-col">
-            <h4 className="footer-column-title">Servicios</h4>
+            <h3 className="footer-column-title">Servicios</h3>
             <ul className="footer-links">
               <li>Asesoramiento en inversiones</li>
               <li>Compra y venta</li>
@@ -88,7 +100,9 @@ export default function Footer() {
 
         <div className="footer-bottom-bar">
           <span>© 2026 García Inversiones Inmobiliarias. Todos los derechos reservados.</span>
-          <Link href="/privacidad" className="footer-privacy-link">Política de Privacidad</Link>
+          <Link href="/privacidad" className="footer-privacy-link">
+            Política de Privacidad
+          </Link>
           <Link href="/#inicio">↑ Volver al inicio</Link>
         </div>
       </div>

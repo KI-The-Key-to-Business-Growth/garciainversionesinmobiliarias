@@ -2,7 +2,10 @@
 // Se muestra mientras PROPERTIES_ENABLED=false. Estilos inline preservados del legacy.
 export default function PropertiesComingSoon() {
   return (
-    <section id="destacadas" style={{ background: '#f2ede4', padding: '100px 20px', textAlign: 'center' }}>
+    <section
+      id="destacadas"
+      style={{ background: '#f2ede4', padding: '100px 20px', textAlign: 'center' }}
+    >
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <div style={{ width: 48, height: 2, background: '#cda04f', margin: '0 auto 28px' }} />
         <p
@@ -41,8 +44,8 @@ export default function PropertiesComingSoon() {
             margin: '0 auto 36px',
           }}
         >
-          Estamos preparando una selección de propiedades en Argentina y mercados internacionales. Si
-          tenés algo en mente, escribinos y te mostramos opciones antes de que estén publicadas.
+          Estamos preparando una selección de propiedades en Argentina y mercados internacionales.
+          Si tenés algo en mente, escribinos y te mostramos opciones antes de que estén publicadas.
         </p>
         <a
           href="https://wa.me/5491167240353"

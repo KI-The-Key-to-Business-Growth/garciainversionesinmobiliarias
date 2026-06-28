@@ -15,23 +15,42 @@ import {
 // Campos manuales que el CRM NUNCA debe poder sobreescribir — server.js:733-748
 export const MANUAL_ONLY_FIELDS = new Set<string>([
   // media manual
-  'imagen_manual', 'og_image_manual', 'galeria_manual',
-  'video_manual_url', 'tour_manual_url',
+  'imagen_manual',
+  'og_image_manual',
+  'galeria_manual',
+  'video_manual_url',
+  'tour_manual_url',
   // presentación web: ubicación y categoría
-  'pais_web', 'ciudad_web', 'ubicacion_web', 'zona_web',
-  'categoria_web', 'tipo_web', 'operacion_web',
+  'pais_web',
+  'ciudad_web',
+  'ubicacion_web',
+  'zona_web',
+  'categoria_web',
+  'tipo_web',
+  'operacion_web',
   // presentación web: contenido
-  'titulo_web', 'descripcion_web', 'bajada_web', 'etiqueta_web', 'destacado_web',
+  'titulo_web',
+  'descripcion_web',
+  'bajada_web',
+  'etiqueta_web',
+  'destacado_web',
   // SEO
-  'seo_title', 'seo_description',
+  'seo_title',
+  'seo_description',
   // inversiones participativas
-  'ticket_minimo', 'horizonte_inversion', 'retorno_estimado',
-  'modelo_inversion', 'riesgo_inversion', 'disclaimer_inversion',
+  'ticket_minimo',
+  'horizonte_inversion',
+  'retorno_estimado',
+  'modelo_inversion',
+  'riesgo_inversion',
+  'disclaimer_inversion',
   'mostrar_como_inversion',
 ]);
 
 export function crmToWebProperty(prop: Record<string, any>): Record<string, any> {
-  const appId = String(prop.app_id || prop.id_prop_houzez_cli || prop.codigo_propiedad || Date.now());
+  const appId = String(
+    prop.app_id || prop.id_prop_houzez_cli || prop.codigo_propiedad || Date.now(),
+  );
   const id = String(prop.id_prop_houzez_cli || appId);
   const isDevelopment = String(prop.tipo || '').toLowerCase() === 'emprendimiento';
   const operation = isDevelopment ? 'proyecto' : normalizeOperation(prop.operacion);

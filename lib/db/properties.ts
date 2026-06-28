@@ -139,7 +139,9 @@ export async function dbGetProperty(id: string): Promise<any | null> {
     // Whitelist de caracteres: elimina metacaracteres PostgREST (coma, paréntesis,
     // punto, etc.) para evitar inyección en el filtro .or(). Los ids del CRM son
     // alfanuméricos, así que no se ven alterados.
-    const safeId = String(id || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 200);
+    const safeId = String(id || '')
+      .replace(/[^a-zA-Z0-9_-]/g, '')
+      .slice(0, 200);
     const { data, error } = await supabase
       .from('properties')
       .select('*, property_overrides(*)')
@@ -178,11 +180,15 @@ export async function searchProperties(query: PropertyQuery = {}): Promise<any[]
     if (pais) rows = rows.filter((p) => norm(p.pais) === norm(pais));
     if (tipo) rows = rows.filter((p) => norm(p.tipo) === norm(tipo));
     if (operacion) rows = rows.filter((p) => norm(p.operacion) === norm(operacion));
-    if (typeof precioMin === 'number') rows = rows.filter((p) => (p.precio_numero ?? 0) >= precioMin);
-    if (typeof precioMax === 'number') rows = rows.filter((p) => (p.precio_numero ?? Infinity) <= precioMax);
+    if (typeof precioMin === 'number')
+      rows = rows.filter((p) => (p.precio_numero ?? 0) >= precioMin);
+    if (typeof precioMax === 'number')
+      rows = rows.filter((p) => (p.precio_numero ?? Infinity) <= precioMax);
     if (q) {
       const needle = norm(q);
-      rows = rows.filter((p) => `${norm(p.titulo)} ${norm(p.descripcion)} ${norm(p.ubicacion)}`.includes(needle));
+      rows = rows.filter((p) =>
+        `${norm(p.titulo)} ${norm(p.descripcion)} ${norm(p.ubicacion)}`.includes(needle),
+      );
     }
     return rows.slice(0, limit);
   }
@@ -201,9 +207,7 @@ export async function searchProperties(query: PropertyQuery = {}): Promise<any[]
     // Full-text en español sobre titulo+descripcion (requiere índice tsvector — ver schema)
     if (q) builder = builder.textSearch('fts', q, { type: 'websearch', config: 'spanish' });
 
-    const { data, error } = await builder
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    const { data, error } = await builder.order('created_at', { ascending: false }).limit(limit);
     if (error) throw error;
     return data.map(normalizeDbRow);
   } catch (err) {
@@ -266,7 +270,9 @@ export async function dbDeleteProperty(propId: string): Promise<void> {
   if (!supabase) return;
   // Whitelist de caracteres: igual que en dbGetProperty, neutraliza metacaracteres
   // PostgREST en el filtro .or() sin tocar ids alfanuméricos legítimos.
-  const safeId = String(propId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 200);
+  const safeId = String(propId || '')
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .slice(0, 200);
   const { error } = await supabase
     .from('properties')
     .delete()

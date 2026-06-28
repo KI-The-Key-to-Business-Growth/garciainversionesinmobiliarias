@@ -59,7 +59,12 @@ export async function handle2ClicsWebhook(req: Request): Promise<Response> {
   if (prop.action === 'del_property') {
     try {
       await dbDeleteProperty(crmAppId);
-      await dbLogIntegration({ provider: '2clics', event_type: 'del_property', crm_app_id: crmAppId, status: 'ok' });
+      await dbLogIntegration({
+        provider: '2clics',
+        event_type: 'del_property',
+        crm_app_id: crmAppId,
+        status: 'ok',
+      });
     } catch (err) {
       captureError(err, { source: 'webhook', action: 'del_property', crm_app_id: crmAppId });
       await dbLogIntegration({
@@ -84,7 +89,12 @@ export async function handle2ClicsWebhook(req: Request): Promise<Response> {
 
   try {
     await dbUpsertProperty(mapped);
-    await dbLogIntegration({ provider: '2clics', event_type: prop.action, crm_app_id: crmAppId, status: 'ok' });
+    await dbLogIntegration({
+      provider: '2clics',
+      event_type: prop.action,
+      crm_app_id: crmAppId,
+      status: 'ok',
+    });
   } catch (err) {
     captureError(err, { source: 'webhook', action: prop.action, crm_app_id: crmAppId });
     await dbLogIntegration({

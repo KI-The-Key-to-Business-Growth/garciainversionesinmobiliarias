@@ -50,9 +50,7 @@ if (typeof setInterval !== 'undefined') {
 // ── Backend Upstash ───────────────────────────────────────────────────────────
 // Upstash usa Redis sólo si hay credenciales y no estamos en tests.
 const useUpstash =
-  process.env.NODE_ENV !== 'test' &&
-  !!env.UPSTASH_REDIS_REST_URL &&
-  !!env.UPSTASH_REDIS_REST_TOKEN;
+  process.env.NODE_ENV !== 'test' && !!env.UPSTASH_REDIS_REST_URL && !!env.UPSTASH_REDIS_REST_TOKEN;
 
 let _redis: Redis | null = null;
 function redis(): Redis {

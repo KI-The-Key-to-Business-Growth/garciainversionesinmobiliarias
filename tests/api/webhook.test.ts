@@ -71,13 +71,17 @@ describe('handle2ClicsWebhook', () => {
   });
 
   it('update_property válido → upsert', async () => {
-    const r = await handle2ClicsWebhook(req({ getprop: true, prop: { ...PROP, action: 'update_property' } }));
+    const r = await handle2ClicsWebhook(
+      req({ getprop: true, prop: { ...PROP, action: 'update_property' } }),
+    );
     expect(r.status).toBe(200);
     expect(dbUpsertProperty).toHaveBeenCalledOnce();
   });
 
   it('del_property → DELETE físico + SUCCESS', async () => {
-    const r = await handle2ClicsWebhook(req({ getprop: true, prop: { ...PROP, action: 'del_property' } }));
+    const r = await handle2ClicsWebhook(
+      req({ getprop: true, prop: { ...PROP, action: 'del_property' } }),
+    );
     expect(r.status).toBe(200);
     expect(await r.text()).toBe('SUCCESS');
     expect(dbDeleteProperty).toHaveBeenCalledOnce();
@@ -85,7 +89,9 @@ describe('handle2ClicsWebhook', () => {
   });
 
   it('acción desconocida → 400', async () => {
-    const r = await handle2ClicsWebhook(req({ getprop: true, prop: { ...PROP, action: 'frobnicate' } }));
+    const r = await handle2ClicsWebhook(
+      req({ getprop: true, prop: { ...PROP, action: 'frobnicate' } }),
+    );
     expect(r.status).toBe(400);
   });
 

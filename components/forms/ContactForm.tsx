@@ -77,19 +77,47 @@ export default function ContactForm() {
       <div className="form-grid">
         <div className="field">
           <label htmlFor="nombre">Nombre</label>
-          <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required maxLength={120} />
+          <input
+            type="text"
+            id="nombre"
+            name="nombre"
+            placeholder="Tu nombre"
+            required
+            maxLength={120}
+          />
         </div>
         <div className="field">
           <label htmlFor="apellido">Apellido</label>
-          <input type="text" id="apellido" name="apellido" placeholder="Tu apellido" required maxLength={120} />
+          <input
+            type="text"
+            id="apellido"
+            name="apellido"
+            placeholder="Tu apellido"
+            required
+            maxLength={120}
+          />
         </div>
         <div className="field">
           <label htmlFor="email">Email</label>
-          <input type="email" id="email" name="email" placeholder="tu@email.com" required maxLength={254} />
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="tu@email.com"
+            required
+            maxLength={254}
+          />
         </div>
         <div className="field">
           <label htmlFor="telefono">Teléfono / WhatsApp</label>
-          <input type="tel" id="telefono" name="telefono" placeholder="+54 9 ..." required maxLength={30} />
+          <input
+            type="tel"
+            id="telefono"
+            name="telefono"
+            placeholder="+54 9 ..."
+            required
+            maxLength={30}
+          />
         </div>
         <div className="field full">
           <label htmlFor="motivo">Motivo de consulta</label>
@@ -113,7 +141,13 @@ export default function ContactForm() {
           />
         </div>
         {/* Timestamp anti-bot (oculto) */}
-        <input ref={loadedAtRef} type="hidden" name="_form_loaded_at" className="js-form-loaded-at" defaultValue="" />
+        <input
+          ref={loadedAtRef}
+          type="hidden"
+          name="_form_loaded_at"
+          className="js-form-loaded-at"
+          defaultValue=""
+        />
         {/* Turnstile invisible: contenedor oculto asociado al formulario */}
         <div id="ts-contact-0" aria-hidden="true" style={{ display: 'none' }} />
         <div className="field full">
@@ -124,7 +158,8 @@ export default function ContactForm() {
         <div className="field full">
           <p className="form-legal">
             Al enviar este formulario aceptás que García Inversiones Inmobiliarias utilice tus datos
-            para responder tu consulta comercial. <a href="/privacidad">Ver Política de Privacidad</a>.
+            para responder tu consulta comercial.{' '}
+            <a href="/privacidad">Ver Política de Privacidad</a>.
           </p>
         </div>
       </div>

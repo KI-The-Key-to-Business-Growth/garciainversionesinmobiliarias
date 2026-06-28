@@ -21,9 +21,7 @@ export default function GlobalError(_props: { error: Error & { digest?: string }
           padding: '24px',
         }}
       >
-        <h1 style={{ fontWeight: 400, fontSize: '28px', margin: '0 0 12px' }}>
-          Algo salió mal.
-        </h1>
+        <h1 style={{ fontWeight: 400, fontSize: '28px', margin: '0 0 12px' }}>Algo salió mal.</h1>
         <p style={{ color: '#7793ab', margin: '0 0 28px', maxWidth: 420 }}>
           Tuvimos un problema inesperado. Probá recargar la página o volver al inicio.
         </p>
