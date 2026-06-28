@@ -45,7 +45,13 @@ describe('isValidPhone', () => {
 
 describe('constantes de validación', () => {
   it('MAX_LENGTHS coincide con la auditoría', () => {
-    expect(MAX_LENGTHS).toMatchObject({ name: 120, phone: 30, email: 254, message: 2000, motivo: 100 });
+    expect(MAX_LENGTHS).toMatchObject({
+      name: 120,
+      phone: 30,
+      email: 254,
+      message: 2000,
+      motivo: 100,
+    });
   });
   it('MOTIVOS_PERMITIDOS contiene la lista blanca exacta', () => {
     expect(MOTIVOS_PERMITIDOS.has('Inversión inmobiliaria')).toBe(true);

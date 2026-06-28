@@ -2,7 +2,13 @@
 
 import { headers } from 'next/headers';
 import { env, isProduction } from '@/lib/env';
-import { escapeHtml, isValidEmail, isValidPhone, MAX_LENGTHS, MOTIVOS_PERMITIDOS } from '@/lib/security/sanitize';
+import {
+  escapeHtml,
+  isValidEmail,
+  isValidPhone,
+  MAX_LENGTHS,
+  MOTIVOS_PERMITIDOS,
+} from '@/lib/security/sanitize';
 import { isBotRequest, isSpamContent, isTooFast } from '@/lib/security/antibot';
 import { checkRate } from '@/lib/security/ratelimit';
 import { verifyTurnstile } from '@/lib/security/turnstile';
@@ -49,7 +55,19 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
   // Spam por contenido → silencioso
   if (isSpamContent(body, userAgent)) return { ok: true };
 
-  const { name, nombre, apellido, phone, telefono, email, message, mensaje, motivo, property_app_id, development_app_id } = body;
+  const {
+    name,
+    nombre,
+    apellido,
+    phone,
+    telefono,
+    email,
+    message,
+    mensaje,
+    motivo,
+    property_app_id,
+    development_app_id,
+  } = body;
 
   const fullName = String(name || [nombre, apellido].filter(Boolean).join(' ') || '').trim();
   const finalPhone = String(phone || telefono || '').trim();
@@ -60,14 +78,21 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
   // Validaciones de presencia
   if (!fullName) return { ok: false, message: 'El nombre es requerido.' };
   if (!finalPhone) return { ok: false, message: 'El teléfono es requerido.' };
-  if (!finalEmail || !isValidEmail(finalEmail)) return { ok: false, message: 'Ingresá un email válido.' };
+  if (!finalEmail || !isValidEmail(finalEmail))
+    return { ok: false, message: 'Ingresá un email válido.' };
 
   // Validaciones de longitud
-  if (fullName.length > MAX_LENGTHS.name) return { ok: false, message: 'El nombre es demasiado largo.' };
-  if (finalPhone.length > MAX_LENGTHS.phone) return { ok: false, message: 'El teléfono es demasiado largo.' };
-  if (finalEmail.length > MAX_LENGTHS.email) return { ok: false, message: 'El email es demasiado largo.' };
+  if (fullName.length > MAX_LENGTHS.name)
+    return { ok: false, message: 'El nombre es demasiado largo.' };
+  if (finalPhone.length > MAX_LENGTHS.phone)
+    return { ok: false, message: 'El teléfono es demasiado largo.' };
+  if (finalEmail.length > MAX_LENGTHS.email)
+    return { ok: false, message: 'El email es demasiado largo.' };
   if (finalMessage.length > MAX_LENGTHS.message)
-    return { ok: false, message: `El mensaje no puede superar los ${MAX_LENGTHS.message} caracteres.` };
+    return {
+      ok: false,
+      message: `El mensaje no puede superar los ${MAX_LENGTHS.message} caracteres.`,
+    };
 
   // Formato de teléfono
   if (!isValidPhone(finalPhone))
@@ -81,7 +106,10 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
   const turnstileToken = String(body['cf-turnstile-response'] || '');
   const turnstileOk = await verifyTurnstile(turnstileToken, ip);
   if (!turnstileOk)
-    return { ok: false, message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.' };
+    return {
+      ok: false,
+      message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.',
+    };
 
   const eventId = body.event_id || createEventId('lead');
   const isPropertyInquiry =
@@ -119,10 +147,16 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
       });
       return {
         ok: false,
-        message: 'No pudimos procesar tu consulta en este momento. Por favor intentá de nuevo o escribinos por WhatsApp.',
+        message:
+          'No pudimos procesar tu consulta en este momento. Por favor intentá de nuevo o escribinos por WhatsApp.',
       };
     }
-    await dbLogIntegration({ provider: 'email-fallback', event_type: leadType, crm_app_id: 'fallback', status: 'ok' });
+    await dbLogIntegration({
+      provider: 'email-fallback',
+      event_type: leadType,
+      crm_app_id: 'fallback',
+      status: 'ok',
+    });
     console.log('[contact] Lead enviado por email (CRM no configurado). event_id:', eventId);
     return { ok: true, event_id: eventId, message: 'Consulta recibida correctamente.' };
   }
@@ -140,7 +174,10 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
   });
 
   if ('error' in built) {
-    return { ok: false, message: 'No pudimos procesar tu consulta. Por favor intentá de nuevo más tarde.' };
+    return {
+      ok: false,
+      message: 'No pudimos procesar tu consulta. Por favor intentá de nuevo más tarde.',
+    };
   }
 
   // ── Envío a 2Clics — único destino de leads comerciales ──────────────────
@@ -148,7 +185,12 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
   const crmRef = String(propId || devId || 'general');
 
   if (result.ok) {
-    await dbLogIntegration({ provider: '2clics', event_type: leadType, crm_app_id: crmRef, status: 'ok' });
+    await dbLogIntegration({
+      provider: '2clics',
+      event_type: leadType,
+      crm_app_id: crmRef,
+      status: 'ok',
+    });
     console.log('[contact] Lead enviado a 2Clics. event_id:', eventId);
     return { ok: true, event_id: eventId, message: 'Consulta recibida correctamente.' };
   }

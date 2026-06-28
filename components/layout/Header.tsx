@@ -14,10 +14,7 @@ const NAV_LINKS = [
   { href: '/#contacto', label: 'Contacto' },
 ];
 
-const MOBILE_LINKS = [
-  { href: '/#inicio', label: 'Inicio' },
-  ...NAV_LINKS,
-];
+const MOBILE_LINKS = [{ href: '/#inicio', label: 'Inicio' }, ...NAV_LINKS];
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);

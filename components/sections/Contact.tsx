@@ -21,7 +21,9 @@ export default function Contact() {
               </div>
               <div className="contact-item">
                 <strong>Email</strong>
-                <a href="mailto:contacto@garciainversiones.com.ar">contacto@garciainversiones.com.ar</a>
+                <a href="mailto:contacto@garciainversiones.com.ar">
+                  contacto@garciainversiones.com.ar
+                </a>
               </div>
               <div className="contact-item">
                 <strong>Instagram</strong>

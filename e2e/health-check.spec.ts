@@ -58,15 +58,13 @@ for (const route of routes) {
 
     // (2) La respuesta del documento no debe ser un error.
     expect(response, `No hubo respuesta HTTP para ${route.path}`).not.toBeNull();
-    expect(
-      response!.status(),
-      `${route.path} devolvió HTTP ${response!.status()}`,
-    ).toBeLessThan(400);
+    expect(response!.status(), `${route.path} devolvió HTTP ${response!.status()}`).toBeLessThan(
+      400,
+    );
 
     // (3) Sin errores críticos de consola ni excepciones.
-    expect(
-      errors,
-      `Errores en ${route.path}:\n${errors.join('\n') || '(ninguno)'}`,
-    ).toHaveLength(0);
+    expect(errors, `Errores en ${route.path}:\n${errors.join('\n') || '(ninguno)'}`).toHaveLength(
+      0,
+    );
   });
 }

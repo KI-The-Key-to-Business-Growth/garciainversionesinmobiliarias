@@ -78,7 +78,13 @@ export default function NewsletterForm() {
         required
         maxLength={254}
       />
-      <input ref={loadedAtRef} type="hidden" name="_form_loaded_at" className="js-form-loaded-at" defaultValue="" />
+      <input
+        ref={loadedAtRef}
+        type="hidden"
+        name="_form_loaded_at"
+        className="js-form-loaded-at"
+        defaultValue=""
+      />
       {/* Turnstile invisible: contenedor oculto */}
       <div id="ts-newsletter-0" aria-hidden="true" style={{ display: 'none' }} />
       <button className="newsletter-btn" type="submit" disabled={submitting}>

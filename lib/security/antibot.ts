@@ -12,17 +12,40 @@ export function isBotRequest(body: FormBody = {}): boolean {
 
 // ── Filtro anti-spam por contenido — server.js:287-329 ───────────────────────
 const SPAM_PHRASES = [
-  'automated test', 'kindly disregard', 'this is a test message',
-  'seo service', 'seo services', 'buy backlinks', 'crypto', 'casino',
-  'loan offer', 'payday loan', 'viagra', 'cialis', 'free traffic',
-  'backlink', 'guest post', 'adult content', 'make money fast',
+  'automated test',
+  'kindly disregard',
+  'this is a test message',
+  'seo service',
+  'seo services',
+  'buy backlinks',
+  'crypto',
+  'casino',
+  'loan offer',
+  'payday loan',
+  'viagra',
+  'cialis',
+  'free traffic',
+  'backlink',
+  'guest post',
+  'adult content',
+  'make money fast',
 ];
 
 export function isSpamContent(body: FormBody = {}, userAgent = ''): boolean {
   const combined = [
-    body.nombre, body.apellido, body.name, body.email,
-    body.telefono, body.phone, body.motivo, body.message, body.mensaje,
-  ].filter(Boolean).join(' ').toLowerCase();
+    body.nombre,
+    body.apellido,
+    body.name,
+    body.email,
+    body.telefono,
+    body.phone,
+    body.motivo,
+    body.message,
+    body.mensaje,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
 
   // 1. Frases de spam conocidas
   if (SPAM_PHRASES.some((p) => combined.includes(p))) {
@@ -38,8 +61,12 @@ export function isSpamContent(body: FormBody = {}, userAgent = ''): boolean {
   }
 
   // 3. Nombre genérico repetido (ej: "Test Test", "Xyz Xyz")
-  const n = String(body.nombre || '').trim().toLowerCase();
-  const a = String(body.apellido || '').trim().toLowerCase();
+  const n = String(body.nombre || '')
+    .trim()
+    .toLowerCase();
+  const a = String(body.apellido || '')
+    .trim()
+    .toLowerCase();
   if (n && a && n === a && n.length > 1) {
     console.warn('[spam] Nombre === apellido:', n);
     return true;

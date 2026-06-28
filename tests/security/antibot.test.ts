@@ -19,9 +19,9 @@ describe('isSpamContent', () => {
     expect(isSpamContent({ message: 'cheap viagra here' }, HUMAN_UA)).toBe(true);
   });
   it('detecta demasiados links', () => {
-    expect(
-      isSpamContent({ mensaje: 'http://a.com http://b.com http://c.com' }, HUMAN_UA),
-    ).toBe(true);
+    expect(isSpamContent({ mensaje: 'http://a.com http://b.com http://c.com' }, HUMAN_UA)).toBe(
+      true,
+    );
   });
   it('detecta nombre === apellido', () => {
     expect(isSpamContent({ nombre: 'Test', apellido: 'Test' }, HUMAN_UA)).toBe(true);
