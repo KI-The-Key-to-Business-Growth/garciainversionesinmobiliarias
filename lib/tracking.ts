@@ -4,11 +4,26 @@
 export type TrackingBody = Record<string, unknown>;
 
 const TRACKING_KEYS = [
-  'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
-  'gclid', 'gbraid', 'wbraid', 'fbclid',
-  'landing_page', 'referrer', 'first_visit_date', 'last_visit_date',
-  'current_page', 'page_location', 'page_title', 'session_id', 'event_id',
-  'form_name', 'lead_type',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term',
+  'gclid',
+  'gbraid',
+  'wbraid',
+  'fbclid',
+  'landing_page',
+  'referrer',
+  'first_visit_date',
+  'last_visit_date',
+  'current_page',
+  'page_location',
+  'page_title',
+  'session_id',
+  'event_id',
+  'form_name',
+  'lead_type',
 ];
 
 export function pickTrackingFields(body: TrackingBody = {}): Record<string, unknown> {

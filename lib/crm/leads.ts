@@ -23,7 +23,8 @@ export type CrmPayload = Record<string, unknown> & {
 };
 
 export function buildCrmPayload(input: ContactInput): { payload: CrmPayload } | { error: string } {
-  const { fullName, phone, email, message, eventId, body, isPropertyInquiry, propId, devId } = input;
+  const { fullName, phone, email, message, eventId, body, isPropertyInquiry, propId, devId } =
+    input;
 
   const payload: CrmPayload = {
     name: fullName,
@@ -40,8 +41,7 @@ export function buildCrmPayload(input: ContactInput): { payload: CrmPayload } | 
     wbraid: String(body.wbraid || '').slice(0, 200),
     fbclid: String(body.fbclid || '').slice(0, 200),
     lead_type:
-      (body.lead_type as string) ||
-      (isPropertyInquiry ? 'consulta_propiedad' : 'consulta_general'),
+      (body.lead_type as string) || (isPropertyInquiry ? 'consulta_propiedad' : 'consulta_general'),
     form_name: String(body.form_name || '').slice(0, 100),
   };
 

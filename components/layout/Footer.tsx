@@ -9,7 +9,11 @@ export default function Footer() {
           <div className="footer-brand-col">
             <Link href="/" className="footer-logo-link">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/logos/Garcia.svg" alt="García Inversiones Inmobiliarias" decoding="async" />
+              <img
+                src="/assets/logos/Garcia.svg"
+                alt="García Inversiones Inmobiliarias"
+                decoding="async"
+              />
             </Link>
             <p className="footer-tagline">
               Consultora boutique de real estate. Propiedades seleccionadas y asesoramiento
@@ -48,12 +52,24 @@ export default function Footer() {
           <div className="footer-col">
             <h4 className="footer-column-title">Navegación</h4>
             <ul className="footer-links">
-              <li><Link href="/#inicio">Inicio</Link></li>
-              <li><Link href="/#nosotros">Nosotros</Link></li>
-              <li><Link href="/propiedades">Propiedades</Link></li>
-              <li><Link href="/#servicios">Servicios</Link></li>
-              <li><Link href="/#mercados">Mercados</Link></li>
-              <li><Link href="/#contacto">Contacto</Link></li>
+              <li>
+                <Link href="/#inicio">Inicio</Link>
+              </li>
+              <li>
+                <Link href="/#nosotros">Nosotros</Link>
+              </li>
+              <li>
+                <Link href="/propiedades">Propiedades</Link>
+              </li>
+              <li>
+                <Link href="/#servicios">Servicios</Link>
+              </li>
+              <li>
+                <Link href="/#mercados">Mercados</Link>
+              </li>
+              <li>
+                <Link href="/#contacto">Contacto</Link>
+              </li>
             </ul>
           </div>
 
@@ -82,7 +98,9 @@ export default function Footer() {
 
         <div className="footer-bottom-bar">
           <span>© 2026 García Inversiones Inmobiliarias. Todos los derechos reservados.</span>
-          <Link href="/privacidad" className="footer-privacy-link">Política de Privacidad</Link>
+          <Link href="/privacidad" className="footer-privacy-link">
+            Política de Privacidad
+          </Link>
           <Link href="/#inicio">↑ Volver al inicio</Link>
         </div>
       </div>

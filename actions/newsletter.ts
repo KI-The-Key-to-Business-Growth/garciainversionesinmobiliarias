@@ -56,7 +56,10 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
   const turnstileToken = String(body['cf-turnstile-response'] || '');
   const turnstileOk = await verifyTurnstile(turnstileToken, ip);
   if (!turnstileOk)
-    return { ok: false, message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.' };
+    return {
+      ok: false,
+      message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.',
+    };
 
   const eventId = body.event_id || createEventId('newsletter');
 
@@ -89,7 +92,9 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
   const nlMedium = escapeHtml(body.utm_medium || '');
   const nlCampaign = escapeHtml(body.utm_campaign || '');
   const nlPage = escapeHtml(body.page_location || '');
-  const nlDateStr = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+  const nlDateStr = new Date().toLocaleString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+  });
 
   const emailResult = await sendEmail({
     to: env.CONTACT_TO_EMAIL,
@@ -113,13 +118,17 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
           <tr style="border-bottom:1px solid #f0f0f0;"><td style="width:140px;color:#666;font-size:14px;">Fecha</td><td style="font-size:14px;font-weight:600;color:#071628;">${nlDateStr}</td></tr>
           ${nlPage ? `<tr style="border-bottom:1px solid #f0f0f0;"><td style="color:#666;font-size:14px;">Página de origen</td><td style="font-size:14px;color:#071628;">${nlPage}</td></tr>` : ''}
         </table>
-        ${(nlSource || nlMedium || nlCampaign) ? `
+        ${
+          nlSource || nlMedium || nlCampaign
+            ? `
         <p style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999;">Origen del lead</p>
         <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;color:#555;margin-bottom:16px;">
           ${nlSource ? `<tr><td style="width:140px;">UTM Source</td><td>${nlSource}</td></tr>` : ''}
           ${nlMedium ? `<tr><td>UTM Medium</td><td>${nlMedium}</td></tr>` : ''}
           ${nlCampaign ? `<tr><td>UTM Campaign</td><td>${nlCampaign}</td></tr>` : ''}
-        </table>` : ''}
+        </table>`
+            : ''
+        }
       </td></tr>
       <tr><td style="background:#f9f9f9;padding:16px 36px;border-top:1px solid #eee;">
         <p style="margin:0;font-size:12px;color:#aaa;">Recibido el ${nlDateStr} · García Inversiones Inmobiliarias</p>
@@ -131,7 +140,9 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
 
   if (!emailResult.ok) {
     console.error('[newsletter] Error de email:', emailResult.error);
-    captureError(new Error(`newsletter email failed: ${emailResult.error}`), { source: 'newsletter-email' });
+    captureError(new Error(`newsletter email failed: ${emailResult.error}`), {
+      source: 'newsletter-email',
+    });
     return {
       ok: false,
       message: 'No pudimos procesar la suscripción. Por favor intentá de nuevo más tarde.',

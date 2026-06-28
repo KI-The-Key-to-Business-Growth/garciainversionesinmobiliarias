@@ -12,7 +12,13 @@ const compat = new FlatCompat({ baseDirectory: __dirname });
 const eslintConfig = [
   ...compat.extends('next/core-web-vitals'),
   {
-    ignores: ['.next/**', 'node_modules/**', 'legacy/**', 'playwright-report/**', 'test-results/**'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'legacy/**',
+      'playwright-report/**',
+      'test-results/**',
+    ],
   },
 ];
 
