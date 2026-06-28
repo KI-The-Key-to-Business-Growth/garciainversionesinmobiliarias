@@ -9,7 +9,13 @@ export default function Footer() {
           <div className="footer-brand-col">
             <Link href="/" className="footer-logo-link">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/logos/Garcia.svg" alt="García Inversiones Inmobiliarias" decoding="async" />
+              <img
+                src="/assets/logos/Garcia.svg"
+                alt="García Inversiones Inmobiliarias"
+                width={800}
+                height={200}
+                decoding="async"
+              />
             </Link>
             <p className="footer-tagline">
               Consultora boutique de real estate. Propiedades seleccionadas y asesoramiento
