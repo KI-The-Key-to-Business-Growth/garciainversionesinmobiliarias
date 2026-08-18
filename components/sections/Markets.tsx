@@ -9,7 +9,7 @@ const MARKETS = [
   {
     country: 'Estados Unidos',
     market: 'Miami',
-    text: 'En Estados Unidos concentramos actualmente nuestro trabajo en Miami, a través de relaciones locales y oportunidades seleccionadas. El foco inicial está en Cervera Real Estate y principalmente en Domus.',
+    text: 'En Estados Unidos concentramos actualmente nuestro trabajo en Miami, a través de relaciones locales y oportunidades seleccionadas.',
     chip: 'Miami',
   },
 ];
