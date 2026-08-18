@@ -32,8 +32,8 @@ export default function Hero() {
               mirada comercial y patrimonial.
             </p>
             <div className="hero-actions">
-              <a className="btn btn-primary" href="#oportunidades-seleccionadas">
-                Ver oportunidades seleccionadas
+              <a className="btn btn-primary" href="/propiedades">
+                Ver propiedades
               </a>
               <a
                 className="btn btn-secondary"
