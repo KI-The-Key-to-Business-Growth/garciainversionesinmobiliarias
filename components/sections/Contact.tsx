@@ -45,7 +45,7 @@ export default function Contact() {
           <div className="contact-right-col">
             <div className="trust-badges reveal">
               <span className="trust-badge">
-                <span className="trust-icon">✓</span>Respondemos en menos de 24hs
+                <span className="trust-icon">✓</span>Atención personalizada
               </span>
               <span className="trust-badge">
                 <span className="trust-icon">✓</span>Atención directa

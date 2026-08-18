@@ -306,17 +306,17 @@ body[data-page-type='home'] .site-header.is-scrolled {
   color: var(--gold);
 }
 
-/* ── CTA pill ── */
-.hdr-cta-btn {
+/* ── Contacto telefónico ── */
+.hdr-phone-link {
   display: flex;
   align-items: center;
   height: 38px;
-  padding: 0 20px;
+  padding: 0 18px;
   border-radius: 999px;
   font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--white);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   text-decoration: none;
   white-space: nowrap;
   transition:
@@ -324,9 +324,12 @@ body[data-page-type='home'] .site-header.is-scrolled {
     border-color 0.2s ease;
   letter-spacing: 0.02em;
 }
-.hdr-cta-btn:hover {
+.hdr-phone-link:hover {
   background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.48);
+}
+.hdr-phone-short {
+  display: none;
 }
 
 /* ── Hamburguesa — oculto en desktop ── */
@@ -354,7 +357,7 @@ body[data-page-type='home'] .site-header.is-scrolled {
 
 /* ── Ocultar nav y CTA cuando el menú está abierto ── */
 body.menu-open .hdr-nav,
-body.menu-open .hdr-cta-btn {
+body.menu-open .hdr-phone-link {
   opacity: 0;
   pointer-events: none;
 }
@@ -2310,6 +2313,16 @@ body[data-page-type='thank_you'] {
     width: auto;
     max-width: 300px;
   }
+  .hdr-phone-link {
+    height: 38px;
+    padding: 0 16px;
+  }
+  .hdr-phone-full {
+    display: none;
+  }
+  .hdr-phone-short {
+    display: inline;
+  }
 }
 
 @media (max-width: 760px) {
@@ -2385,7 +2398,7 @@ body[data-page-type='thank_you'] {
     width: auto;
     max-width: 52vw;
   }
-  .hdr-cta-btn {
+  .hdr-phone-link {
     font-size: 0.76rem;
     padding: 0 12px;
     height: 34px;

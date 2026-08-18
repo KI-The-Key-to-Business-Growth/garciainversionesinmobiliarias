@@ -59,13 +59,13 @@ export default function Footer() {
                 <Link href="/#inicio">Inicio</Link>
               </li>
               <li>
-                <Link href="/#nosotros">Nosotros</Link>
-              </li>
-              <li>
                 <Link href="/propiedades">Propiedades</Link>
               </li>
               <li>
                 <Link href="/#servicios">Servicios</Link>
+              </li>
+              <li>
+                <Link href="/#nosotros">Nosotros</Link>
               </li>
               <li>
                 <Link href="/#mercados">Mercados</Link>

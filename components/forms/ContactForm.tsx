@@ -141,7 +141,7 @@ export default function ContactForm() {
           <textarea
             id="mensaje"
             name="mensaje"
-            placeholder="Contanos brevemente qué tipo de operación te interesa, en qué mercado y con qué presupuesto aproximado. Eso nos permite darte una respuesta más precisa."
+            placeholder="Contanos brevemente qué necesitás y cualquier información que consideres relevante. Esto nos permite orientarte mejor desde el primer contacto."
             maxLength={2000}
           />
         </div>

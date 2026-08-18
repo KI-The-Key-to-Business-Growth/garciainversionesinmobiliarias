@@ -7,9 +7,9 @@ import Link from 'next/link';
 // Porta el comportamiento de legacy/public/assets/js/site.js (menú + is-scrolled).
 
 const NAV_LINKS = [
-  { href: '/#nosotros', label: 'Nosotros' },
   { href: '/propiedades', label: 'Propiedades' },
   { href: '/#servicios', label: 'Servicios' },
+  { href: '/#nosotros', label: 'Nosotros' },
   { href: '/#mercados', label: 'Mercados' },
   { href: '/#contacto', label: 'Contacto' },
 ];
@@ -69,9 +69,14 @@ export default function Header() {
             </Link>
           ))}
         </nav>
-        <Link href="/propiedades" className="hdr-cta-btn">
-          Propiedades
-        </Link>
+        <a
+          href="tel:+5491167240353"
+          className="hdr-phone-link"
+          aria-label="Llamar a García Inversiones Inmobiliarias"
+        >
+          <span className="hdr-phone-full">+54 9 11 6724-0353</span>
+          <span className="hdr-phone-short">Llamar</span>
+        </a>
       </header>
 
       <aside
