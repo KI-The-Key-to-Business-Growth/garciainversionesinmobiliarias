@@ -96,39 +96,17 @@
 
   <script src="assets/js/tracking.js?v=8" defer></script>
 
-  <!--
-    FIX TRACKING: los eventos de conversión se disparan solo cuando el usuario
-    llega desde el formulario (referrer dentro del mismo sitio).
-    Esto evita inflar conversiones cuando alguien entra directamente a la URL.
-  -->
+  <!-- Tracking informativo: generate_lead se dispara solo en el formulario. -->
   <script>
     (function () {
-      const referrer = document.referrer || '';
-      const isFromSite =
-        referrer.includes(window.location.hostname) ||
-        referrer.includes('localhost') ||
-        referrer === '';
-
-      // Solo disparar si viene de una página del mismo sitio
-      // (en producción con dominio real, referrer === '' puede ser tráfico directo;
-      // ajustar la condición según necesidad)
       window.dataLayer = window.dataLayer || [];
 
       window.dataLayer.push({
         event:         'thank_you_page_view',
-        lead_type:     'consulta_inmobiliaria',
-        page_location: window.location.href
+        page_path:     window.location.pathname,
+        page_location: window.location.href,
+        page_title:    document.title
       });
-
-      // generate_lead solo se dispara si viene del formulario de contacto
-      if (isFromSite) {
-        window.dataLayer.push({
-          event:         'generate_lead',
-          lead_type:     'consulta_inmobiliaria',
-          form_name:     'Formulario de consulta',
-          page_location: window.location.href
-        });
-      }
     })();
   </script>
 </body>

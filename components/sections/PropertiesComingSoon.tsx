@@ -51,6 +51,7 @@ export default function PropertiesComingSoon() {
           href="https://wa.me/5491167240353"
           target="_blank"
           rel="noopener"
+          data-whatsapp-location="propiedades_placeholder"
           style={{
             background: '#cda04f',
             color: '#ffffff',

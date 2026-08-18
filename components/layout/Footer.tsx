@@ -27,6 +27,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener"
                 className="footer-contact-item"
+                data-whatsapp-location="footer"
               >
                 <span className="footer-contact-label">WhatsApp</span>
                 <span>+54 9 11 6724-0353</span>

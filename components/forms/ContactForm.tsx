@@ -49,6 +49,11 @@ export default function ContactForm() {
         reset();
         return;
       }
+      if (!res.event_id) {
+        form.reset();
+        reset();
+        return;
+      }
       (window as unknown as { dataLayer?: unknown[] }).dataLayer?.push({
         event: 'generate_lead',
         event_id: res.event_id,
