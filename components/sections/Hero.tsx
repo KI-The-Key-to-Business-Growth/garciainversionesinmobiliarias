@@ -27,13 +27,13 @@ export default function Hero() {
               <span className="hero-line accent">visión estratégica</span>
             </h1>
             <p className="hero-text">
-              Somos una consultora boutique especializada en propiedades seleccionadas e inversiones
-              inmobiliarias en Argentina y mercados internacionales. Trabajamos uno a uno con cada
-              cliente para que cada decisión sea la correcta.
+              Somos una consultora boutique de real estate en Buenos Aires y Miami. Seleccionamos
+              propiedades y oportunidades según cada objetivo, y acompañamos cada decisión con una
+              mirada comercial y patrimonial.
             </p>
             <div className="hero-actions">
-              <a className="btn btn-primary" href="/propiedades">
-                Ver propiedades
+              <a className="btn btn-primary" href="#oportunidades-seleccionadas">
+                Ver oportunidades seleccionadas
               </a>
               <a
                 className="btn btn-secondary"
