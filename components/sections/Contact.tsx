@@ -15,7 +15,12 @@ export default function Contact() {
             <div className="contact-list">
               <div className="contact-item">
                 <strong>WhatsApp</strong>
-                <a href="https://wa.me/5491167240353" target="_blank" rel="noopener">
+                <a
+                  href="https://wa.me/5491167240353"
+                  target="_blank"
+                  rel="noopener"
+                  data-whatsapp-location="contacto"
+                >
                   +54 9 11 6724-0353
                 </a>
               </div>

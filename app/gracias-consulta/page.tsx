@@ -37,9 +37,8 @@ export default function GraciasPage() {
       <Footer />
       <WhatsAppFloat />
 
-      {/* Tracking de conversión — sólo dispara generate_lead si viene del sitio (referrer interno) */}
-      <Script id="ty-tracking" strategy="afterInteractive">
-        {`(function(){var referrer=document.referrer||'';var isFromSite=referrer.includes(window.location.hostname)||referrer.includes('localhost')||referrer==='';window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'thank_you_page_view',lead_type:'consulta_inmobiliaria',page_location:window.location.href});if(isFromSite){window.dataLayer.push({event:'generate_lead',lead_type:'consulta_inmobiliaria',form_name:'Formulario de consulta',page_location:window.location.href});}})();`}
+      <Script id="thank-you-page-view" strategy="afterInteractive">
+        {`window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'thank_you_page_view',page_path:window.location.pathname,page_location:window.location.href,page_title:document.title});`}
       </Script>
     </>
   );

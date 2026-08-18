@@ -3,6 +3,7 @@ import Script from 'next/script';
 import { Jost, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
 import { CANONICAL_BASE_URL } from '@/lib/env';
+import WhatsAppTracking from '@/components/tracking/WhatsAppTracking';
 
 const GTM_ID = 'GTM-MBNKBBSW';
 
@@ -115,6 +116,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
+
+        <WhatsAppTracking />
 
         {children}
 

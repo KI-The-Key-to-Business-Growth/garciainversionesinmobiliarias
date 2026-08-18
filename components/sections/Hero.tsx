@@ -40,6 +40,7 @@ export default function Hero() {
                 href="https://wa.me/5491167240353"
                 target="_blank"
                 rel="noopener"
+                data-whatsapp-location="hero"
               >
                 Hablar con un asesor
               </a>

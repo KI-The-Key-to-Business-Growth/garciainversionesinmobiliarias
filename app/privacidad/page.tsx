@@ -394,7 +394,12 @@ export default function PrivacidadPage() {
                     </p>
                     <p>
                       <strong>WhatsApp:</strong>{' '}
-                      <a href="https://wa.me/5491167240353" target="_blank" rel="noopener">
+                      <a
+                        href="https://wa.me/5491167240353"
+                        target="_blank"
+                        rel="noopener"
+                        data-whatsapp-location="privacidad"
+                      >
                         +54 9 11 6724-0353
                       </a>
                     </p>
