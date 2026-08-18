@@ -27,8 +27,8 @@ export default function HomePage() {
           text="Estamos preparando una selección de propiedades y desarrollos alineados con distintos objetivos inmobiliarios."
           showCta={false}
         />
-        <About />
         <Services />
+        <About />
         <Markets />
         <Why />
         <CtaBand />

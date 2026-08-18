@@ -1,5 +1,5 @@
 // POR QUÉ NOSOTROS — "¿Por qué García Inversiones?" / "Porque no mostramos todo."
-// why-stats: grid 3 columnas, números Cormorant dorados (§3.3). Stat mercados +8 (§3.2).
+// why-stats: grid 3 columnas, números Cormorant dorados.
 export default function Why() {
   return (
     <section className="section why">
@@ -14,19 +14,25 @@ export default function Why() {
           </div>
           <div className="why-points">
             <article className="why-point reveal">
-              <h3>Selección real</h3>
+              <h3>Selección con criterio</h3>
               <p>
-                Cada propiedad que presentamos pasó por un análisis previo de mercado, ubicación y
-                proyección.
+                No recomendamos una propiedad simplemente porque esté disponible. Buscamos que tenga
+                sentido para el objetivo de cada cliente.
               </p>
             </article>
             <article className="why-point reveal">
-              <h3>Trato personalizado</h3>
-              <p>Trabajás directamente con Fabiana en cada etapa del proceso.</p>
+              <h3>Acompañamiento personalizado</h3>
+              <p>
+                Cada operación se trabaja con seguimiento cercano y acompañamiento durante las
+                distintas etapas del proceso.
+              </p>
             </article>
             <article className="why-point reveal">
-              <h3>Más de 500 operaciones de respaldo</h3>
-              <p>Experiencia real en Argentina y en mercados internacionales.</p>
+              <h3>Mirada comercial y patrimonial</h3>
+              <p>
+                Analizamos cada decisión considerando la propiedad, su contexto y el objetivo detrás
+                de la operación.
+              </p>
             </article>
           </div>
         </div>
@@ -36,12 +42,12 @@ export default function Why() {
             <span className="why-stat-label">Operaciones realizadas</span>
           </div>
           <div className="why-stat">
-            <span className="why-stat-number">20 años</span>
+            <span className="why-stat-number">+20 años</span>
             <span className="why-stat-label">En la industria del real estate</span>
           </div>
           <div className="why-stat">
-            <span className="why-stat-number">+8</span>
-            <span className="why-stat-label">Mercados internacionales</span>
+            <span className="why-stat-number why-stat-number--market">Buenos Aires + Miami</span>
+            <span className="why-stat-label">Mercados activos</span>
           </div>
         </div>
       </div>

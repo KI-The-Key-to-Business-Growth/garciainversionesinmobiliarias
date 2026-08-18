@@ -1,38 +1,42 @@
-// SERVICIOS — 4 cards (§3.2): 01 Inversiones, 02 Compra/venta/alquiler, 03 Propietarios, 04 Mercados internacionales.
+// SERVICIOS — 4 cards: inversiones, operaciones, propietarios y desarrollos seleccionados.
 // Cambio de diseño §3.3: service cards min-height 320px, display flex column (en globals.css).
 const SERVICES = [
   {
     n: '01',
     title: 'Asesoramiento en inversiones',
-    text: 'Evaluamos cada oportunidad desde una perspectiva patrimonial, financiera y comercial. Te ayudamos a entender qué comprar, dónde, cuándo y con qué objetivo.',
-    items: ['Análisis de oportunidad', 'Perfil de inversión', 'Estrategia de renta o resguardo'],
+    text: 'Analizamos cada oportunidad desde una perspectiva comercial y patrimonial, partiendo del objetivo de cada cliente.',
+    items: ['Análisis de oportunidad', 'Perfil de inversión', 'Comparación de alternativas'],
   },
   {
     n: '02',
     title: 'Compra, venta y alquiler',
-    text: 'Acompañamos cada operación con atención personalizada, desde la búsqueda o publicación hasta el cierre. Sin vueltas, con presencia real en cada etapa.',
-    items: ['Propiedades seleccionadas', 'Negociación y seguimiento', 'Cierre acompañado'],
+    text: 'Acompañamos cada operación de forma personalizada, desde la búsqueda o publicación hasta la negociación y el cierre.',
+    items: [
+      'Propiedades seleccionadas',
+      'Negociación y seguimiento',
+      'Acompañamiento hasta el cierre',
+    ],
   },
   {
     n: '03',
     title: 'Propietarios',
-    text: 'Si tenés una propiedad para vender o alquilar, te acompañamos desde el análisis inicial hasta el cierre con difusión estratégica y seguimiento activo.',
+    text: 'Si tenés una propiedad para vender o alquilar, trabajamos desde el análisis inicial hasta su comercialización y seguimiento.',
     items: [
       'Tasación profesional',
-      'Estudio integral de mercado',
-      'Presentación y marketing de la propiedad',
-      'Seguimiento y reportes',
+      'Análisis de mercado',
+      'Presentación y difusión',
+      'Seguimiento',
     ],
   },
   {
     n: '04',
-    title: 'Mercados internacionales',
-    text: 'Acompañamos a clientes que buscan diversificar su capital fuera de Argentina con oportunidades reales en Estados Unidos, Uruguay, Dubái y España.',
+    title: 'Desarrollos seleccionados',
+    text: 'Analizamos proyectos y desarrollos en Buenos Aires y Miami para acompañar al cliente en la comparación y evaluación de alternativas.',
     items: [
-      'Real estate internacional',
-      'Proyectos en desarrollo y unidades terminadas',
-      'Visión de mediano y largo plazo',
-      'Oportunidades para revalorización, rentabilidad o uso propio',
+      'Análisis del proyecto',
+      'Comparación de alternativas',
+      'Información comercial vigente',
+      'Acompañamiento personalizado',
     ],
   },
 ];

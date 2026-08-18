@@ -27,23 +27,23 @@ export default function About() {
               seleccionamos cada propiedad, analizamos cada mercado y acompañamos cada decisión.
             </p>
             <p>
-              <strong>Fabiana García</strong> es la CEO y referente comercial del estudio. Con más
-              de 20 años en la industria del real estate, ha acompañado operaciones en Argentina,
-              Estados Unidos, Uruguay, Dubái y España. Su mirada combina conocimiento del mercado
-              local con visión internacional y trato directo.
+              <strong>Fabiana García</strong> es la fundadora, CEO y principal referente comercial
+              de García Inversiones. Con más de 20 años en la industria del real estate, combina
+              experiencia, conocimiento del mercado y una forma de trabajo basada en el trato
+              directo y el acompañamiento personalizado.
             </p>
             <div className="stats">
               <div className="stat">
-                <strong>Smart</strong>
-                <span>Inversiones estratégicas e inteligentes</span>
+                <strong>Criterio</strong>
+                <span>Análisis antes de recomendar.</span>
               </div>
               <div className="stat">
-                <strong>Global</strong>
-                <span>Mirada local e internacional</span>
+                <strong>Buenos Aires + Miami</strong>
+                <span>Dos mercados, una misma forma de trabajar.</span>
               </div>
               <div className="stat">
-                <strong>Personal</strong>
-                <span>Acompañamiento uno a uno</span>
+                <strong>Acompañamiento</strong>
+                <span>Atención personalizada en cada etapa.</span>
               </div>
             </div>
           </div>

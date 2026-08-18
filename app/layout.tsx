@@ -25,9 +25,9 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_BASE_URL),
-  title: 'García Inversiones Inmobiliarias | Real Estate Argentina y el Mundo',
+  title: 'García Inversiones Inmobiliarias | Real Estate Buenos Aires y Miami',
   description:
-    'Asesoramiento estratégico en real estate. Propiedades seleccionadas y acompañamiento personalizado para quienes invierten con criterio en Argentina, EE.UU., Uruguay, Dubái y España.',
+    'Consultora boutique de real estate en Buenos Aires y Miami. Propiedades seleccionadas, asesoramiento en compra, venta e inversión y acompañamiento personalizado.',
   alternates: { canonical: '/' },
   icons: {
     icon: '/assets/logos/isotipo.png',
@@ -37,17 +37,17 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'García Inversiones Inmobiliarias',
     locale: 'es_AR',
-    title: 'García Inversiones Inmobiliarias | Real Estate Argentina y el Mundo',
+    title: 'García Inversiones Inmobiliarias | Real Estate Buenos Aires y Miami',
     description:
-      'Asesoramiento estratégico en real estate. Propiedades seleccionadas, mercados globales y acompañamiento personalizado.',
+      'Consultora boutique de real estate en Buenos Aires y Miami, con propiedades seleccionadas y acompañamiento personalizado.',
     url: '/',
     images: [{ url: '/assets/propiedades/condor-resort.jpeg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'García Inversiones Inmobiliarias | Real Estate Argentina y el Mundo',
+    title: 'García Inversiones Inmobiliarias | Real Estate Buenos Aires y Miami',
     description:
-      'Asesoramiento estratégico en real estate. Propiedades seleccionadas, mercados globales y acompañamiento personalizado.',
+      'Consultora boutique de real estate en Buenos Aires y Miami, con propiedades seleccionadas y acompañamiento personalizado.',
     images: ['/assets/propiedades/condor-resort.jpeg'],
   },
   formatDetection: { telephone: false },
@@ -76,13 +76,9 @@ const ORG_JSONLD = {
       address: { '@type': 'PostalAddress', addressLocality: 'Buenos Aires', addressCountry: 'AR' },
       sameAs: ['https://www.instagram.com/inv.inmob.garcia'],
       areaServed: [
-        { '@type': 'Country', name: 'Argentina' },
-        { '@type': 'Country', name: 'United States' },
-        { '@type': 'Country', name: 'United Arab Emirates' },
-        { '@type': 'Country', name: 'Uruguay' },
-        { '@type': 'Country', name: 'Spain' },
+        { '@type': 'City', name: 'Buenos Aires, Argentina' },
+        { '@type': 'City', name: 'Miami, Florida, Estados Unidos' },
       ],
-      priceRange: '$$$$',
     },
     {
       '@type': 'WebSite',
@@ -90,7 +86,7 @@ const ORG_JSONLD = {
       url: CANONICAL_BASE_URL,
       name: 'García Inversiones Inmobiliarias',
       description:
-        'Asesoramiento estratégico en real estate. Propiedades seleccionadas, mercados globales y acompañamiento personalizado.',
+        'Consultora boutique de real estate en Buenos Aires y Miami, con propiedades seleccionadas y acompañamiento personalizado.',
       publisher: { '@id': `${CANONICAL_BASE_URL}/#organization` },
       inLanguage: 'es-AR',
     },

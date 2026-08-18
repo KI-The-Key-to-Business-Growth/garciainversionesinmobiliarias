@@ -1,4 +1,4 @@
-// Footer premium — México eliminado, orden de mercados Argentina/EEUU/Uruguay/Dubái/España.
+// Footer premium — mercados activos Argentina/Buenos Aires y Estados Unidos/Miami.
 import Link from 'next/link';
 
 export default function Footer() {
@@ -19,7 +19,7 @@ export default function Footer() {
             </Link>
             <p className="footer-tagline">
               Consultora boutique de real estate. Propiedades seleccionadas y asesoramiento
-              personalizado en Argentina y mercados internacionales.
+              personalizado en Buenos Aires y Miami.
             </p>
             <div className="footer-contacts">
               <a
@@ -79,11 +79,14 @@ export default function Footer() {
           <div className="footer-col">
             <h3 className="footer-column-title">Mercados</h3>
             <ul className="footer-links">
-              <li>Argentina</li>
-              <li>Estados Unidos</li>
-              <li>Uruguay</li>
-              <li>Dubái</li>
-              <li>España</li>
+              <li>
+                <span className="footer-market-primary">Argentina</span>
+                <span className="footer-market-detail">Buenos Aires</span>
+              </li>
+              <li>
+                <span className="footer-market-primary">Estados Unidos</span>
+                <span className="footer-market-detail">Miami</span>
+              </li>
             </ul>
           </div>
 
@@ -91,10 +94,9 @@ export default function Footer() {
             <h3 className="footer-column-title">Servicios</h3>
             <ul className="footer-links">
               <li>Asesoramiento en inversiones</li>
-              <li>Compra y venta</li>
-              <li>Alquiler de propiedades</li>
-              <li>Mercados internacionales</li>
-              <li>Proyectos y desarrollos</li>
+              <li>Compra, venta y alquiler</li>
+              <li>Propietarios</li>
+              <li>Desarrollos seleccionados</li>
             </ul>
           </div>
         </div>
