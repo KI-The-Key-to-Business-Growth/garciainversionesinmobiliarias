@@ -12,7 +12,6 @@ import CtaBand from '@/components/sections/CtaBand';
 import Contact from '@/components/sections/Contact';
 import Newsletter from '@/components/sections/Newsletter';
 import TurnstileScript from '@/components/forms/TurnstileScript';
-import { PROPERTIES_ENABLED } from '@/lib/flags';
 
 export default function HomePage() {
   return (
@@ -20,13 +19,17 @@ export default function HomePage() {
       <Header />
       <main>
         <Hero />
+        <PropertiesComingSoon
+          id="oportunidades-seleccionadas"
+          eyebrow="SELECCIÓN GARCÍA"
+          title="Oportunidades seleccionadas"
+          status="Selección en preparación."
+          text="Estamos preparando una selección de propiedades y desarrollos alineados con distintos objetivos inmobiliarios."
+          showCta={false}
+        />
         <About />
         <Services />
         <Markets />
-        {/* Mientras PROPERTIES_ENABLED=false se muestra "Selección en preparación".
-            Cuando el CRM 2Clics conecte (Fase 5) se renderiza la grilla destacada. */}
-        <PropertiesComingSoon />
-        {PROPERTIES_ENABLED && null /* Fase 5: <FeaturedProperties /> */}
         <Why />
         <CtaBand />
         <Contact />
