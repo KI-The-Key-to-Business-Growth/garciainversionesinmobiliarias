@@ -21,14 +21,14 @@ type PropertyCardProps = {
   // /propiedades y Home ("Oportunidades seleccionadas") — ver docs/ai/PROPERTY_UX_DECISIONS.md.
   // La ficha (relacionadas, `PropertyDetailView.tsx`) sigue con 'default' sin cambios.
   //
-  // 'overlay-home' vs. 'overlay-catalog' (2026-09-02, pedido explícito): comparten TODO el
-  // markup/CSS salvo el comportamiento del título, porque Home y el catálogo cumplen funciones
-  // distintas — Home muestra solo 3 destacadas y prioriza impacto visual (título oculto en
-  // reposo, aparece en hover/focus en desktop); el catálogo necesita escanearse rápido con
-  // muchas cards seguidas, así que el título queda SIEMPRE visible (1 línea en reposo, hasta 2 en
-  // hover/focus en desktop). La diferencia se resuelve con una clase adicional
-  // (`twoclics-card--overlay-catalog`) sobre el mismo `.twoclics-card--overlay` — no hay CSS
-  // duplicado, solo un bloque de override acotado al `<h3>`.
+  // 'overlay-home' vs. 'overlay-catalog' (2026-09-02, unificadas visualmente 2026-09-03, pedido
+  // explícito): nacieron distintas (Home ocultaba el título en reposo y lo revelaba en hover; el
+  // catálogo lo mostraba siempre) pero hoy renderizan EXACTAMENTE igual — mismo markup, mismo CSS,
+  // mismo comportamiento de título. Se mantienen como dos valores de `variant` separados (en vez
+  // de colapsarlos a uno solo) porque documentan la intención en cada call site
+  // (`FeaturedProperties.tsx` vs. `app/propiedades/page.tsx`) sin costo real, y si el día de
+  // mañana necesitan volver a diferenciarse alcanza con reintroducir un modifier class acotado al
+  // título — no hay que volver a tocar este componente ni sus consumidores.
   variant?: 'default' | 'overlay-home' | 'overlay-catalog';
 };
 
@@ -66,12 +66,8 @@ export default function PropertyCard({ property, compact = false, variant = 'def
   const featured = property.webListing === 'DESTACADO';
 
   if (variant === 'overlay-home' || variant === 'overlay-catalog') {
-    const overlayClassName =
-      variant === 'overlay-catalog'
-        ? 'twoclics-card twoclics-card--overlay twoclics-card--overlay-catalog'
-        : 'twoclics-card twoclics-card--overlay';
     return (
-      <article className={overlayClassName}>
+      <article className="twoclics-card twoclics-card--overlay">
         <Link href={href} className="twoclics-card-media" aria-label={`Ver propiedad ${property.title}`}>
           <ListingImage image={property.images[0]} alt={property.title} />
           <div className="twoclics-card-gradient" />

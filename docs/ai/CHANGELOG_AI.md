@@ -502,3 +502,20 @@ Delta, varias Oficinas seguidas, Departamentos con títulos largos (2 líneas en
 comprimirse). 212 tests (211 previos + 1 nuevo), typecheck/lint limpios, e2e de salud sobre build
 de producción sin errores de consola. Detalle en `docs/ai/PROPERTY_UX_DECISIONS.md` ("Título:
 reveal en hover/focus en Home, siempre visible en catálogo").
+
+**2026-09-03 · Producto/UX (título overlay: unificado Home = catálogo)** · Pedido explícito de
+que Home use el mismo comportamiento de título que el catálogo (siempre visible, 1 línea en
+reposo en desktop, expande a 2 en hover/focus, siempre hasta 2 líneas en mobile) en vez del
+reveal-en-hover que tenía desde el 2026-09-01. Se fusionó el CSS de `overlay-catalog` en la regla
+base `.twoclics-card--overlay .twoclics-card-overlay-info h3` y se eliminó el modifier class
+`twoclics-card--overlay-catalog`, que quedó redundante. `overlay-home` y `overlay-catalog` (los
+dos valores de `variant` en `PropertyCard.tsx`) ahora renderizan **markup byte-idéntico** —
+verificado con un test que compara `homeHtml === catalogHtml` directamente. Se mantuvieron ambos
+nombres de `variant` (en vez de colapsarlos a uno) porque siguen documentando la intención en cada
+call site sin costo real. No se tocó imagen/scrim/badges/ubicación/precio/facts/CTA/tipo/links/
+ficha individual · Motivo: pedido explícito, "una card de Home y una del catálogo tienen que ser
+esencialmente la misma card" · Estado: vigente. Verificado a 1920×800 y 390×844 en Home (reposo,
+hover, focus por teclado, títulos cortos y largos). 212 tests (mismo total — se reescribió el test
+que ya cubría la diferencia entre variantes para cubrir ahora la igualdad), typecheck/lint
+limpios. Detalle en `docs/ai/PROPERTY_UX_DECISIONS.md` ("Título: mismo comportamiento en Home y
+catálogo").

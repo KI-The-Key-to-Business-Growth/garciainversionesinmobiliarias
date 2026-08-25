@@ -4153,73 +4153,47 @@ body[data-page-type='thank_you'] {
   border-radius: 1px;
 }
 
-/* Título solo en hover/focus en desktop (2026-09-01, pedido explícito) — comportamiento BASE,
-   hoy vigente solo en Home ("Oportunidades seleccionadas", `variant="overlay-home"`): reduce el
-   ruido inicial de la card, ubicación/precio/facts/CTA siguen visibles siempre. El texto completo
-   del título queda igual en el DOM (accesible), solo se oculta VISUALMENTE por defecto
-   (max-height + opacity, no `display:none`, para poder animarlo). Se revela con `:hover`,
-   `:focus-visible` y `:focus-within` sobre el link que envuelve toda la card
-   (`.twoclics-card-media`) — cubre mouse y navegación por teclado. En mobile (sin hover real) se
-   fuerza visible siempre, ver media query más abajo. El catálogo (`variant="overlay-catalog"`)
-   pisa este comportamiento más abajo (`.twoclics-card--overlay-catalog h3`) — ahí el título
-   necesita estar siempre visible porque hay que escanear muchas cards seguidas. */
-.twoclics-card--overlay h3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+/* Título visible siempre, 1 línea en reposo, hasta 2 en hover/focus en desktop (unificado
+   2026-09-03, pedido explícito). Hasta acá Home ocultaba el título en reposo y el catálogo lo
+   mostraba siempre — ahora las dos variantes (`overlay-home`/`overlay-catalog`) comparten
+   exactamente el mismo comportamiento y CSS; el título deja de depender del contexto. El texto
+   completo del título queda igual en el DOM (accesible) — el recorte a 1 línea es puramente
+   visual (`max-height` + `overflow: hidden`, sin `display:none`, para poder animarlo). Se
+   expande con `:hover`, `:focus-visible` y `:focus-within` sobre el link que envuelve toda la
+   card (`.twoclics-card-media`) — cubre mouse y navegación por teclado. En mobile (sin hover
+   real) queda siempre visible hasta 2 líneas, ver media query más abajo.
+
+   `display: block` (sin `-webkit-line-clamp`) — conviven mal con `max-height`: con
+   `display: -webkit-box` + `-webkit-line-clamp: 2` el navegador igual renderiza las 2 líneas que
+   el line-clamp permite y NO respeta un `max-height` menor (confirmado con
+   `getComputedStyle`/`offsetHeight` durante la implementación original del catálogo). `max-height`
+   + `overflow: hidden` son la ÚNICA fuente de verdad del recorte, en múltiplos exactos de
+   `line-height` (1.18em × 1 línea / × 2 líneas) para que el corte caiga justo en el borde entre
+   líneas, no a mitad de un glifo. Selector de 2 clases (reutiliza `.twoclics-card-overlay-info`,
+   ya existente) + `min-height: 0` explícito porque `.twoclics-catalog-section .twoclics-card h3`
+   (regla vieja de la card default, también 2 clases de especificidad) le gana a un selector de 1
+   sola clase — un `min-height` mayor que el `max-height` siempre gana en CSS sin importar el
+   orden de declaración; esto importa porque estas cards también se renderizan dentro de
+   `.twoclics-catalog-section` en `/propiedades`. */
+.twoclics-card--overlay .twoclics-card-overlay-info h3 {
+  display: block;
   overflow: hidden;
   margin: 0;
-  max-height: 0;
-  opacity: 0;
+  min-height: 0;
+  max-height: 1.18em;
+  opacity: 1;
   font-family: var(--font-cormorant), serif;
-  font-size: 1.18rem;
+  font-size: 1.05rem;
   font-weight: 600;
   line-height: 1.18;
   color: var(--white);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-  transition: max-height 0.25s ease, opacity 0.2s ease;
+  transition: max-height 0.25s ease;
 }
 
 .twoclics-card--overlay .twoclics-card-media:hover h3,
 .twoclics-card--overlay .twoclics-card-media:focus-visible h3,
 .twoclics-card--overlay .twoclics-card-media:focus-within h3 {
-  max-height: 3.1em;
-  opacity: 1;
-}
-
-/* Catálogo (`.twoclics-card--overlay-catalog`, 2026-09-02, pedido explícito): variante intermedia
-   — a diferencia de Home, acá el título queda SIEMPRE visible (opacity:1 fijo, nunca se anima),
-   apenas más chico ("tamaño algo menor que el título overlay original"), recortado a 1 línea en
-   reposo y hasta 2 líneas en hover/focus, con transición suave.
-
-   Dos bugs reales encontrados en la primera pasada, ambos confirmados con `getComputedStyle`:
-   (1) `-webkit-line-clamp` (heredado de la regla base) y `max-height` compiten cuando conviven —
-   con `display: -webkit-box` + `-webkit-line-clamp: 2`, el navegador renderiza igual las 2 líneas
-   que el line-clamp permite y NO respeta un `max-height` más chico. Corregido sacando el
-   line-clamp para esta variante (`display: block`, sin `-webkit-line-clamp`) y dejando que
-   `max-height` + `overflow: hidden` (heredado) sean la ÚNICA fuente de verdad del recorte.
-   (2) `.twoclics-catalog-section .twoclics-card h3` (regla vieja de la card default, `min-height:
-   2.45em`, especificidad 2 clases) le seguía ganando a esta regla (antes 1 clase) — un
-   `min-height` mayor que el `max-height` SIEMPRE gana en CSS, sin importar cuál se declaró
-   después. Corregido igualando la especificidad a 2 clases
-   (`.twoclics-card--overlay-catalog .twoclics-card-overlay-info h3`, reutilizando una clase que
-   ya existe en el árbol) y reseteando `min-height: 0` explícitamente — así, al estar declarada
-   después en la hoja de estilos, gana el empate de especificidad. `max-height` en múltiplos
-   exactos de `line-height` (1.18em × 1 línea / × 2 líneas) para que el corte caiga justo en el
-   borde entre líneas, no a mitad de un glifo. No cambia el resto de la card (scrim/badges/
-   ubicación/precio/facts/tipo). */
-.twoclics-card--overlay-catalog .twoclics-card-overlay-info h3 {
-  display: block;
-  -webkit-line-clamp: unset;
-  min-height: 0;
-  font-size: 1.05rem;
-  max-height: 1.18em;
-  opacity: 1;
-}
-
-.twoclics-card--overlay-catalog .twoclics-card-media:hover h3,
-.twoclics-card--overlay-catalog .twoclics-card-media:focus-visible h3,
-.twoclics-card--overlay-catalog .twoclics-card-media:focus-within h3 {
   max-height: 2.36em;
 }
 
@@ -5579,24 +5553,15 @@ body[data-page-type='thank_you'] {
     grid-template-columns: 1fr;
   }
 
-  /* Sin hover real en mobile — el título de la card overlay queda siempre visible (ajuste
-     2026-09-01), a diferencia de desktop donde aparece recién en hover/focus. */
-  .twoclics-card--overlay h3 {
-    max-height: none;
-    opacity: 1;
-    transition: none;
-  }
-
-  /* Bug real encontrado validando mobile (2026-09-02): el catálogo sacó `-webkit-line-clamp` en
-     desktop (ver bloque `.twoclics-card--overlay-catalog h3` más arriba) para poder animar el
-     hover con `max-height` — sin ese line-clamp, el `max-height: none` de la regla de arriba
-     dejaba pasar CUALQUIER cantidad de líneas en vez de tope 2, y además esa regla base (1 clase)
-     tiene MENOS especificidad que el `max-height: 1.18em` (1 línea) del bloque desktop del
-     catálogo (2 clases) — sin este override, el catálogo en mobile quedaba pegado en 1 línea,
-     cortando títulos largos a mitad de palabra en vez de mostrar hasta 2 líneas. Mismo nivel de
-     especificidad que la regla desktop (2 clases), declarada después → gana en mobile. */
-  .twoclics-card--overlay-catalog .twoclics-card-overlay-info h3 {
+  /* Sin hover real en mobile — el título de la card overlay queda siempre visible hasta 2 líneas
+     (unificado 2026-09-03, antes solo el catálogo se comportaba así en mobile). Mismo selector de
+     2 clases que en desktop para seguir ganando el empate de especificidad contra
+     `.twoclics-catalog-section .twoclics-card h3` (regla vieja de la card default, ver comentario
+     en el bloque desktop). `opacity` ya es 1 por default (regla desktop) — no hace falta
+     repetirlo acá. */
+  .twoclics-card--overlay .twoclics-card-overlay-info h3 {
     max-height: 2.36em;
+    transition: none;
   }
 
   /* Filtros compactos: Ubicación ocupa el ancho completo, Operación y Tipo

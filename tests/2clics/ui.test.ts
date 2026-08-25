@@ -345,7 +345,7 @@ describe('2Clics property UI', () => {
       expect(compactHtml).not.toContain('twoclics-card--overlay');
     });
 
-    it('marks only overlay-catalog with the extra modifier class that drives the "title always visible" title behavior — overlay-home keeps the base hover-reveal behavior untouched', () => {
+    it('renders overlay-home and overlay-catalog with byte-identical markup — unified 2026-09-03, both share the same "title visible, 1 line rest / 2 lines hover" behavior', () => {
       const homeHtml = render(
         React.createElement(PropertyCard, { variant: 'overlay-home', property: property() }),
       );
@@ -353,13 +353,13 @@ describe('2Clics property UI', () => {
         React.createElement(PropertyCard, { variant: 'overlay-catalog', property: property() }),
       );
 
-      expect(homeHtml).toContain('twoclics-card--overlay');
+      // No quedó ningún modifier class residual de cuando el título se comportaba distinto por
+      // variante — si algún día vuelven a divergir, este test debe fallar y avisar.
       expect(homeHtml).not.toContain('twoclics-card--overlay-catalog');
-      expect(catalogHtml).toContain('twoclics-card--overlay-catalog');
-      // Ambas variantes comparten el mismo markup salvo la clase extra — mismo título en el DOM,
-      // mismo footer con CTA + tipo, nada duplicado.
+      expect(catalogHtml).not.toContain('twoclics-card--overlay-catalog');
+      expect(homeHtml).toBe(catalogHtml);
+      expect(homeHtml).toContain('twoclics-card--overlay');
       expect(homeHtml).toContain(property().title);
-      expect(catalogHtml).toContain(property().title);
     });
   });
 

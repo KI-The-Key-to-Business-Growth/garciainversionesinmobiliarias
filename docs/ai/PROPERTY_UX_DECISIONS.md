@@ -446,25 +446,30 @@ fotos de playa/cielo muy claro) y Oficina — misma legibilidad en todos los cas
 caso. 211 tests (sin cambios de markup/semántica, no se tocaron), typecheck/lint limpios, e2e de
 salud de Home y `/propiedades` sin errores de consola sobre build de producción.
 
-#### Título: reveal en hover/focus en Home, siempre visible en catálogo (2026-09-02)
+#### Título: mismo comportamiento en Home y catálogo (2026-09-02, unificado 2026-09-03)
 
-Home y catálogo cumplen funciones distintas — Home muestra solo 3 destacadas y prioriza impacto
-visual; el catálogo necesita escanearse rápido con muchas cards seguidas (título ausente por
-defecto ahí generaba cards casi indistinguibles a simple vista, especialmente entre propiedades
-con título/ubicación idénticos — ver nota sobre Oficinas repetidas más abajo). Se dividió el
-`variant` de `PropertyCard.tsx` en `'overlay-home'` y `'overlay-catalog'` — mismo componente, sin
-duplicar CSS; la diferencia se limita al comportamiento del `<h3>`, resuelta con una clase
-adicional (`twoclics-card--overlay-catalog`) sobre el mismo `.twoclics-card--overlay` base.
+**Estado vigente:** Home y catálogo usan **exactamente el mismo comportamiento de título** —
+siempre visible, 1 línea en reposo en desktop, se expande hasta 2 líneas en hover/focus, siempre
+visible hasta 2 líneas en mobile. `overlay-home` y `overlay-catalog` (los dos valores de `variant`
+de `PropertyCard.tsx`) renderizan hoy **markup byte-idéntico** — el mismo componente, el mismo CSS,
+sin ningún modifier class de por medio (test de regresión: `homeHtml === catalogHtml` en
+`tests/2clics/ui.test.ts`). Se mantienen como dos valores de `variant` separados en vez de
+colapsarlos a uno solo porque documentan la intención en cada call site
+(`FeaturedProperties.tsx` vs. `app/propiedades/page.tsx`) sin costo real — si el día de mañana
+necesitan volver a diferenciarse, alcanza con reintroducir un modifier class acotado al `<h3>`.
 
-- **Home (`overlay-home`, sin cambios respecto al ajuste anterior):** título oculto en reposo en
-  desktop, aparece en `:hover`/`:focus-visible`/`:focus-within` (hasta 2 líneas,
-  `-webkit-line-clamp: 2`). En mobile, siempre visible.
-- **Catálogo (`overlay-catalog`, nuevo):** título **siempre visible** — 1 línea en reposo en
-  desktop (`.twoclics-card--overlay-catalog h3`, `max-height` = 1 línea, fuente ligeramente más
-  chica que Home, `1.05rem`), se expande hasta 2 líneas en hover/focus (`max-height` = 2 líneas,
-  misma transición suave). En mobile, siempre visible hasta 2 líneas.
+**Historia (por qué llegamos acá):** originalmente (2026-09-01) Home ocultaba el título en reposo
+en desktop y lo revelaba recién en hover/focus, priorizando impacto visual con solo 3 destacadas.
+El 2026-09-02 el catálogo necesitó diferenciarse porque escanear muchas cards seguidas sin título
+visible las volvía casi indistinguibles a simple vista (especialmente entre propiedades con
+título/ubicación idénticos — ver nota sobre Oficinas repetidas más abajo), así que se creó
+`overlay-catalog` con el título siempre visible. El 2026-09-03, pedido explícito, se llevó ese
+mismo comportamiento (siempre visible) también a Home — misma tipografía/tamaño/jerarquía que el
+catálogo (`1.05rem`) — y al quedar ambas variantes con comportamiento idéntico, se eliminó el
+modifier class `twoclics-card--overlay-catalog` (ya no aportaba nada) y se fusionó su CSS en la
+regla base `.twoclics-card--overlay .twoclics-card-overlay-info h3`.
 
-**Dos bugs reales encontrados implementando esto** (los tres corregidos, confirmados con
+**Tres bugs reales encontrados implementando esto** (los tres corregidos, confirmados con
 `getComputedStyle`/`offsetHeight`, no solo visualmente):
 
 1. `-webkit-line-clamp` y `max-height` compiten cuando conviven — con `display: -webkit-box` +
@@ -496,9 +501,11 @@ misma card. La calidad de títulos del CRM se revisa por separado, no en esta ta
 
 Verificado a 1920×800 y 390×844 en Home y catálogo: Casa Miami, Casa Benavídez, Terreno Delta,
 varias Oficinas seguidas (mismo título/ubicación), y Departamentos con títulos largos (título de 2
-líneas en hover/focus sin comprimirse, confirmado con `scrollHeight === offsetHeight`). 212 tests,
-typecheck/lint limpios, e2e de salud de Home y `/propiedades` sin errores de consola sobre build
-de producción.
+líneas en hover/focus sin comprimirse, confirmado con `scrollHeight === offsetHeight`). Tras la
+unificación del 2026-09-03, verificado además que una card de Home y una del catálogo con la misma
+propiedad se ven visualmente indistinguibles (mismo título en 1 línea en reposo, misma expansión a
+2 líneas en hover/focus por teclado, mismo tamaño de fuente). 212 tests, typecheck/lint limpios,
+e2e de salud de Home y `/propiedades` sin errores de consola sobre build de producción.
 
 ## Ficha `/propiedades/[id]`
 
