@@ -6,7 +6,7 @@ import Hero from '@/components/sections/Hero';
 import About from '@/components/sections/About';
 import Services from '@/components/sections/Services';
 import Markets from '@/components/sections/Markets';
-import PropertiesComingSoon from '@/components/sections/PropertiesComingSoon';
+import FeaturedProperties from '@/components/properties/FeaturedProperties';
 import Why from '@/components/sections/Why';
 import CtaBand from '@/components/sections/CtaBand';
 import Contact from '@/components/sections/Contact';
@@ -19,14 +19,7 @@ export default function HomePage() {
       <Header />
       <main>
         <Hero />
-        <PropertiesComingSoon
-          id="oportunidades-seleccionadas"
-          eyebrow="SELECCIÓN GARCÍA"
-          title="Oportunidades seleccionadas"
-          status="Selección en preparación."
-          text="Estamos preparando una selección de propiedades y desarrollos alineados con distintos objetivos inmobiliarios."
-          showCta={false}
-        />
+        <FeaturedProperties />
         <Services />
         <About />
         <Markets />

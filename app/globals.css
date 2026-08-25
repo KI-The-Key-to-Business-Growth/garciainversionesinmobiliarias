@@ -3332,9 +3332,2562 @@ body[data-page-type='thank_you'] {
     gap: 0;
   }
 
-  .property-detail-hero--compact .property-share-btn svg {
+.property-detail-hero--compact .property-share-btn svg {
     width: 16px;
     height: 16px;
     flex-shrink: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   43. 2Clics API UI — catalogo, cards y fichas
+   ───────────────────────────────────────────────────────────── */
+.twoclics-catalog-hero {
+  background: var(--navy);
+  color: var(--white);
+  padding: 86px 0 42px;
+}
+
+.twoclics-catalog-hero h1 {
+  max-width: 900px;
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(2.35rem, 4.1vw, 3.8rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--gold);
+  text-align: center;
+  margin: 14px auto 12px;
+}
+
+.twoclics-detail-hero h1 {
+  max-width: 960px;
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(2.05rem, 3.9vw, 3.45rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--white);
+  margin: 0 0 14px;
+}
+
+.twoclics-catalog-hero p {
+  max-width: 840px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1rem;
+  line-height: 1.58;
+  text-align: center;
+  margin-inline: auto;
+}
+
+.twoclics-catalog-hero .eyebrow {
+  margin-bottom: 10px;
+}
+
+@media (min-width: 1121px) {
+  .twoclics-catalog-hero > .container {
+    width: auto;
+    margin: 0;
+    padding-inline: 48px;
+  }
+}
+
+.twoclics-catalog-section,
+.twoclics-detail-section {
+  background: var(--ivory);
+  padding: 72px 0 96px;
+}
+
+.twoclics-catalog-section {
+  padding: 42px 0 82px;
+}
+
+.twoclics-detail-section {
+  padding-top: 56px;
+}
+
+.twoclics-section-heading {
+  max-width: 780px;
+  margin-bottom: 36px;
+}
+
+.twoclics-section-heading--compact {
+  margin: 0 0 20px;
+}
+
+.twoclics-section-heading--compact h2,
+.twoclics-detail-panel h2,
+.twoclics-plans h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.42rem, 2vw, 1.9rem);
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.twoclics-filters {
+  display: grid;
+  /* Precio ensanchado (pasada UX 2026-08-24) — ahora es un filtro real de 3 sub-columnas
+     (Moneda/Desde/Hasta) siempre visibles, no un texto suelto; necesita más aire que antes. */
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(280px, 1.7fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.twoclics-filter-group {
+  min-width: 0;
+}
+
+.twoclics-filter-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--steel);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.twoclics-filter-group select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(50, 86, 117, 0.22);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--text);
+}
+
+.twoclics-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.twoclics-filters .btn {
+  min-height: 42px;
+  padding: 10px 20px;
+}
+
+/* Acción secundaria discreta — no compite en jerarquía con "Aplicar filtros" */
+.twoclics-filters-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  color: var(--steel);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.twoclics-filters-clear:hover {
+  color: var(--navy);
+}
+
+.twoclics-filters-clear:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Precio — depende de Operación (y de Moneda cuando hay más de una). El fieldset hereda el
+   estilo de label/select de .twoclics-filter-group (misma clase base); esto solo resetea los
+   estilos por-defecto de <fieldset>/<legend> y agrega el layout propio de sus sub-bloques. */
+.twoclics-filter-group--price {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.twoclics-filter-group--price legend {
+  padding: 0;
+  margin-bottom: 5px;
+  color: var(--steel);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Nota informativa secundaria bajo los controles de Precio (ej. faceta vacía sin filtro activo
+   que preservar) — mismo tratamiento tipográfico que .twoclics-filter-price-error pero en tono
+   neutral, no de error, porque no hay nada que el usuario deba corregir (bug real 2026-08-26:
+   antes reemplazaba todo el bloque, incluidos los inputs — ver PriceFilterGroup). */
+.twoclics-filter-price-hint {
+  margin: 8px 0 0;
+  color: var(--text-soft);
+  font-size: 0.76rem;
+  font-style: italic;
+}
+
+/* Precio ahora es siempre "Moneda | Desde | Hasta" en una sola fila (pasada UX 2026-08-24) — deja
+   de ser un texto informativo suelto y se lee como un filtro real, igual que Ubicación/Operación/
+   Tipo. Moneda ocupa una columna más angosta; Desde/Hasta comparten el resto en partes iguales.
+   `.twoclics-filter-price-range` pasa a `display: contents` para que sus dos hijos (Desde/Hasta)
+   se conviertan en ítems directos de este grid de 3 columnas, sin duplicar DOM/inputs (misma
+   técnica ya usada en mobile desde Fase 1.1, ahora aplicada también en desktop). */
+.twoclics-filter-price-controls {
+  display: grid;
+  grid-template-columns: minmax(84px, 0.85fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+
+.twoclics-filter-price-range {
+  display: contents;
+}
+
+.twoclics-filter-price-range input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(50, 86, 117, 0.22);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--text);
+}
+
+.twoclics-filter-price-error {
+  margin: 8px 0 0;
+  color: #a3402f;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+/* "Más filtros" (Fase 2) — <details> nativo, ocupa la fila completa del grid de .twoclics-filters
+   sin importar cuántas columnas tenga (1 / -1). Cerrado por defecto: una sola línea de summary,
+   jerarquía visual menor que los filtros principales. Abierto: los 3 controles secundarios en su
+   propia fila, sin competir con el ancho de Ubicación/Operación/Tipo/Precio. */
+.twoclics-filter-more {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.twoclics-filter-more summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--steel);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.twoclics-filter-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.twoclics-filter-more summary::before {
+  content: '▸';
+  font-size: 0.66rem;
+  transition: transform 0.15s ease;
+}
+
+.twoclics-filter-more[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.twoclics-filter-more summary:hover {
+  color: var(--navy);
+}
+
+.twoclics-filter-more summary:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Más filtros (revisado 2026-08-24): flex en vez de grid de 3 columnas iguales — el segmented
+   control ahora es compacto (ancho intrínseco, ya no estira a ocupar toda su columna), así que un
+   grid de fr iguales dejaba un vacío enorme a la derecha de cada grupo. Flex + gap generoso agrupa
+   los 3 filtros con más aire ENTRE ellos y sin desperdiciar ancho DENTRO de cada uno.
+   align-items:flex-start (no :end) porque Apto crédito usa un spacer del alto del <legend> en vez
+   de contenido real — top-align es lo que los deja con la fila de controles a la misma altura. */
+.twoclics-filter-more-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px 36px;
+  margin-top: 14px;
+}
+
+/* Dormitorios/Ambientes — segmented control de radios reales (reemplaza el <select> nativo: en
+   mobile un <select> con solo 5 opciones cortas igual dispara el picker de pantalla completa del
+   navegador/SO, y ese chrome no es estilizable de forma confiable con CSS). El fieldset hereda el
+   estilo de label de .twoclics-filter-group; esto solo resetea <fieldset>/<legend> y agrega el
+   layout propio del grupo de segmentos. */
+.twoclics-filter-group--segmented {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.twoclics-filter-group--segmented legend {
+  padding: 0;
+  margin-bottom: 5px;
+  color: var(--steel);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Un único grupo visual (revisado 2026-08-24): borde exterior común + divisores internos finos,
+   en vez de 5 pills sueltas con gaps grandes entre sí. Ancho intrínseco por segmento (inline-flex,
+   sin grid de columnas iguales) — "Todos" queda un poco más ancho que los dígitos por su propio
+   contenido, sin forzarlo. overflow:hidden recorta los segmentos extremos a las esquinas
+   redondeadas del contenedor sin necesitar border-radius individual por segmento. */
+.twoclics-segmented {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid rgba(50, 86, 117, 0.24);
+  border-radius: 7px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+/* El radio real nunca usa display:none (rompería el foco/tab) — se oculta solo visualmente
+   (clip), la <label> adyacente es la superficie visible/clickeable real. position:absolute lo
+   saca del flujo del flex, así que solo las <label> determinan el layout de los segmentos. */
+.twoclics-segmented-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.twoclics-segmented-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  min-width: 30px;
+  padding: 0 9px;
+  background: var(--white);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+/* Divisor fino entre segmentos — solo entre labels (:first-of-type es el primero de los 5, ya que
+   los radios están fuera del flujo y no cuentan para :first-of-type/:not entre hermanos <label>). */
+.twoclics-segmented-label:not(:first-of-type) {
+  border-left: 1px solid rgba(50, 86,117, 0.16);
+}
+
+.twoclics-segmented-label:hover {
+  background: rgba(50, 86, 117, 0.06);
+}
+
+.twoclics-segmented-input:checked + .twoclics-segmented-label {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.twoclics-segmented-input:checked + .twoclics-segmented-label:hover {
+  background: var(--navy);
+}
+
+/* outline-offset negativo (hacia adentro) + z-index — con los segmentos pegados sin gap, un
+   outline hacia afuera quedaría recortado por overflow:hidden del contenedor o tapado por el
+   segmento vecino. Color de foco distinto si el segmento enfocado está además activo: un outline
+   navy sobre fondo navy (el segmento seleccionado) sería invisible — ahí el foco se ve en blanco. */
+.twoclics-segmented-input:focus-visible + .twoclics-segmented-label {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--navy);
+  outline-offset: -2px;
+}
+
+.twoclics-segmented-input:checked:focus-visible + .twoclics-segmented-label {
+  outline-color: var(--white);
+}
+
+.twoclics-filter-group--checkbox {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Spacer del mismo alto que el <legend> de Dormitorios/Ambientes (font-size 0.72rem + margin-
+   bottom 5px) — sin él, el checkbox queda más arriba que la fila de segmentos de los otros dos
+   grupos y se percibe suelto/desalineado respecto del resto del bloque. */
+.twoclics-filter-checkbox-spacer {
+  display: block;
+  height: 17px;
+}
+
+.twoclics-filter-group--checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.twoclics-filter-group--checkbox input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--navy);
+  cursor: pointer;
+}
+
+.twoclics-listing-block + .twoclics-listing-block {
+  margin-top: 64px;
+}
+
+.twoclics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.twoclics-catalog-section .twoclics-grid {
+  gap: 20px;
+}
+
+.twoclics-catalog-section .twoclics-section-heading--compact {
+  margin-bottom: 18px;
+}
+
+.twoclics-listing-heading-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.twoclics-listing-heading-row span {
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.twoclics-grid--featured {
+  margin-inline: auto;
+  justify-content: center;
+}
+
+.twoclics-grid--featured-1 {
+  max-width: 390px;
+  grid-template-columns: minmax(0, 390px);
+}
+
+.twoclics-grid--featured-2 {
+  max-width: 790px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.twoclics-grid--featured-3 {
+  max-width: 1160px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.twoclics-grid--featured-4 {
+  max-width: 1280px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.twoclics-grid--related {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.twoclics-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(50, 86, 117, 0.16);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(12, 41, 72, 0.07);
+}
+
+.twoclics-card-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 1.42 / 1;
+  overflow: hidden;
+  background: #dfe5ea;
+}
+
+.twoclics-catalog-section .twoclics-card-media {
+  aspect-ratio: 1.62 / 1;
+}
+
+.listing-image-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.twoclics-card-media img,
+.twoclics-gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.twoclics-card-media img {
+  transition: transform 0.5s ease;
+}
+
+.twoclics-card:hover .twoclics-card-media img {
+  transform: scale(1.035);
+}
+
+.listing-image-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(135deg, rgba(12, 41, 72, 0.08), rgba(205, 160, 79, 0.12)),
+    #e8edf1;
+  color: rgba(12, 41, 72, 0.58);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.twoclics-card-badges {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.twoclics-card-badges span {
+  min-height: 25px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(7, 22, 40, 0.82);
+  color: var(--white);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.twoclics-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 9px;
+  padding: 18px;
+}
+
+.twoclics-catalog-section .twoclics-card-body {
+  gap: 7px;
+  padding: 16px;
+}
+
+.twoclics-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: var(--gold);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.twoclics-card h3 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.34rem;
+  font-weight: 600;
+  line-height: 1.12;
+  color: var(--navy);
+  min-height: 3em;
+  overflow-wrap: anywhere;
+}
+
+.twoclics-card h3 a {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.twoclics-catalog-section .twoclics-card h3 {
+  min-height: 2.45em;
+  font-size: 1.26rem;
+}
+
+.twoclics-catalog-section .twoclics-card h3 a {
+  -webkit-line-clamp: 2;
+}
+
+.twoclics-catalog-section .twoclics-card-location,
+.twoclics-catalog-section .twoclics-card-facts,
+.twoclics-catalog-section .twoclics-card-relation {
+  font-size: 0.82rem;
+  line-height: 1.38;
+}
+
+/* Precio con un poco más de jerarquía visual (pasada cards 2026-08-26) — antes quedaba más chico
+   que el resto de la letra del cuerpo (0.92rem vs. 0.86rem de ubicación/facts), casi un dato más
+   entre otros. Ahora se distingue con claridad sin volverse un elemento enorme: sigue siendo
+   claramente menor que el título (1.26rem) — el título sigue siendo protagonista. */
+.twoclics-catalog-section .twoclics-card-price {
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.twoclics-card--compact .twoclics-card-media {
+  aspect-ratio: 1.62 / 1;
+}
+
+.twoclics-card--compact .twoclics-card-body {
+  padding: 16px;
+}
+
+.twoclics-card--compact h3 {
+  min-height: 2.5em;
+  font-size: 1.25rem;
+}
+
+.twoclics-card--compact h3 a {
+  -webkit-line-clamp: 2;
+}
+
+.twoclics-card--compact .twoclics-card-cta {
+  min-height: 38px;
+  padding: 9px 16px;
+}
+
+.twoclics-card-location,
+.twoclics-card-facts,
+.twoclics-card-relation {
+  color: var(--text-soft);
+  font-size: 0.86rem;
+  line-height: 1.48;
+}
+
+.twoclics-card-price {
+  color: var(--navy);
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.twoclics-card-relation {
+  color: var(--steel);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.twoclics-card-cta {
+  align-self: flex-start;
+  margin-top: auto;
+  min-height: 40px;
+  padding: 10px 18px;
+  font-size: 0.82rem;
+}
+
+.twoclics-catalog-section .twoclics-card-cta {
+  min-height: 38px;
+  padding: 9px 16px;
+}
+
+/* Card overlay — APROBADA (2026-08-28, docs/ai/PROPERTY_UX_DECISIONS.md) para /propiedades y
+   Home ("Oportunidades seleccionadas"). Info principal superpuesta sobre la foto (inspirado en
+   portales tipo Cervera solo en la IDEA de "foto protagonista + info superpuesta" — identidad
+   visual (tipografía, navy/gold, sin ornamento extra) sigue siendo la de García). Toda la tarjeta
+   (foto + info) es un único <Link> clickeable; el CTA queda como texto discreto integrado abajo,
+   no un botón compitiendo con la foto. La ficha (relacionadas, `PropertyDetailView.tsx`) sigue
+   con la card default sin cambios hasta que se revise específicamente ese contexto. */
+.twoclics-card--overlay {
+  background: transparent;
+  border: none;
+  box-shadow: 0 16px 32px rgba(12, 41, 72, 0.16);
+}
+
+.twoclics-card--overlay .twoclics-card-media {
+  aspect-ratio: 4 / 3;
+}
+
+/* Scrim propio, no un ::before/::after — así el orden real en el DOM (imagen → scrim → badges →
+   texto) controla el apilado visual sin depender de z-index: cada elemento pinta arriba del
+   anterior.
+
+   Ajuste estructural 2026-08-29 (pedido explícito): la legibilidad NO puede depender de qué foto
+   haya detrás (fachada clara, interior muy claro, aérea compleja) — antes el degradé llegaba a
+   opacidad 0 ya al 58% de altura, así que en fotos claras el título/eyebrow (que arrancan más
+   arriba del bloque) quedaban sobre una zona casi sin oscurecer. Ahora el scrim es más robusto y
+   progresivo, en 5 paradas: prácticamente limpio arriba de ~68%, transición suave (se funde con
+   la foto, no una caja recortada) entre ~68% y ~35%, y navy con opacidad alta ya desde el 35%
+   hacia abajo — así CUALQUIER texto que viva dentro del bloque de info (que ahora ocupa el 50%
+   inferior de la card, ver `.twoclics-card-overlay-info`) cae sobre una zona con contraste
+   garantizado, sin importar la foto. La mitad superior (arriba de ~55-60%) sigue prácticamente
+   intacta — la foto sigue siendo protagonista, esto no es una placa navy tapando la card. */
+.twoclics-card--overlay .twoclics-card-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(12, 41, 72, 0.92) 0%,
+    rgba(12, 41, 72, 0.78) 16%,
+    rgba(12, 41, 72, 0.52) 35%,
+    rgba(12, 41, 72, 0.22) 50%,
+    rgba(12, 41, 72, 0) 68%
+  );
+  pointer-events: none;
+}
+
+.twoclics-card--overlay .twoclics-card-badges {
+  top: 12px;
+  bottom: auto;
+}
+
+.twoclics-card--overlay .twoclics-card-badges span {
+  background: rgba(7, 22, 40, 0.55);
+}
+
+/* "Destacada" discreta a propósito (pedido explícito) — contorno fino en vez del pill sólido que
+   ya usa Venta/Alquiler, para no sumar ruido sobre la foto. */
+.twoclics-card--overlay .twoclics-card-badges span.twoclics-card-badge--subtle {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+/* `top: 50%` fija una zona de lectura consistente: el bloque de info vive dentro del 50% inferior
+   de la card (regla estructural pedida, no un límite de scroll) — independientemente de la foto,
+   ese 50% inferior siempre cae sobre la parte más opaca del scrim de arriba. `justify-content:
+   flex-end` alinea el contenido contra el borde inferior de esa zona (la parte MÁS oscura), así
+   con poco contenido (título corto, sin facts) el texto queda pegado abajo en vez de flotar a
+   mitad de la zona; con contenido más largo (título de 2 líneas + varios facts) crece hacia
+   arriba dentro de la misma zona, y solo en el caso más extremo puede asomar levemente por
+   encima del 50% — ahí lo sostiene la transición del scrim, que ya empieza a oscurecer antes. */
+.twoclics-card-overlay-info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 14px 16px;
+  color: var(--white);
+}
+
+/* Bug real encontrado ajustando el hover del título del catálogo (2026-09-02): con la zona de
+   info a altura FIJA (`top: 50%`), cuando el título necesita crecer a 2 líneas (Home en
+   hover/focus, catálogo en hover/focus) el contenido total a veces supera por poco la altura
+   disponible — el `flex-shrink: 1` que traen los flex items por default hace que el navegador
+   comprima el título SILENCIOSAMENTE en vez de dejarlo llegar a su `max-height` real (confirmado
+   con `getComputedStyle`/`offsetHeight`: el título se quedaba ~8px corto de sus 2 líneas). Esto
+   ya estaba documentado como comportamiento esperado ("con contenido más largo... crece hacia
+   arriba... solo en el caso más extremo puede asomar levemente por encima del 50%") pero el
+   flex-shrink por default lo estaba abortando en vez de dejarlo asomar. Con flex-shrink:0 en
+   todos los hijos, el contenido simplemente desborda hacia arriba cuando hace falta (el
+   contenedor no tiene overflow:hidden) — no se toca ubicación/precio/facts/CTA/tipo en sí, solo
+   se corrige que puedan mostrarse a su tamaño real sin compresión invisible. */
+.twoclics-card-overlay-info > * {
+  flex-shrink: 0;
+}
+
+/* Legibilidad sobre foto (ajuste 2026-08-28, pedido explícito): un text-shadow MUY sutil, apenas
+   perceptible, para separar el texto del fondo sin generar glow ni una sombra que se note como
+   efecto gráfico — el degradé (zona de lectura del 50% inferior + scrim, ajuste 2026-08-29) sigue
+   siendo la base del contraste; esto es solo un refuerzo puntual. Mismo valor en título/ubicación/
+   precio/facts/CTA para que se sienta coherente. */
+
+/* Eyebrow de tipo (ajuste 2026-08-30, pedido explícito): el dorado García sólido en el texto no
+   daba contraste suficiente en fotos muy claras (cielo, agua, vegetación, interiores claros) — a
+   diferencia del resto de los textos, el eyebrow es chico/bold y no puede apoyarse en un
+   text-shadow más fuerte sin verse pesado. Solución: el texto pasa a blanco/off-white (mismo nivel
+   de contraste robusto que título/ubicación/precio/facts, ya resuelto por la zona de lectura +
+   scrim) y el dorado García se conserva como acento — una línea corta y fina antes del texto
+   (`::before`, no un elemento nuevo en el DOM), sin pill/badge/caja/fondo/borde. */
+.twoclics-card--overlay .twoclics-card-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.twoclics-card--overlay .twoclics-card-meta::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 1px;
+}
+
+/* Título solo en hover/focus en desktop (2026-09-01, pedido explícito) — comportamiento BASE,
+   hoy vigente solo en Home ("Oportunidades seleccionadas", `variant="overlay-home"`): reduce el
+   ruido inicial de la card, ubicación/precio/facts/CTA siguen visibles siempre. El texto completo
+   del título queda igual en el DOM (accesible), solo se oculta VISUALMENTE por defecto
+   (max-height + opacity, no `display:none`, para poder animarlo). Se revela con `:hover`,
+   `:focus-visible` y `:focus-within` sobre el link que envuelve toda la card
+   (`.twoclics-card-media`) — cubre mouse y navegación por teclado. En mobile (sin hover real) se
+   fuerza visible siempre, ver media query más abajo. El catálogo (`variant="overlay-catalog"`)
+   pisa este comportamiento más abajo (`.twoclics-card--overlay-catalog h3`) — ahí el título
+   necesita estar siempre visible porque hay que escanear muchas cards seguidas. */
+.twoclics-card--overlay h3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  max-height: 0;
+  opacity: 0;
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.18rem;
+  font-weight: 600;
+  line-height: 1.18;
+  color: var(--white);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+
+.twoclics-card--overlay .twoclics-card-media:hover h3,
+.twoclics-card--overlay .twoclics-card-media:focus-visible h3,
+.twoclics-card--overlay .twoclics-card-media:focus-within h3 {
+  max-height: 3.1em;
+  opacity: 1;
+}
+
+/* Catálogo (`.twoclics-card--overlay-catalog`, 2026-09-02, pedido explícito): variante intermedia
+   — a diferencia de Home, acá el título queda SIEMPRE visible (opacity:1 fijo, nunca se anima),
+   apenas más chico ("tamaño algo menor que el título overlay original"), recortado a 1 línea en
+   reposo y hasta 2 líneas en hover/focus, con transición suave.
+
+   Dos bugs reales encontrados en la primera pasada, ambos confirmados con `getComputedStyle`:
+   (1) `-webkit-line-clamp` (heredado de la regla base) y `max-height` compiten cuando conviven —
+   con `display: -webkit-box` + `-webkit-line-clamp: 2`, el navegador renderiza igual las 2 líneas
+   que el line-clamp permite y NO respeta un `max-height` más chico. Corregido sacando el
+   line-clamp para esta variante (`display: block`, sin `-webkit-line-clamp`) y dejando que
+   `max-height` + `overflow: hidden` (heredado) sean la ÚNICA fuente de verdad del recorte.
+   (2) `.twoclics-catalog-section .twoclics-card h3` (regla vieja de la card default, `min-height:
+   2.45em`, especificidad 2 clases) le seguía ganando a esta regla (antes 1 clase) — un
+   `min-height` mayor que el `max-height` SIEMPRE gana en CSS, sin importar cuál se declaró
+   después. Corregido igualando la especificidad a 2 clases
+   (`.twoclics-card--overlay-catalog .twoclics-card-overlay-info h3`, reutilizando una clase que
+   ya existe en el árbol) y reseteando `min-height: 0` explícitamente — así, al estar declarada
+   después en la hoja de estilos, gana el empate de especificidad. `max-height` en múltiplos
+   exactos de `line-height` (1.18em × 1 línea / × 2 líneas) para que el corte caiga justo en el
+   borde entre líneas, no a mitad de un glifo. No cambia el resto de la card (scrim/badges/
+   ubicación/precio/facts/tipo). */
+.twoclics-card--overlay-catalog .twoclics-card-overlay-info h3 {
+  display: block;
+  -webkit-line-clamp: unset;
+  min-height: 0;
+  font-size: 1.05rem;
+  max-height: 1.18em;
+  opacity: 1;
+}
+
+.twoclics-card--overlay-catalog .twoclics-card-media:hover h3,
+.twoclics-card--overlay-catalog .twoclics-card-media:focus-visible h3,
+.twoclics-card--overlay-catalog .twoclics-card-media:focus-within h3 {
+  max-height: 2.36em;
+}
+
+.twoclics-card--overlay .twoclics-card-location {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.78rem;
+  line-height: 1.3;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.twoclics-card--overlay .twoclics-card-price {
+  margin-top: 2px;
+  color: var(--white);
+  font-size: 0.98rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.twoclics-card--overlay .twoclics-card-facts {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.72rem;
+  line-height: 1.3;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* Footer del bloque de info (ajuste 2026-09-01, pedido explícito): el tipo (CASA/DEPARTAMENTO/
+   OFICINA/TERRENO · LOTE) se mueve de arriba del título a esta fila inferior, a la derecha del
+   CTA — misma esquina inferior derecha del bloque de info. `justify-content: space-between` deja
+   el CTA a la izquierda y el tipo a la derecha, sin competir con el precio (que queda arriba, sin
+   tocar). Mismo tratamiento visual del tipo que antes (texto blanco + acento lineal dorado), solo
+   reposicionado. */
+.twoclics-card-overlay-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.twoclics-card-overlay-cta {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--white);
+  opacity: 0.92;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* Zoom apenas perceptible en hover (1.02, dentro del rango 1.01–1.03 pedido) — reusa la misma
+   transition de `.twoclics-card-media img` (ya respeta prefers-reduced-motion globalmente). */
+.twoclics-card--overlay:hover .twoclics-card-media img {
+  transform: scale(1.02);
+}
+
+.twoclics-card-relation--overlay {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.twoclics-state {
+  max-width: 620px;
+  padding: 36px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.twoclics-state p {
+  color: var(--text-soft);
+  line-height: 1.75;
+  margin-bottom: 22px;
+}
+
+.twoclics-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+}
+
+.twoclics-featured {
+  background: var(--ivory);
+  padding: 66px 0 70px;
+  scroll-margin-top: 96px;
+}
+
+.twoclics-featured .twoclics-section-heading {
+  margin-bottom: 24px;
+}
+
+.twoclics-featured .eyebrow {
+  margin-bottom: 10px;
+}
+
+.twoclics-featured .section-title {
+  font-size: clamp(2.25rem, 3.1vw, 3.25rem);
+  line-height: 0.98;
+  margin-bottom: 12px;
+}
+
+.twoclics-featured .section-text {
+  font-size: 0.98rem;
+  line-height: 1.56;
+}
+
+.twoclics-featured .twoclics-grid {
+  gap: 20px;
+}
+
+.twoclics-featured .twoclics-card--compact .twoclics-card-media {
+  aspect-ratio: 1.86 / 1;
+}
+
+.twoclics-featured .twoclics-card--compact .twoclics-card-body {
+  gap: 6px;
+  padding: 14px;
+}
+
+.twoclics-featured .twoclics-card--compact h3 {
+  min-height: 2.35em;
+  font-size: 1.18rem;
+  line-height: 1.08;
+}
+
+.twoclics-featured .twoclics-card-meta {
+  gap: 6px 12px;
+  font-size: 0.64rem;
+}
+
+.twoclics-featured .twoclics-card-location,
+.twoclics-featured .twoclics-card-facts,
+.twoclics-featured .twoclics-card-relation {
+  font-size: 0.8rem;
+  line-height: 1.34;
+}
+
+.twoclics-featured .twoclics-card-price {
+  font-size: 0.9rem;
+}
+
+.twoclics-featured .twoclics-card--compact .twoclics-card-cta {
+  min-height: 36px;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+}
+
+.twoclics-detail-hero {
+  background: var(--navy);
+  color: var(--white);
+  padding: 84px 0 38px;
+}
+
+.twoclics-detail-hero--property {
+  padding: 42px 0 28px;
+}
+
+.twoclics-detail-hero-container {
+  --property-hero-header-pad: 48px;
+  --property-hero-logo-width: 208px;
+  --property-hero-phone-width: 168px;
+  position: relative;
+  width: 100%;
+  min-height: 128px;
+}
+
+.twoclics-detail-hero--property .twoclics-detail-hero-container {
+  min-height: 108px;
+}
+
+.twoclics-detail-hero-inner {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+}
+
+.twoclics-detail-hero-inner--property {
+  display: block;
+}
+
+.twoclics-detail-hero-nav {
+  position: absolute;
+  left: calc(var(--property-hero-header-pad) + (var(--property-hero-logo-width) / 2));
+  top: 50%;
+  transform: translate(-50%, -42%);
+}
+
+.twoclics-detail-heading {
+  min-width: 0;
+}
+
+.twoclics-detail-eyebrow {
+  color: var(--gold);
+}
+
+.twoclics-detail-location {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.96rem;
+}
+
+.twoclics-detail-hero-inner--property .twoclics-detail-heading {
+  width: min(860px, calc(100% - 560px));
+  margin-inline: auto;
+  text-align: center;
+}
+
+.twoclics-detail-hero-inner--property .twoclics-detail-eyebrow,
+.twoclics-detail-hero-inner--property .twoclics-detail-location {
+  text-align: center;
+}
+
+@media (min-width: 1121px) {
+  .twoclics-detail-hero--property .twoclics-detail-eyebrow {
+    margin-bottom: 8px;
+  }
+
+  .twoclics-detail-hero--property h1 {
+    margin-bottom: 10px;
+  }
+}
+
+.twoclics-detail-price-block {
+  min-width: min(220px, 100%);
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  text-align: right;
+}
+
+.twoclics-detail-hero-inner--property .twoclics-detail-price-block {
+  position: absolute;
+  top: 50%;
+  right: var(--property-hero-header-pad);
+  width: var(--property-hero-phone-width);
+  min-width: 0;
+  transform: translateY(-50%);
+  text-align: center;
+}
+
+.twoclics-detail-hero-action {
+  position: absolute;
+  top: 50%;
+  right: var(--property-hero-header-pad);
+  width: var(--property-hero-phone-width);
+  display: flex;
+  justify-content: center;
+  transform: translateY(-50%);
+}
+
+.twoclics-detail-price-block span {
+  display: block;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 7px;
+}
+
+.twoclics-detail-price-block strong {
+  color: var(--white);
+  font-size: 1.18rem;
+  line-height: 1.25;
+}
+
+.twoclics-back-link {
+  display: inline-flex;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.twoclics-back-link:hover {
+  color: var(--white);
+}
+
+.twoclics-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 28px;
+  align-items: start;
+}
+
+.twoclics-detail-main,
+.twoclics-detail-aside {
+  display: grid;
+  gap: 22px;
+}
+
+.twoclics-detail-utility-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
+}
+
+.twoclics-share {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.twoclics-share-button {
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 1px solid rgba(50, 86, 117, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--steel);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.twoclics-share-button svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.twoclics-share-button:hover {
+  color: var(--navy);
+  border-color: rgba(50, 86, 117, 0.28);
+}
+
+.twoclics-share--icon .twoclics-share-button {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+  border-color: rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+}
+
+.twoclics-share--icon .twoclics-share-button:hover {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.twoclics-share--icon .twoclics-share-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.twoclics-share-status {
+  color: var(--steel);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.twoclics-share--icon .twoclics-share-status {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.twoclics-detail-aside {
+  position: sticky;
+  top: 112px;
+}
+
+.twoclics-mobile-actions {
+  display: none;
+}
+
+.twoclics-gallery {
+  display: grid;
+  gap: 8px;
+}
+
+.twoclics-gallery-main {
+  position: relative;
+  aspect-ratio: 2.08 / 1;
+  max-height: 450px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e8edf1;
+}
+
+.twoclics-gallery-main-button {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.twoclics-gallery-main-button:disabled {
+  cursor: default;
+}
+
+.twoclics-gallery-count,
+.twoclics-lightbox-count {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 2;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(7, 22, 40, 0.78);
+  color: var(--white);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.twoclics-gallery-all {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 3;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 999px;
+  background: rgba(7, 22, 40, 0.72);
+  color: var(--white);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.twoclics-gallery-all:hover {
+  background: rgba(7, 22, 40, 0.88);
+}
+
+.twoclics-gallery-nav,
+.twoclics-lightbox-nav,
+.twoclics-lightbox-close {
+  position: absolute;
+  z-index: 3;
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(7, 22, 40, 0.68);
+  color: var(--white);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.twoclics-gallery-nav:hover,
+.twoclics-lightbox-nav:hover,
+.twoclics-lightbox-close:hover {
+  background: rgba(7, 22, 40, 0.86);
+  transform: translateY(-1px);
+}
+
+.twoclics-gallery-nav span,
+.twoclics-lightbox-nav span,
+.twoclics-lightbox-close span {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.twoclics-gallery-nav--prev {
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.twoclics-gallery-nav--next {
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.twoclics-gallery-nav--prev:hover,
+.twoclics-gallery-nav--next:hover {
+  transform: translateY(calc(-50% - 1px));
+}
+
+.twoclics-gallery-thumbs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 3px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.twoclics-gallery-thumb,
+.twoclics-plan-thumb {
+  position: relative;
+  aspect-ratio: 1.42 / 1;
+  flex: 0 0 clamp(76px, 8vw, 108px);
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: #e8edf1;
+}
+
+.twoclics-gallery-thumb {
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.twoclics-gallery-thumb[aria-current='true'] {
+  border-color: var(--gold);
+}
+
+.twoclics-gallery-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 22, 40, 0);
+  transition: background 0.2s ease;
+}
+
+.twoclics-gallery-thumb:hover::after {
+  background: rgba(7, 22, 40, 0.12);
+}
+
+.twoclics-gallery-thumb .listing-image-frame,
+.twoclics-gallery-thumb .listing-image-fallback,
+.twoclics-plan-thumb .listing-image-frame,
+.twoclics-plan-thumb .listing-image-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.twoclics-plans {
+  margin-top: 12px;
+}
+
+.twoclics-plans h2 {
+  margin-bottom: 14px;
+}
+
+.twoclics-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  padding: 42px 72px;
+  background: rgba(3, 10, 18, 0.92);
+}
+
+.twoclics-lightbox-stage {
+  position: relative;
+  width: min(1180px, 100%);
+  height: min(78vh, 760px);
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0b1420;
+}
+
+.twoclics-lightbox-close {
+  top: 22px;
+  right: 22px;
+}
+
+.twoclics-lightbox-nav--prev {
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.twoclics-lightbox-nav--next {
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.twoclics-lightbox-nav--prev:hover,
+.twoclics-lightbox-nav--next:hover {
+  transform: translateY(calc(-50% - 1px));
+}
+
+.twoclics-lightbox-count {
+  right: 50%;
+  bottom: 22px;
+  transform: translateX(50%);
+}
+
+.twoclics-lightbox-stage .listing-image-frame {
+  overflow: visible;
+}
+
+.twoclics-lightbox-stage img {
+  object-fit: contain;
+}
+
+/* Bug real (2026-08-31): con columnas 100% iguales (`repeat(auto-fit, minmax(126px, 1fr))`), el
+   valor de Precio (ej. "U$D 1.300.000") podía no entrar en su celda — 126px de mínimo menos el
+   padding (18px por lado) deja ~90px para el texto, insuficiente con `white-space: nowrap`.
+   `Precio` es siempre el primer elemento de `essentialFacts()` (land/office/residencial, ver
+   PropertyDetailView.tsx) — se le da una pista fija más ancha (`minmax(165px, 1.3fr)`) y el resto
+   de los datos (Ambientes/Dormitorios/Baños/Cocheras/Superficie total) siguen repartiéndose el
+   espacio restante en partes iguales con `repeat(auto-fit, ...)`, sin achicar el valor de Precio
+   ni tocar el resto de las columnas. */
+.twoclics-essential-strip {
+  display: grid;
+  grid-template-columns: minmax(165px, 1.3fr) repeat(auto-fit, minmax(126px, 1fr));
+  overflow: hidden;
+  border: 1px solid rgba(50, 86, 117, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.twoclics-essential-item {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 16px 18px;
+  border-right: 1px solid rgba(50, 86, 117, 0.12);
+}
+
+.twoclics-essential-item:last-child {
+  border-right: 0;
+}
+
+.twoclics-essential-item span {
+  color: var(--text-soft);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.twoclics-essential-item strong {
+  color: var(--navy);
+  font-size: clamp(1rem, 1.35vw, 1.22rem);
+  line-height: 1.18;
+  white-space: nowrap;
+}
+
+.twoclics-technical-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.twoclics-detail-list--technical {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.twoclics-detail-panel {
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.twoclics-detail-panel h2 {
+  margin-bottom: 14px;
+}
+
+.twoclics-detail-panel p,
+.twoclics-rich-text {
+  color: var(--text-soft);
+  font-size: 0.98rem;
+  line-height: 1.76;
+}
+
+.twoclics-rich-text {
+  max-width: 780px;
+}
+
+.twoclics-detail-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.twoclics-detail-list--compact {
+  grid-template-columns: 1fr;
+}
+
+.twoclics-detail-list div {
+  min-width: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(50, 86, 117, 0.12);
+}
+
+.twoclics-detail-list dt {
+  color: var(--text-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.twoclics-detail-list dd {
+  color: var(--navy);
+  font-size: 0.96rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.twoclics-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.twoclics-chip-list li {
+  padding: 5px 9px;
+  border: 1px solid rgba(50, 86, 117, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.twoclics-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ── Ficha de propiedad — contenido editorial (Descripción hacia abajo) ────
+   Reemplaza los .twoclics-detail-panel individuales por secciones sin caja,
+   separadas por divisores finos. Alcance: solo PropertyDetailView.tsx — no
+   toca .twoclics-detail-panel/.twoclics-chip-list base (los sigue usando
+   DevelopmentDetailView y la tarjeta de asesoramiento/mapa). */
+
+.twoclics-ficha-section {
+  padding-top: 30px;
+  border-top: 1px solid rgba(50, 86, 117, 0.14);
+}
+
+.twoclics-ficha-section--first {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.twoclics-ficha-section--minor {
+  padding-top: 24px;
+}
+
+.twoclics-ficha-section > h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.3rem, 1.9vw, 1.68rem);
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.08;
+  margin: 0 0 16px;
+}
+
+.twoclics-ficha-section--minor > h3 {
+  color: var(--steel);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.twoclics-rich-text--editorial {
+  max-width: 66ch;
+  font-size: 1.02rem;
+  line-height: 1.82;
+}
+
+/* Descripción — progressive disclosure. El clamp solo recorta visualmente;
+   el texto completo original sigue en el DOM (nunca se corta el string). */
+.twoclics-description-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
+  overflow: hidden;
+}
+
+.twoclics-description-toggle {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--navy);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.twoclics-description-toggle:hover {
+  color: var(--steel);
+}
+
+.twoclics-description-toggle:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.twoclics-details-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 44px;
+}
+
+.twoclics-details-columns--single {
+  grid-template-columns: 1fr;
+}
+
+.twoclics-details-column + .twoclics-details-column {
+  border-left: 1px solid rgba(50, 86, 117, 0.14);
+  padding-left: 44px;
+}
+
+.twoclics-details-column h3 {
+  color: var(--navy);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.twoclics-spec-list {
+  display: grid;
+}
+
+.twoclics-spec-list div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(50, 86, 117, 0.1);
+}
+
+.twoclics-spec-list div:last-child {
+  border-bottom: 0;
+}
+
+.twoclics-spec-list dt {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.twoclics-spec-list dd {
+  flex: 0 0 auto;
+  max-width: 60%;
+  overflow: hidden;
+  color: var(--navy);
+  font-size: 0.94rem;
+  font-weight: 700;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Secciones menores (Información adicional) con pocos datos: se acota el
+   ancho para que label y valor se perciban como una unidad, en vez de
+   quedar separados a lo ancho de toda la columna principal. */
+.twoclics-spec-list--compact {
+  max-width: 420px;
+}
+
+.twoclics-chip-list--compact li {
+  padding: 4px 11px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.twoclics-detail-aside .twoclics-detail-panel {
+  padding: 14px;
+}
+
+.twoclics-detail-aside .twoclics-detail-panel h2 {
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.twoclics-detail-aside .twoclics-detail-panel p {
+  font-size: 0.86rem;
+  line-height: 1.52;
+}
+
+.twoclics-detail-aside .twoclics-detail-list {
+  gap: 7px;
+}
+
+.twoclics-detail-aside .twoclics-detail-list div {
+  padding-bottom: 7px;
+}
+
+.twoclics-detail-aside .twoclics-detail-list dt {
+  font-size: 0.66rem;
+  margin-bottom: 3px;
+}
+
+.twoclics-detail-aside .twoclics-detail-list dd {
+  font-size: 0.9rem;
+}
+
+.twoclics-advice-card {
+  display: grid;
+  gap: 10px;
+}
+
+.twoclics-advice-eyebrow {
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.twoclics-detail-aside .twoclics-advice-card h2 {
+  margin-bottom: 0;
+}
+
+.twoclics-advice-phone-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+}
+
+.twoclics-advice-phone {
+  color: var(--navy);
+  font-size: 0.96rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.twoclics-advice-phone:hover {
+  color: var(--steel);
+}
+
+.twoclics-advice-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.twoclics-advice-call,
+.twoclics-mobile-call {
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(50, 86, 117, 0.16);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--steel);
+  text-decoration: none;
+}
+
+.twoclics-advice-phone-row .twoclics-advice-call {
+  width: 32px;
+  height: 32px;
+  border-color: rgba(50, 86, 117, 0.18);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.twoclics-advice-call:hover,
+.twoclics-mobile-call:hover {
+  color: var(--navy);
+  border-color: rgba(50, 86, 117, 0.28);
+}
+
+.twoclics-advice-call svg,
+.twoclics-mobile-call svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.twoclics-advice-phone-row .twoclics-advice-call svg {
+  width: 14px;
+  height: 14px;
+}
+
+.twoclics-map-panel {
+  display: grid;
+  gap: 9px;
+  width: 100%;
+  max-width: 560px;
+  justify-self: start;
+  padding: 18px;
+}
+
+.twoclics-map-panel h2 {
+  font-size: clamp(1.24rem, 1.7vw, 1.55rem);
+  line-height: 1.08;
+  margin-bottom: 0;
+}
+
+.twoclics-map-location {
+  margin: 0;
+  color: var(--steel);
+  font-size: 0.92rem;
+  line-height: 1.42;
+}
+
+.twoclics-map-note {
+  width: fit-content;
+  margin: -2px 0 2px;
+  padding: 4px 8px;
+  border: 1px solid rgba(50, 86, 117, 0.12);
+  border-radius: 999px;
+  background: rgba(119, 147, 171, 0.08);
+  color: var(--steel);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.twoclics-map-frame,
+.twoclics-map-placeholder {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.twoclics-map-frame {
+  height: 320px;
+  border: 1px solid rgba(50, 86, 117, 0.14);
+  background: #eef2f5;
+  box-shadow: none;
+}
+
+.twoclics-map-placeholder {
+  display: grid;
+  justify-items: start;
+  min-height: 0;
+  padding: 14px;
+  border: 1px solid rgba(50, 86, 117, 0.16);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.twoclics-map-placeholder .btn {
+  min-height: 40px;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+}
+
+.twoclics-map-link {
+  justify-self: start;
+  color: var(--steel);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+.twoclics-map-link:hover {
+  color: var(--navy);
+}
+
+.twoclics-detail-cta {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.twoclics-detail-aside .twoclics-detail-cta {
+  min-height: 40px;
+  padding: 10px 16px;
+}
+
+.twoclics-inquiry-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(7, 22, 40, 0.72);
+  backdrop-filter: blur(2px);
+  isolation: isolate;
+}
+
+.twoclics-inquiry-modal {
+  position: relative;
+  z-index: 9001;
+  width: min(520px, 100%);
+  max-height: min(760px, calc(100vh - 44px));
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid rgba(50, 86, 117, 0.16);
+  border-radius: 8px;
+  background: #fbfaf7;
+  box-shadow: 0 24px 70px rgba(7, 22, 40, 0.24);
+}
+
+.twoclics-inquiry-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(50, 86, 117, 0.16);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--navy);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.twoclics-inquiry-modal h3 {
+  margin: 4px 38px 6px 0;
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.45rem;
+  line-height: 1.05;
+}
+
+.twoclics-inquiry-property {
+  margin-bottom: 16px;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.twoclics-inquiry-form {
+  display: grid;
+  gap: 12px;
+}
+
+.twoclics-inquiry-form .field {
+  gap: 6px;
+}
+
+.twoclics-inquiry-form .field label {
+  font-size: 0.78rem;
+}
+
+.twoclics-inquiry-form .field input,
+.twoclics-inquiry-form .field textarea {
+  border-radius: 8px;
+  padding: 11px 12px;
+}
+
+.twoclics-inquiry-form .field textarea {
+  min-height: 112px;
+}
+
+.twoclics-inquiry-status {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.twoclics-inquiry-status.is-ok {
+  border: 1px solid rgba(54, 132, 86, 0.24);
+  background: rgba(54, 132, 86, 0.08);
+  color: #285f3e;
+}
+
+.twoclics-inquiry-status.is-error {
+  border: 1px solid rgba(160, 72, 72, 0.24);
+  background: rgba(160, 72, 72, 0.08);
+  color: #7b3434;
+}
+
+.twoclics-related-section {
+  background: var(--ivory);
+  padding: 0 0 92px;
+}
+
+.twoclics-related-scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 14px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.twoclics-related-track {
+  display: flex;
+  gap: 16px;
+}
+
+.twoclics-related-track .twoclics-card {
+  flex: 0 0 clamp(230px, 23vw, 280px);
+  scroll-snap-align: start;
+}
+
+.twoclics-related-track .twoclics-card-media {
+  aspect-ratio: 1.62 / 1;
+}
+
+.twoclics-related-track .twoclics-card-body {
+  gap: 7px;
+  padding: 14px;
+}
+
+.twoclics-related-track .twoclics-card h3 {
+  min-height: 2.35em;
+  font-size: 1.15rem;
+}
+
+.twoclics-related-track .twoclics-card-location,
+.twoclics-related-track .twoclics-card-facts,
+.twoclics-related-track .twoclics-card-relation {
+  font-size: 0.8rem;
+}
+
+.twoclics-related-track .twoclics-card-price {
+  font-size: 0.88rem;
+}
+
+.twoclics-related-track .twoclics-card-cta {
+  min-height: 36px;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+}
+
+.twoclics-units {
+  display: grid;
+  gap: 12px;
+}
+
+.twoclics-unit {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid rgba(50, 86, 117, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.twoclics-unit strong {
+  color: var(--navy);
+  font-size: 1rem;
+}
+
+.twoclics-unit span {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1120px) {
+  .twoclics-grid,
+  .twoclics-grid--featured {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .twoclics-grid--featured-1 {
+    grid-template-columns: minmax(0, 390px);
+  }
+
+  .twoclics-grid--featured-3,
+  .twoclics-grid--featured-4,
+  .twoclics-grid--related {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .twoclics-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .twoclics-filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .twoclics-detail-hero-container {
+    width: min(calc(100% - 56px), var(--container));
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    min-height: 0;
+  }
+
+  .twoclics-detail-hero-inner--property .twoclics-detail-heading {
+    width: auto;
+  }
+
+  .twoclics-detail-hero-nav,
+  .twoclics-detail-hero-inner--property .twoclics-detail-price-block,
+  .twoclics-detail-hero-action {
+    position: static;
+    transform: none;
+  }
+
+  .twoclics-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .twoclics-detail-aside {
+    position: static;
+  }
+}
+
+@media (max-width: 680px) {
+  .twoclics-catalog-hero,
+  .twoclics-detail-hero {
+    padding: 86px 0 44px;
+  }
+
+  .twoclics-detail-hero--property {
+    padding: 34px 0 30px;
+  }
+
+  .twoclics-catalog-hero {
+    padding: 72px 0 34px;
+  }
+
+  .twoclics-detail-hero-container {
+    width: min(calc(100% - 40px), var(--container));
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .twoclics-catalog-section,
+  .twoclics-detail-section {
+    padding: 44px 0 64px;
+  }
+
+  .twoclics-catalog-section {
+    padding-top: 34px;
+  }
+
+  .twoclics-grid,
+  .twoclics-grid--featured,
+  .twoclics-grid--featured-1,
+  .twoclics-grid--featured-2,
+  .twoclics-grid--featured-3,
+  .twoclics-grid--featured-4,
+  .twoclics-grid--related,
+  .twoclics-detail-list {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sin hover real en mobile — el título de la card overlay queda siempre visible (ajuste
+     2026-09-01), a diferencia de desktop donde aparece recién en hover/focus. */
+  .twoclics-card--overlay h3 {
+    max-height: none;
+    opacity: 1;
+    transition: none;
+  }
+
+  /* Bug real encontrado validando mobile (2026-09-02): el catálogo sacó `-webkit-line-clamp` en
+     desktop (ver bloque `.twoclics-card--overlay-catalog h3` más arriba) para poder animar el
+     hover con `max-height` — sin ese line-clamp, el `max-height: none` de la regla de arriba
+     dejaba pasar CUALQUIER cantidad de líneas en vez de tope 2, y además esa regla base (1 clase)
+     tiene MENOS especificidad que el `max-height: 1.18em` (1 línea) del bloque desktop del
+     catálogo (2 clases) — sin este override, el catálogo en mobile quedaba pegado en 1 línea,
+     cortando títulos largos a mitad de palabra en vez de mostrar hasta 2 líneas. Mismo nivel de
+     especificidad que la regla desktop (2 clases), declarada después → gana en mobile. */
+  .twoclics-card--overlay-catalog .twoclics-card-overlay-info h3 {
+    max-height: 2.36em;
+  }
+
+  /* Filtros compactos: Ubicación ocupa el ancho completo, Operación y Tipo
+     comparten una fila de 2 columnas, Aplicar/Limpiar quedan abajo. Mismo
+     form/inputs que desktop — solo cambia la ubicación en el grid. */
+  .twoclics-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
+    padding: 12px 14px;
+  }
+
+  .twoclics-filter-group--location,
+  .twoclics-filter-group--price,
+  .twoclics-filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .twoclics-filter-group label {
+    margin-bottom: 4px;
+    font-size: 0.68rem;
+  }
+
+  .twoclics-filter-group select {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .twoclics-filter-price-range input {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .twoclics-filter-group--price legend {
+    margin-bottom: 4px;
+  }
+
+  /* Moneda + Desde + Hasta en una sola fila de 3 columnas (Moneda más angosta) — Precio se
+     muestra siempre así ahora (pasada UX 2026-08-24), en desktop y mobile por igual; acá solo se
+     angosta la columna de Moneda y se recorta el padding interno para 390px. */
+  .twoclics-filter-price-controls {
+    grid-template-columns: minmax(86px, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .twoclics-filter-price-currency select {
+    padding-left: 6px;
+    padding-right: 4px;
+    font-size: 0.82rem;
+  }
+
+  .twoclics-filter-price-range input {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .twoclics-filter-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  /* Más filtros (revisado 2026-08-24): cerrado sigue siendo una sola línea de summary compacta.
+     Abierto: con el segmented control compacto (ancho intrínseco, ya no grid de 5 columnas
+     iguales) Dormitorios/Ambientes/Apto crédito ya no necesitan una fila propia de ancho completo
+     cada uno — el flex-wrap los acomoda solos según el espacio real de 390px. */
+  .twoclics-filter-more {
+    padding-top: 8px;
+  }
+
+  .twoclics-filter-more summary {
+    font-size: 0.72rem;
+  }
+
+  .twoclics-filter-more-grid {
+    gap: 14px 22px;
+    margin-top: 10px;
+  }
+
+  .twoclics-segmented-label {
+    min-height: 34px;
+    min-width: 26px;
+    font-size: 0.76rem;
+    padding: 0 8px;
+  }
+
+  .twoclics-detail-utility-row {
+    justify-content: flex-start;
+    margin-top: -4px;
+  }
+
+  .twoclics-mobile-actions {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px;
+    align-items: center;
+    margin-top: -4px;
+  }
+
+  .twoclics-mobile-actions .twoclics-share {
+    justify-content: center;
+  }
+
+  .twoclics-mobile-actions .twoclics-share--icon .twoclics-share-button,
+  .twoclics-mobile-call {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    border-color: rgba(50, 86, 117, 0.16);
+    background: rgba(255, 255, 255, 0.76);
+    color: var(--steel);
+  }
+
+  .twoclics-mobile-actions .twoclics-share--icon .twoclics-share-button:hover {
+    color: var(--navy);
+    border-color: rgba(50, 86, 117, 0.28);
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .twoclics-mobile-actions .twoclics-detail-cta {
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 11px 12px;
+    font-size: 0.76rem;
+  }
+
+  .twoclics-mobile-actions .twoclics-share--icon .twoclics-share-status {
+    top: calc(100% + 6px);
+    left: 0;
+    right: auto;
+    color: var(--steel);
+  }
+
+  .twoclics-essential-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .twoclics-essential-item {
+    padding: 14px;
+  }
+
+  .twoclics-technical-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .twoclics-ficha-section {
+    padding-top: 24px;
+  }
+
+  .twoclics-details-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .twoclics-details-column + .twoclics-details-column {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid rgba(50, 86, 117, 0.14);
+    padding-top: 20px;
+    margin-top: 20px;
+  }
+
+  .twoclics-spec-list dd {
+    max-width: 55%;
+  }
+
+  .twoclics-spec-list--compact {
+    max-width: none;
+  }
+
+  .twoclics-description-clamp {
+    -webkit-line-clamp: 6;
+  }
+
+  .twoclics-detail-hero-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .twoclics-detail-hero-nav,
+  .twoclics-detail-hero-inner--property .twoclics-detail-heading,
+  .twoclics-detail-hero-inner--property .twoclics-detail-price-block,
+  .twoclics-detail-hero-action {
+    grid-column: 1;
+  }
+
+  .twoclics-detail-hero-nav {
+    justify-self: start;
+    transform: none;
+  }
+
+  .twoclics-detail-eyebrow {
+    text-align: center;
+  }
+
+  .twoclics-detail-price-block {
+    justify-self: center;
+    text-align: center;
+  }
+
+  .twoclics-detail-hero-action,
+  .twoclics-advice-card {
+    display: none;
+  }
+
+  .twoclics-filter-actions .btn,
+  .twoclics-card-cta {
+    width: 100%;
+  }
+
+  .twoclics-card-body,
+  .twoclics-detail-panel,
+  .twoclics-state {
+    padding: 20px;
+  }
+
+  .twoclics-gallery-main {
+    aspect-ratio: 1 / 0.72;
+    max-height: none;
+  }
+
+  .twoclics-gallery-thumbs {
+    gap: 8px;
+  }
+
+  .twoclics-gallery-thumb,
+  .twoclics-plan-thumb {
+    flex: 0 0 24%;
+    scroll-snap-align: start;
+  }
+
+  .twoclics-related-track .twoclics-card {
+    flex-basis: min(76vw, 270px);
+  }
+
+  .twoclics-gallery-nav {
+    width: 38px;
+    height: 38px;
+  }
+
+  .twoclics-lightbox {
+    padding: 54px 14px 44px;
+  }
+
+  .twoclics-lightbox-stage {
+    width: 100%;
+    height: min(70vh, 620px);
+  }
+
+  .twoclics-lightbox-nav {
+    width: 38px;
+    height: 38px;
+  }
+
+  .twoclics-lightbox-nav--prev {
+    left: 12px;
+  }
+
+  .twoclics-lightbox-nav--next {
+    right: 12px;
+  }
+
+  .twoclics-lightbox-close {
+    top: 12px;
+    right: 12px;
+  }
+
+  .twoclics-map-frame {
+    height: 285px;
+  }
+
+  .twoclics-map-panel {
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .twoclics-map-placeholder {
+    padding: 14px;
+  }
+
+  .twoclics-inquiry-overlay {
+    padding: 14px;
+  }
+
+  .twoclics-inquiry-modal {
+    max-height: calc(100vh - 28px);
+    padding: 20px;
+  }
+
+  .twoclics-inquiry-modal h3 {
+    font-size: 1.32rem;
   }
 }

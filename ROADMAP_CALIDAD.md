@@ -9,6 +9,14 @@ este archivo a un proyecto nuevo y reseteá los estados a ⏳.
 > Estado de la columna "Estado" = situación en **García Inversiones Inmobiliarias**
 > al 2026-06-26. Al reusar la plantilla, vaciá esa columna.
 
+> **NOTA DE ARQUITECTURA 2026-08:** Supabase ya no es la fuente de verdad del inventario
+> público. La nueva UI de propiedades (`/propiedades`, `/propiedades/[id]`, `/desarrollos/[id]`)
+> consume 2Clics External API server-side (`lib/2clics/*`). Las referencias a la tabla
+> `properties` en este documento (ítem #1, RLS) corresponden al flujo **legacy** del webhook
+> (`app/api/2clics/webhook`, `lib/db/properties.ts`) y deben interpretarse en ese contexto, no
+> como el mecanismo vigente de inventario. Detalle completo en
+> [`docs/ai/ARCHITECTURE.md`](docs/ai/ARCHITECTURE.md) y [`docs/ai/LEGACY.md`](docs/ai/LEGACY.md).
+
 ---
 
 ## 🔒 Seguridad

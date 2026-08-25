@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 // HERO — imagen única condor-resort con filtro saturate(1.35) brightness(1.05) (vía .hero-slide en globals.css).
 // next/image con priority (LCP) + fill; el filtro de .hero-slide se aplica sobre la imagen.
@@ -32,9 +33,9 @@ export default function Hero() {
               mirada comercial y patrimonial.
             </p>
             <div className="hero-actions">
-              <a className="btn btn-primary" href="/propiedades">
+              <Link className="btn btn-primary" href="/propiedades">
                 Ver propiedades
-              </a>
+              </Link>
               <a
                 className="btn btn-secondary"
                 href="https://wa.me/5491167240353"

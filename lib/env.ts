@@ -12,6 +12,23 @@ export const env = {
   CRM_AGENT_ID: Number(process.env.CRM_AGENT_ID || 0),
   CRM_MESSAGE_URL: process.env.CRM_MESSAGE_URL || 'https://api.2clics.com.ar/api/external/message',
 
+  // 2Clics External API v1.0.0 (server-side only)
+  TWOCLICS_API_BASE_URL: (
+    process.env.TWOCLICS_API_BASE_URL || 'https://api.ext.2clics.com.ar'
+  ).replace(/\/$/, ''),
+  TWOCLICS_API_KEY: process.env.TWOCLICS_API_KEY || '',
+  TWOCLICS_API_REGION_PREFIX: process.env.TWOCLICS_API_REGION_PREFIX || 'AR',
+  TWOCLICS_AR_API_KEY: process.env.TWOCLICS_AR_API_KEY || '',
+  TWOCLICS_US_API_KEY: process.env.TWOCLICS_US_API_KEY || '',
+  TWOCLICS_AR_AGENT_ID: process.env.TWOCLICS_AR_AGENT_ID || '',
+  TWOCLICS_US_AGENT_ID: process.env.TWOCLICS_US_AGENT_ID || '',
+  TWOCLICS_AR_REAL_ESTATE_ID: process.env.TWOCLICS_AR_REAL_ESTATE_ID || '',
+  TWOCLICS_US_REAL_ESTATE_ID: process.env.TWOCLICS_US_REAL_ESTATE_ID || '',
+  TWOCLICS_REVALIDATE_SECONDS: Number(process.env.TWOCLICS_REVALIDATE_SECONDS || 300),
+
+  // Google Maps Embed API (opcional, server-side only)
+  GOOGLE_MAPS_EMBED_API_KEY: process.env.GOOGLE_MAPS_EMBED_API_KEY || '',
+
   // Email (Resend)
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   CONTACT_TO_EMAIL: process.env.CONTACT_TO_EMAIL || '',

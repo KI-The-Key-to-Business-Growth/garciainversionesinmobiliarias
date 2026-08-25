@@ -18,7 +18,7 @@ de contacto y newsletter, integrado con un CRM externo (2Clics), email transacci
 | Lenguaje      | TypeScript (strict)                                        |
 | Base de datos | Supabase (PostgreSQL, acceso vía service role server-side) |
 | Email         | Resend                                                     |
-| CRM           | 2Clics (webhook + envío de leads)                          |
+| CRM           | 2Clics (webhook legacy + External API + envío de leads)     |
 | Rate limiting | Upstash Redis (con fallback en memoria)                    |
 | Anti-spam     | Cloudflare Turnstile + honeypot + filtros                  |
 | Monitoreo     | Sentry                                                     |
@@ -62,6 +62,14 @@ Definidas en `.env` (nunca commitear). Ver `.env.example` para la plantilla comp
 | `CRM_HASH`                       | Hash de autorización del webhook 2Clics                                  |
 | `CRM_AGENT_ID`                   | ID del agente para envío de leads al CRM                                 |
 | `CRM_MESSAGE_URL`                | Endpoint de mensajes del CRM 2Clics                                      |
+| `TWOCLICS_API_BASE_URL`          | Base URL de 2Clics External API v1.0.0 (`https://api.ext.2clics.com.ar`)  |
+| `TWOCLICS_API_KEY`               | API key principal de la cuenta 2Clics, sin prefijo y solo server-side    |
+| `TWOCLICS_API_REGION_PREFIX`     | Prefijo server-side para el header `api_key` (`AR` por default)          |
+| `TWOCLICS_AR_API_KEY`            | Override opcional para Argentina si 2Clics entrega una clave regional    |
+| `TWOCLICS_US_API_KEY`            | Override opcional para Miami/US si 2Clics entrega una clave regional     |
+| `TWOCLICS_AR_AGENT_ID`           | Agent default opcional para leads generales de Argentina                 |
+| `TWOCLICS_US_AGENT_ID`           | Agent default opcional para leads generales de Miami/US                  |
+| `GOOGLE_MAPS_EMBED_API_KEY`      | API key opcional para mapa embebido en fichas, solo server-side          |
 | `RESEND_API_KEY`                 | API key de Resend (email transaccional)                                  |
 | `CONTACT_TO_EMAIL`               | Email donde llegan las consultas (obligatorio para los formularios)      |
 | `CONTACT_FROM_EMAIL`             | Remitente (dominio verificado en Resend)                                 |
@@ -72,10 +80,26 @@ Definidas en `.env` (nunca commitear). Ver `.env.example` para la plantilla comp
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site key pública de Turnstile (se expone al cliente)                     |
 | `TURNSTILE_SECRET_KEY`           | Secret key de Turnstile — solo server-side                               |
 | `SENTRY_DSN`                     | DSN de Sentry. Vacío = monitoreo inactivo (no-op)                        |
-| `PROPERTIES_ENABLED`             | Feature flag del listado público de propiedades (`true`/`false`)         |
 
 Métricas/publicidad opcionales (`GTM_CONTAINER_ID`, `GA4_MEASUREMENT_ID`,
 `GOOGLE_ADS_CONVERSION_ID`, `META_PIXEL_ID`, etc.) están documentadas en `.env.example`.
+
+### 2Clics External API v1.0.0
+
+La credencial principal es `TWOCLICS_API_KEY` y se guarda sin prefijo. La capa
+server-side construye una unica credencial efectiva para el header `api_key`
+agregando `TWOCLICS_API_REGION_PREFIX` (`AR` por default). La aplicacion usa
+`TWOCLICS_AR_API_KEY` o `TWOCLICS_US_API_KEY` solo como override opcional si 2Clics
+confirma claves separadas por mercado.
+
+La ubicacion publica no depende de la API key usada para la llamada y no se
+reinterpreta como una clasificacion comercial fija. Se deriva de los objetos
+geograficos que devuelve 2Clics (`state`, `city`, `neighborhood`) y se muestra con
+los valores reales del CRM.
+
+Las fichas de propiedades y desarrollos pueden mostrar un mapa embebido si se
+configura `GOOGLE_MAPS_EMBED_API_KEY`. Sin esa variable, la web mantiene un
+fallback seguro con enlace público a Google Maps.
 
 ---
 
@@ -101,7 +125,7 @@ Métricas/publicidad opcionales (`GTM_CONTAINER_ID`, `GA4_MEASUREMENT_ID`,
 app/            Rutas (App Router): páginas, layouts, route handlers (/api)
 actions/        Server Actions (contacto, newsletter)
 components/     UI — forms/ · layout/ · sections/
-lib/            Lógica de negocio — crm/ · db/ · security/ · properties/
+lib/            Lógica de negocio — 2clics/ · crm/ · db/ · security/ · properties/
 data/           Fallback JSON local de propiedades
 tests/          Tests unitarios/integración (Vitest)
 e2e/            Tests E2E (Playwright)

@@ -7,11 +7,15 @@ node_modules/
 .vercel/
 npm-debug.log*
 yarn-error.log*
+debug.log
+.codex-next-dev*.log
+.codex-screens/
 # Archivos de datos con info sensible de usuarios
 data/leads.json
 data/newsletter.json
 # Config local de Claude Code (por máquina — no versionar)
 .claude/settings.local.json
+CLAUDE.local.md
 # Next.js
 /.next/
 /out/
@@ -21,3 +25,8 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /playwright/.cache/
+# Coverage (si se corre vitest --coverage)
+/coverage/
+# Scratch/temporal de trabajo (screenshots ad-hoc, scripts de verificación, logs de dev/prod
+# levantados a mano) — ver CLAUDE.local.md. Nunca contiene código fuente real.
+/.tmp/

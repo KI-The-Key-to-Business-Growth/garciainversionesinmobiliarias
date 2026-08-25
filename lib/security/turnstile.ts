@@ -1,3 +1,5 @@
+import 'server-only';
+
 // ── Cloudflare Turnstile ─────────────────────────────────────────────────────
 // Portado de legacy/server.js:258-284. Verificación humana real en formularios.
 // Comportamiento auditado: sin clave configurada → skip (dev); error de red → fail-open.
