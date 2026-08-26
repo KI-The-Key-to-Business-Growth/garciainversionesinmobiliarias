@@ -29,7 +29,7 @@ de contacto y newsletter, integrado con un CRM externo (2Clics), email transacci
 
 ## 🚀 Correr en local
 
-Requisitos: **Node 20.x** y npm.
+Requisitos: **Node 24.x** y npm.
 
 ```bash
 # 1. Instalar dependencias
