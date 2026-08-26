@@ -9,6 +9,7 @@ import {
 import { formatOperation, formatPublicLocation, operationFilterToApi } from '@/lib/2clics/format';
 import {
   twoclicsClient,
+  isAmbiguousFailResponse,
   TwoclicsApiError,
   TwoclicsNetworkError,
   TwoclicsTimeoutError,
@@ -669,8 +670,13 @@ export function dedupePublicProperties(properties: PublicProperty[]): PublicProp
 // campos count/properties/description — misma forma exacta en los tres casos. Un error real
 // (validación de filtros, api_key inválida) siempre llega con HTTP 4xx/401 y SÍ trae
 // `description` — y ya lo corta lib/2clics/client.ts (throw TwoclicsApiError) antes de que este
-// response llegue hasta acá, así que en la práctica nunca convive con esta forma. El chequeo de
-// `!response.description` es una segunda barrera defensiva, no una suposición nueva.
+// response llegue hasta acá, así que en la práctica nunca convive con esta forma.
+//
+// Bug real de producción (2026-08-26): esta misma forma también puede salir de un hipo transitorio
+// del backend de 2Clics (no solo de un "0 legítimo") — indistinguibles. `lib/2clics/client.ts`
+// (`isAmbiguousFailResponse`, reusada acá para no duplicar el criterio) ya reintenta esta forma
+// dentro de `getProperties` antes de que llegue hasta acá, así que si TODAVÍA llega con esta forma
+// después de agotar los reintentos, es válido tratarla como 0 legítimo — mismo criterio de antes.
 export function propertyResponseCount(response: {
   status?: string;
   count?: number;
@@ -683,12 +689,7 @@ export function propertyResponseCount(response: {
   if (typeof response.count === 'number' && Number.isFinite(response.count)) {
     return { count: Math.max(0, response.count), reliable: true };
   }
-  if (
-    response.status === 'fail' &&
-    response.count === undefined &&
-    response.properties === undefined &&
-    !response.description
-  ) {
+  if (isAmbiguousFailResponse(response)) {
     return { count: 0, reliable: true };
   }
   return { count: response.properties?.length || 0, reliable: false };

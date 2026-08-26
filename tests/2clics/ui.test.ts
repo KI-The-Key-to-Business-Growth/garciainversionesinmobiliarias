@@ -1314,6 +1314,21 @@ describe('2Clics filters and states', () => {
     expect(withPh.map((type) => type.name).sort()).toEqual(['Casa', 'PH']);
   });
 
+  // Regresión de producción (2026-08-26): "Oficina" aparecía como opción del selector (viene de
+  // `buildAvailablePropertyTypes`) pero al filtrar por ella no devolvía resultados — este test
+  // recorre exactamente la misma canalización real (propiedad pública → tipos dinámicos → appId
+  // resuelto) para CUALQUIER tipo dinámico, no solo Oficina, así protege también a un tipo nuevo
+  // que 2Clics publique el día de mañana (ej. "PH" del test de arriba).
+  it('carries the appId all the way from a real property through buildAvailablePropertyTypes to resolvePropertyTypeAppId — for Oficina and for any future dynamic type', () => {
+    const oficina = property({ propertyType: { typeId: 8, name: 'Oficina', appId: '5793' } });
+    const ph = property({ propertyType: { typeId: 9, name: 'PH', appId: '6001' } });
+
+    const types = buildAvailablePropertyTypes([oficina, ph]);
+
+    expect(resolvePropertyTypeAppId(8, types)).toBe('5793');
+    expect(resolvePropertyTypeAppId(9, types)).toBe('6001');
+  });
+
   it('hides "Limpiar filtros" when no filter is active', () => {
     const html = render(
       React.createElement(PropertyFilters, {
@@ -2013,11 +2028,29 @@ describe('2Clics bug real: property_type requiere appId, no typeId (2026-08-26)'
   const propertyTypes: TwoclicsPropertyType[] = [
     { typeId: 2, name: 'Casa', appId: '5791', group: '1' },
     { typeId: 1, name: 'Departamento', appId: '5785', group: '1' },
+    { typeId: 8, name: 'Oficina', appId: '5793', group: '1' },
   ];
 
   it('resolvePropertyTypeAppId traduce el typeId activo a su appId real', () => {
     expect(resolvePropertyTypeAppId(2, propertyTypes)).toBe('5791');
     expect(resolvePropertyTypeAppId(1, propertyTypes)).toBe('5785');
+  });
+
+  // Bug real de producción (2026-08-26): con la lista dinámica de tipos (`buildAvailablePropertyTypes`,
+  // ver más abajo), Oficina pasó a resolverse igual que cualquier otro tipo con inventario público
+  // real — este test fija ese contrato específicamente para Oficina, el tipo que se reportó roto.
+  it('resolvePropertyTypeAppId traduce Oficina (typeId público 8) a su appId real, igual que cualquier otro tipo con inventario', () => {
+    expect(resolvePropertyTypeAppId(8, propertyTypes)).toBe('5793');
+  });
+
+  it('withResolvedPropertyType arma el request de catálogo correcto para Oficina (mismo contrato público ?tipo=8, appId solo server-side)', () => {
+    const officeTypeId = 8;
+    const request = { offset: 0, limit: 30, filters: { property_type: officeTypeId, operation_type: 'ALQUILER_PERMANENTE' } };
+    const appId = resolvePropertyTypeAppId(officeTypeId, propertyTypes);
+    expect(withResolvedPropertyType(request, appId).filters).toMatchObject({
+      property_type: '5793',
+      operation_type: 'ALQUILER_PERMANENTE',
+    });
   });
 
   it('resolvePropertyTypeAppId devuelve null sin tipo activo o si el typeId no existe en la lista', () => {

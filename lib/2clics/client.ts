@@ -33,6 +33,10 @@ type RequestOptions = {
   next?: NextFetchRequestConfig;
   timeoutMs?: number;
   retries?: number;
+  // Ver `isAmbiguousFailResponse` más abajo — solo lo activa `getProperties` (lectura, idempotente,
+  // segura de reintentar). NUNCA pasarlo a `sendLeadMessage` (escritura): reintentar ahí podría
+  // duplicar un lead real.
+  retryAmbiguousFail?: boolean;
 };
 
 export type TwoclicsRequestCacheOptions = Pick<RequestOptions, 'cache' | 'next'>;
@@ -135,6 +139,22 @@ function cleanBody(body: object): Record<string, unknown> {
   );
 }
 
+// Bug real de producción (2026-08-26): un filtro con inventario público real (ej. Oficina) devolvía
+// 0 resultados durante varios minutos después de funcionar bien. Causa: 2Clics responde HTTP 200 +
+// `status:"fail"` (sin count/properties/description) tanto para "0 resultados legítimos" como para
+// un hipo transitorio del backend — misma forma exacta, confirmado contra la API real (ver
+// `propertyResponseCount` en `lib/2clics/listings.ts`, auditoría 2026-08-21). El fetch cache de
+// Next (`cache:'force-cache'` + `next.revalidate`) no distingue "200 con fail semántico" de un
+// verdadero éxito — lo cachea igual, y `request()` solo reintentaba errores HTTP/red reales, nunca
+// esta forma. Resultado: un fail transitorio quedaba cacheado como si fuera la verdad hasta la
+// próxima revalidación (piso 30s, default 300s). Exportada para que `propertyResponseCount` use la
+// MISMA forma, sin duplicar el criterio en dos archivos.
+export function isAmbiguousFailResponse(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object') return false;
+  const p = payload as { status?: string; count?: unknown; properties?: unknown; description?: unknown };
+  return p.status === 'fail' && p.count === undefined && p.properties === undefined && !p.description;
+}
+
 export class TwoclicsClient {
   async request<T>(
     region: TwoclicsRegion,
@@ -147,6 +167,7 @@ export class TwoclicsClient {
       next,
       timeoutMs = DEFAULT_TIMEOUT_MS,
       retries = DEFAULT_RETRIES,
+      retryAmbiguousFail = false,
     }: RequestOptions = {},
   ): Promise<T> {
     const cfg = requireTwoclicsRegionConfig(region);
@@ -184,6 +205,17 @@ export class TwoclicsClient {
           throw apiError;
         }
 
+        // Un "fail" ambiguo (200 OK, sin count/properties/description) puede ser un 0 legítimo o
+        // un hipo transitorio del backend de 2Clics — indistinguibles por forma. Antes de aceptarlo
+        // como definitivo (y dejar que el fetch cache lo guarde por el resto de la ventana de
+        // revalidación), se reintenta igual que un error HTTP real, dentro del mismo presupuesto de
+        // intentos. Solo cuando `retryAmbiguousFail` está activo (hoy: `getProperties`, nunca
+        // `sendLeadMessage` — reintentar una escritura podría duplicar un lead real).
+        if (retryAmbiguousFail && isAmbiguousFailResponse(payload) && attempt < attempts - 1) {
+          await delay(RETRY_DELAY_MS * (attempt + 1));
+          continue;
+        }
+
         return payload as T;
       } catch (error) {
         const requestError = isAbortError(error)
@@ -218,6 +250,7 @@ export class TwoclicsClient {
     return this.request(region, '/api/property', {
       method: 'POST',
       body: request,
+      retryAmbiguousFail: true,
       ...requestOptions,
     });
   }
