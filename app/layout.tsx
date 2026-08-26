@@ -74,7 +74,7 @@ const ORG_JSONLD = {
       telephone: '+54-9-11-6724-0353',
       email: 'contacto@garciainversiones.com.ar',
       address: { '@type': 'PostalAddress', addressLocality: 'Buenos Aires', addressCountry: 'AR' },
-      sameAs: ['https://www.instagram.com/inv.inmob.garcia'],
+      sameAs: ['https://www.instagram.com/garciainversiones.re/'],
       areaServed: [
         { '@type': 'City', name: 'Buenos Aires, Argentina' },
         { '@type': 'City', name: 'Miami, Florida, Estados Unidos' },

@@ -32,8 +32,8 @@ export default function Contact() {
               </div>
               <div className="contact-item">
                 <strong>Instagram</strong>
-                <a href="https://instagram.com/inv.inmob.garcia" target="_blank" rel="noopener">
-                  @inv.inmob.garcia
+                <a href="https://www.instagram.com/garciainversiones.re/" target="_blank" rel="noopener">
+                  @garciainversiones.re
                 </a>
               </div>
               <div className="contact-item">

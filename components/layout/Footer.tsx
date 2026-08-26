@@ -37,13 +37,13 @@ export default function Footer() {
                 <span>contacto@garciainversiones.com.ar</span>
               </a>
               <a
-                href="https://instagram.com/inv.inmob.garcia"
+                href="https://www.instagram.com/garciainversiones.re/"
                 target="_blank"
                 rel="noopener"
                 className="footer-contact-item"
               >
                 <span className="footer-contact-label">Instagram</span>
-                <span>@inv.inmob.garcia</span>
+                <span>@garciainversiones.re</span>
               </a>
               <div className="footer-contact-item">
                 <span className="footer-contact-label">Ubicación</span>

@@ -4346,7 +4346,7 @@ body[data-page-type='thank_you'] {
 }
 
 .twoclics-detail-hero--property {
-  padding: 42px 0 28px;
+  padding: 22px 0 22px;
 }
 
 .twoclics-detail-hero-container {
@@ -4359,7 +4359,7 @@ body[data-page-type='thank_you'] {
 }
 
 .twoclics-detail-hero--property .twoclics-detail-hero-container {
-  min-height: 108px;
+  min-height: 60px;
 }
 
 .twoclics-detail-hero-inner {
@@ -4406,11 +4406,17 @@ body[data-page-type='thank_you'] {
 
 @media (min-width: 1121px) {
   .twoclics-detail-hero--property .twoclics-detail-eyebrow {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
+  /* Hero de ficha compactado (2026-09-04, pedido explícito): de ~268px a ~135-150px totales en
+     desktop. El H1 comparte `.twoclics-detail-hero h1` con la ficha de desarrollo (sin `--property`,
+     ver DevelopmentDetailView.tsx) — este override queda acotado a `--property` para no tocar esa
+     ficha. Tamaño más chico que el original (clamp 2.05rem→3.45rem) pero sigue con jerarquía
+     propia (Cormorant Garamond, dorado del eyebrow arriba) — no es un título diminuto. */
   .twoclics-detail-hero--property h1 {
-    margin-bottom: 10px;
+    font-size: clamp(1.9rem, 2.6vw, 2.75rem);
+    margin-bottom: 8px;
   }
 }
 
@@ -4763,13 +4769,19 @@ body[data-page-type='thank_you'] {
   background: rgba(3, 10, 18, 0.92);
 }
 
+/* Bug real (2026-09-04): `.twoclics-lightbox-stage` tenía tamaño fijo Y su propio fondo opaco
+   (`#0b1420`) — con `object-fit: contain` (sin tocar), una foto vertical o de proporción distinta
+   a la del stage queda "letterboxed" (barras a los costados) DENTRO de esa caja, y esas barras
+   mostraban el fondo del stage, no el backdrop general del modal — se percibía como un segundo
+   rectángulo navy detrás de la foto. El stage sigue del mismo tamaño (sirve de referencia para
+   posicionar los controles) pero ahora es transparente — el letterboxing de `object-fit: contain`
+   cae directamente sobre el backdrop de `.twoclics-lightbox`, sin una caja intermedia visible. */
 .twoclics-lightbox-stage {
   position: relative;
   width: min(1180px, 100%);
   height: min(78vh, 760px);
   overflow: hidden;
   border-radius: 8px;
-  background: #0b1420;
 }
 
 .twoclics-lightbox-close {
