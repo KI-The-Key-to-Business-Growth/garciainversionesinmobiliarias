@@ -130,6 +130,14 @@ export type ListingLocationOption = {
   label: string;
   kind: ListingLocationKind;
   count: number;
+  // WEB GARCÍA V2 (Comprar/Alquilar, LocationPicker) — aditivos, no rompen al <select> nativo de
+  // /propiedades (que solo usa value/label/kind/count, sin cambios). `region` agrupa por mercado
+  // (AR → "Buenos Aires", US → "Miami", mismo par ya aprobado en Footer/Trayectoria — no un nuevo
+  // invento). `shortLabel` es el nombre "hoja" sin repetir país/mercado (ej. "Tigre", no
+  // "Tigre · Argentina") — el picker ya muestra el mercado como encabezado de grupo, así que el
+  // label compuesto completo (`label`) sería redundante ahí.
+  region: TwoclicsRegion;
+  shortLabel: string;
 };
 
 export type ListingsStatus = 'ready' | 'unconfigured' | 'error';
@@ -254,6 +262,35 @@ export function nextPageHref(filters: PropertyListingFilters, basePath = '/propi
   params.set('offset', String(filters.offset + filters.limit));
   params.set('limit', String(filters.limit));
   return `${basePath}?${params.toString()}`;
+}
+
+export type RemovableFilterKey = 'ubicacion' | 'tipo' | 'precio' | 'dormitorios' | 'ambientes' | 'aptoCredito';
+
+// WEB GARCÍA V2 (Comprar/Alquilar, séptima pasada) — chips de "filtros activos" removibles
+// individualmente. Mismo criterio que `nextPageHref`: reconstruye la URL de searchParams
+// preservando todo excepto la clave indicada, siempre server-driven (un <a href> real, sin fetch
+// de cliente, sin segundo motor de filtrado). No incluye `operacion` a propósito — en
+// Comprar/Alquilar la operación está forzada server-side, nunca es un filtro removible por el
+// usuario.
+export function removeFilterHref(
+  filters: PropertyListingFilters,
+  basePath: string,
+  remove: RemovableFilterKey,
+): string {
+  const params = new URLSearchParams();
+  if (filters.location !== 'all' && remove !== 'ubicacion') params.set('ubicacion', filters.location);
+  if (filters.propertyTypeId && remove !== 'tipo') params.set('tipo', String(filters.propertyTypeId));
+  if (filters.bedrooms && remove !== 'dormitorios') params.set('dormitorios', String(filters.bedrooms));
+  if (filters.rooms && remove !== 'ambientes') params.set('ambientes', String(filters.rooms));
+  if (filters.aptoCredito && remove !== 'aptoCredito') params.set('aptoCredito', '1');
+  if (remove !== 'precio') {
+    if (filters.price.currency) params.set('moneda', filters.price.currency);
+    if (filters.price.min !== null) params.set('precioMin', String(filters.price.min));
+    if (filters.price.max !== null) params.set('precioMax', String(filters.price.max));
+  }
+  params.set('limit', String(filters.limit));
+  const query = params.toString();
+  return query ? `${basePath}?${query}` : basePath;
 }
 
 function parseLocationFilter(value: string): ListingLocationFilter {
@@ -710,6 +747,8 @@ function addLocationOption(
   kind: ListingLocationKind,
   id: number | undefined,
   label: string,
+  region: TwoclicsRegion,
+  shortLabel: string,
 ): void {
   const cleanLabel = label.trim();
   if (!id || !cleanLabel) return;
@@ -719,7 +758,7 @@ function addLocationOption(
     current.count += 1;
     return;
   }
-  options.set(value, { value, label: cleanLabel, kind, count: 1 });
+  options.set(value, { value, label: cleanLabel, kind, count: 1, region, shortLabel: shortLabel.trim() || cleanLabel });
 }
 
 // Presentación pública de cada opción del filtro de ubicación — reutiliza formatPublicLocation
@@ -750,18 +789,24 @@ export function buildLocationOptions(properties: PublicProperty[]): ListingLocat
       'state',
       location.state?.stateId,
       publicLocationOptionLabel('state', location, region),
+      region,
+      location.state?.name || '',
     );
     addLocationOption(
       options,
       'city',
       location.city?.cityId,
       publicLocationOptionLabel('city', location, region),
+      region,
+      location.city?.name || '',
     );
     addLocationOption(
       options,
       'neighborhood',
       location.neighborhood?.neighborhoodId,
       publicLocationOptionLabel('neighborhood', location, region),
+      region,
+      location.neighborhood?.name || '',
     );
   }
 

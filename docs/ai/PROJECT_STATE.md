@@ -109,6 +109,50 @@ Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual (no una ronda gen
 - Ninguna otra ruta V2 ni el flujo de leads específico de propiedad (`PropertyInquiryPanel.tsx` →
   `POST /api/lead/message`) se tocó en esta pasada.
 
+### Sexta pasada (2026-08) — Comprar/Alquilar cerrados visualmente
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual sobre `/comprar` y `/alquilar`
+únicamente — arquitectura del motor de catálogo sin cambios, `/propiedades` no se tocó:
+
+- **Bug real corregido**: el grid de filtros (`.twoclics-filters`, 5 columnas) asumía siempre 5
+  ítems (incluida Operación); en Comprar/Alquilar (Operación oculta) el auto-placement de CSS Grid
+  corría Precio/Acciones a columnas equivocadas — causa real de "Precio fragmentado" y "Aplicar
+  filtros con demasiado protagonismo". Corregido con el modifier `.twoclics-filters--locked`.
+- **`.market-page`**: sistema visual propio de página (contenedor de filtros más editorial, hero
+  y secciones más compactas) aplicado solo en `/comprar`/`/alquilar` — `/propiedades` no lo recibe.
+- **Copy**: eyebrow + bajada factual en ambos Hero. Alquilar deliberadamente no menciona Miami
+  (hoy sin inventario real de alquiler en ese mercado).
+- Header, Footer, `PropertyCard`, filtros secundarios y `/propiedades` sin cambios de componente.
+
+### Séptima pasada (2026-08) — Comprar/Alquilar, segunda ronda visual/UX
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Arquitectura sin cambios; `/propiedades` no se
+tocó.
+
+- **Hero sin eyebrow duplicado**: nuevo H1 + bajada ("Propiedades para comprar/alquilar"). La
+  bajada de Alquilar no nombra ningún mercado a propósito (inventario dinámico).
+- **LocationPicker propio** (`components/properties/LocationPicker.tsx`): combobox accesible que
+  reemplaza el `<select>` nativo de Ubicación SOLO en Comprar/Alquilar, agrupado por mercado
+  (Buenos Aires/Miami) con nombres cortos por opción, 100% derivado de las location facets reales
+  (`groupOptions()`, sin lista hardcodeada). Mismo `name="ubicacion"`/contrato de `searchParams`.
+- **Panel de filtros acoplado al Hero** (margin-top negativo, sin glassmorphism), CTA renombrado a
+  "Buscar propiedades" (gold/navy), chips de "filtros activos" removibles individualmente
+  (`removeFilterHref()`).
+- `/propiedades`, `PropertyCard`, leads, CRM, Supabase, integración 2Clics: sin cambios.
+
+### Octava pasada (2026-08) — Comprar/Alquilar sin Hero interior
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual sobre la séptima pasada (todo lo
+demás de esa ronda —LocationPicker, filtros, Precio, CTA, chips— quedó aprobado sin cambios).
+
+- Se retiró el Hero navy (H1 + bajada) de `/comprar` y `/alquilar`: son páginas funcionales de
+  búsqueda, no landings editoriales. La sección activa ya la comunica el Header.
+- Composición: Header → filtros → "Propiedades + N resultados" → grid → Footer.
+- SEO intacto (`title`/`description`/`canonical` sin cambios); cada página mantiene un
+  `<h1 className="sr-only">` para accesibilidad/semántica sin mostrar título visible.
+- CSS de "docking" (margin-top negativo del panel contra el Hero) retirado por completo, sin
+  reglas muertas — el panel ahora es el primer bloque bajo el Header con aire fijo.
+
 ## Pendiente de decisión (no confundir con "roto")
 
 - **Formulario de contacto general** (`lib/crm/leads.ts`, host `api.2clics.com.ar` legacy):

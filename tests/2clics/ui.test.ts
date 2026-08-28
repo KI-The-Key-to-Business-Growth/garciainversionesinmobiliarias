@@ -1181,8 +1181,8 @@ describe('2Clics filters and states', () => {
         },
         propertyTypes: [{ typeId: 1, name: 'Casa' }],
         availableLocations: [
-          { value: 'state:3', label: 'Bs.As. G.B.A. Norte', kind: 'state', count: 11 },
-          { value: 'neighborhood:20', label: 'Miami', kind: 'neighborhood', count: 10 },
+          { value: 'state:3', label: 'Bs.As. G.B.A. Norte', kind: 'state', count: 11, region: 'AR', shortLabel: 'Bs.As. G.B.A. Norte' },
+          { value: 'neighborhood:20', label: 'Miami', kind: 'neighborhood', count: 10, region: 'US', shortLabel: 'Miami' },
         ],
         availableOperations: ['venta', 'alquiler'],
         priceFacet: { currencies: [], rangeByCurrency: {} },

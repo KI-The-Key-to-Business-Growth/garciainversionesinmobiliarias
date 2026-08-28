@@ -442,3 +442,137 @@ Ajuste puntual, no una ronda general: única ruta nueva es `/contacto`; el resto
   `PropertyInquiryPanel.tsx` (modal "Consultar esta propiedad" → `POST /api/lead/message`) no
   referencian `/contacto` ni `/#contacto` y no se tocaron.
 - **Sitemap**: se agregó `/contacto` a `app/sitemap.ts`.
+
+## Séptima pasada (2026-08) — Comprar/Alquilar, segunda ronda visual/UX
+
+Segunda pasada visual sobre las mismas dos páginas de la sexta pasada, tras revisión humana en
+vivo. Arquitectura sin cambios (misma operación forzada, exclusión curatorial, `getPropertyCatalog`,
+contrato de `searchParams`); `/propiedades` no se tocó.
+
+- **Hero sin repetición**: se quitó el eyebrow lateral (duplicaba el H1). Nuevo H1 + bajada:
+  "Propiedades para comprar" / "Explorá propiedades disponibles en Buenos Aires y Miami." y
+  "Propiedades para alquilar" / "Explorá las propiedades disponibles actualmente." — la bajada de
+  Alquilar NO nombra ningún mercado a propósito (el inventario real de alquiler en Miami puede
+  cambiar; nombrarlo hoy sería una promesa pública que el inventario dinámico no sostiene).
+- **Panel de filtros "acoplado" al Hero**: `.market-page .twoclics-filters` ahora sube con
+  `margin-top` negativo sobre el padding-bottom extra del Hero (`.market-page
+  .twoclics-catalog-hero--compact`) — el panel blanco queda visualmente montado entre el navy y el
+  cream, mismo ancho que la grilla de resultados, sin aumentar la altura total de la página. Sin
+  glassmorphism (fondo blanco sólido + sombra normal).
+- **CTA renombrado**: "Aplicar filtros" → "Buscar propiedades" en Comprar/Alquilar, reutilizando
+  `.btn-primary` (gold/navy, ya aprobado en Hero/CTAs del resto del sitio) en vez de `.btn-dark`.
+  `/propiedades` conserva "Aplicar filtros" en navy sin cambios.
+- **LocationPicker propio** (`components/properties/LocationPicker.tsx`, Client Component) —
+  reemplaza el `<select>` nativo de Ubicación SOLO en Comprar/Alquilar (`/propiedades` sigue con el
+  `<select>` tal cual). Combobox accesible (`role="listbox"`/`role="option"`, `aria-haspopup`,
+  `aria-expanded`, `aria-activedescendant`, teclado ArrowUp/ArrowDown/Enter/Escape, click-outside)
+  con un `<input type="hidden" name="ubicacion">` que viaja en el mismo `<form>` GET de siempre —
+  mismo contrato de `searchParams`, mismo `getPropertyCatalog`, sin segundo motor de filtrado.
+  - **Agrupación por mercado**: las opciones (`ListingLocationOption`, ahora con `region` y
+    `shortLabel` agregados de forma aditiva — `/propiedades` no se ve afectada) se agrupan bajo
+    "Buenos Aires"/"Miami" (mismo par ya aprobado en Footer/Trayectoria, no un dato nuevo de
+    2Clics). El nivel "state" (Mercado técnico, ej. "Argentina"/"Bs.As. G.B.A. Norte") ya no se
+    ofrece como opción — el propio encabezado de grupo lo reemplaza.
+  - **Label corto por opción**: cada ubicación muestra solo su nombre "hoja" (`shortLabel`, ej.
+    "Tigre", "Benavídez", "Miami") en vez del label compuesto completo (`label`, ej. "Tigre ·
+    Argentina") que sí sigue usando el `<select>` de `/propiedades` — el mercado ya es el
+    encabezado del grupo, repetirlo en cada opción era la fuente de la confusión reportada.
+  - **100% dinámico**: `groupOptions()` (exportada para tests) deriva grupos/opciones directo de
+    `availableLocations` (las facets reales ya resueltas server-side) — cero lista hardcodeada de
+    barrios/localidades. Si 2Clics agrega una localidad nueva, aparece sola.
+  - **Búsqueda interna** ("Buscar ubicación…"): filtra localmente sobre las opciones ya recibidas
+    (normalizando mayúsculas/acentos) — sin llamar a 2Clics por tecla, sin API nueva.
+  - **Value técnico preservado**: el value que se envía (`state:`/`city:`/`neighborhood:<id>`) no
+    cambió — solo la presentación. Un value ya activo que no esté entre las opciones clickeables
+    (ej. una URL manual con un `state:` id) igual se conserva en el hidden input y resuelve un
+    label razonable para el trigger cerrado.
+- **Filtros activos — chips** (`.twoclics-active-filters`, Comprar/Alquilar únicamente): debajo del
+  panel, un chip por filtro activo (Ubicación/Tipo/Precio/Dormitorios/Ambientes/Apto crédito, nunca
+  Operación —forzada, no removible—) con su label público y un ×. Cada chip es un `<Link>` real a
+  `removeFilterHref()` (nueva función en `lib/2clics/listings.ts`, mismo patrón que `nextPageHref`)
+  que reconstruye la URL de `searchParams` sin ESE filtro puntual — sin JS, sin segundo estado
+  cliente/servidor, mismo motor de siempre.
+- **Precio**: sin cambios de semántica/contrato. Con el LocationPicker (compacto) liberando ancho,
+  `.market-page .twoclics-filters--locked` amplía la columna de Precio (`minmax(320px,1.9fr)`,
+  antes `280px,1.7fr`) para que Desde/Hasta dejen de sentirse mínimos — ajuste solo en Comprar/
+  Alquilar, `/propiedades` no lo recibe.
+- **"Más filtros"**: misma lógica (`<details>`/`<summary>`, Dormitorios/Ambientes/Apto crédito),
+  solo se le quitó el border-top grueso y se cambió el marcador ▸ por +/− en Comprar/Alquilar
+  (`/propiedades` conserva el marcador y el borde original).
+- **PropertyCard, `/propiedades`, leads, mapas, CRM, Supabase, integración 2Clics**: sin cambios —
+  verificado con tests dedicados (overlay/gradient/badges/CTA de la card, y que `/propiedades`
+  nunca recibe LocationPicker, chips ni el CTA "Buscar propiedades").
+
+## Octava pasada (2026-08) — Comprar/Alquilar sin Hero interior
+
+Ajuste puntual sobre la misma segunda ronda visual, tras revisión humana en localhost: todo lo de
+la séptima pasada (LocationPicker, agrupación por mercado, panel de filtros, Precio, CTA "Buscar
+propiedades", Más filtros, filtros activos, grid, exclusión curatorial) quedó **aprobado**. Único
+cambio de esta pasada:
+
+- **Se retiró por completo el Hero interior** de `/comprar` y `/alquilar` (bloque navy con H1 +
+  bajada). Decisión de producto: estas dos páginas son herramientas de búsqueda funcionales, no
+  landings editoriales — la sección activa ya la comunica el Header (Comprar/Alquilar en dorado,
+  `.hdr-active`, sin cambios). Composición final: Header → panel de filtros → "Propiedades + N
+  resultados" → grid → Footer, nada entre Header y filtros.
+- **SEO preservado sin H1 visible**: `title`/`description`/`alternates.canonical` de ambas páginas
+  no se tocaron. Para no perder la semántica de encabezado de página, cada una mantiene un
+  `<h1 className="sr-only">` (mismo texto que tenía el H1 visible: "Propiedades para
+  comprar"/"Propiedades para alquilar") — utilidad `.sr-only` ya existente en `app/globals.css`
+  (agregada en la quinta pasada para Contacto).
+- **CSS de docking retirado, no dejado muerto**: el `margin-top` negativo de la séptima pasada
+  (pensado para que el panel de filtros se "acoplara" al Hero) y el padding-bottom extra del Hero
+  ya no tenían sentido sin Hero del que despegar — se eliminaron por completo. El panel de filtros
+  ahora es simplemente el primer bloque de `.market-page .twoclics-catalog-section`, con
+  `padding-top: 40px` (desktop) / `24px` (mobile ≤680px) de aire fijo respecto al Header — mismo
+  criterio de "primer bloque bajo el Header" ya usado en `/contacto` (quinta pasada).
+- **Sin cambios**: LocationPicker, agrupación por mercado, Precio, "Más filtros", chips de filtros
+  activos, grid de resultados, `PropertyCard`, exclusión curatorial, `/propiedades`, Header global,
+  Footer.
+
+## Sexta pasada (2026-08) — Comprar/Alquilar cerrados visualmente, sin tocar arquitectura
+
+Ajuste puntual sobre `/comprar` y `/alquilar` únicamente. Arquitectura sin cambios: mismo motor de
+`/propiedades` (`getPropertyCatalog`, `CatalogView`, `PropertyFilters`, `PropertyCard`), operación
+forzada server-side, exclusión curatorial, filtros, paginación y fichas canónicas intactos.
+`/propiedades` no recibió ningún cambio de esta pasada.
+
+- **Bug real encontrado y corregido — grid de filtros con Operación oculta**: `.twoclics-filters`
+  usa un `grid-template-columns` de 5 pistas (`repeat(3, 1fr) minmax(280px,1.7fr) auto`) pensado
+  para 5 ítems (Ubicación/Operación/Tipo/Precio/Acciones). En `/comprar` y `/alquilar`, el `<select>`
+  de Operación no se renderiza (`lockedOperation`), así que quedan 4 ítems — el auto-placement de
+  CSS Grid corría Precio a la 3ª columna (1fr, angosta) y Acciones a la 4ª (1.7fr, botón estirado en
+  una columna pensada para Precio). Esto explicaba directamente los síntomas reportados en la
+  revisión visual ("Precio se ve fragmentado/estrecho", "Aplicar filtros con demasiado protagonismo
+  navy separado de la fila"). **Corregido** con un modifier `.twoclics-filters--locked` (aplicado
+  por `PropertyFilters.tsx` solo cuando hay `lockedOperation`) que redefine el grid a 4 columnas
+  explícitas en desktop (`repeat(2, 1fr) minmax(280px,1.7fr) auto`) — Ubicación/Tipo comparten las
+  dos primeras, Precio conserva su ancho, Acciones queda al final de la fila. `/propiedades` nunca
+  recibe la clase (siempre tiene las 5 columnas originales) — cero cambio ahí.
+- **Sistema visual de página propio — `.market-page`**: clase en el `<main>` de `app/comprar` y
+  `app/alquilar` (no en `/propiedades`) que redecora el contenedor de filtros (fondo blanco, radio
+  14px, sombra suave, más aire interno, inputs/selects con radio 10px y foco dorado) y ajusta
+  densidad (hero compacto y sección de resultados con menos padding vertical) para que ambas
+  páginas entren de forma razonable en los primeros ~800-900px de un desktop. Mismo componente/CSS
+  base que `/propiedades` — nada de esto duplica `PropertyFilters`/`CatalogView`/`PropertyCard`, y
+  `/propiedades` sigue exactamente igual porque nunca recibe `.market-page`.
+- **Hero interior — mismo sistema entre Comprar y Alquilar**: ambas usan el mismo
+  `.twoclics-catalog-hero--compact` (ya existente, compartido con Desarrollos/Invertir/Vender/
+  Nosotros/Servicios, sin tocar). Se agregó un eyebrow corto ("Comprar"/"Alquilar") sobre el H1
+  existente. Copy factual, sin jerga técnica:
+  - Comprar: "Explorá propiedades en venta en Buenos Aires y Miami." (venta sí tiene inventario real
+    en ambos mercados).
+  - Alquilar: "Explorá propiedades en alquiler disponibles en Buenos Aires." — **sin mencionar
+    Miami a propósito**: el inventario real de alquiler hoy no tiene ninguna propiedad en Estados
+    Unidos (ver bug de Precio/Ubicación documentado en `PROPERTY_UX_DECISIONS.md`, sección
+    "Bug real corregido — el estado del usuario nunca debe desaparecer"). Nombrar Miami en el copy
+    de Alquilar habría sido una promesa pública incorrecta contra el inventario real y dinámico.
+  - Metadata (`description`) de ambas páginas actualizada en el mismo sentido (sin "con filtros por
+    mercado, tipo y precio" — lenguaje de implementación, no de cara al usuario).
+- **Header/Footer**: sin cambios — el estado activo de Comprar/Alquilar en el Header
+  (`.hdr-nav a.hdr-active { color: var(--gold); }`) ya estaba implementado desde una pasada
+  anterior; se confirmó que sigue funcionando, no se tocó.
+- **`PropertyCard`, `ListingState`, filtros secundarios (Dormitorios/Ambientes/Apto crédito),
+  "Limpiar filtros", paginación "Ver más"**: sin cambios de componente — solo se benefician del
+  nuevo contenedor `.market-page` cuando corresponde (radio/foco de inputs), sin tocar su lógica ni
+  su markup interno.

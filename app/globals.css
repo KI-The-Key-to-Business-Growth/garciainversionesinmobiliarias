@@ -109,6 +109,20 @@ select {
   padding: 72px 0;
 }
 
+/* Utilidad genérica de accesibilidad — visible solo para lectores de pantalla. Usada por los
+   chips de "filtros activos" de Comprar/Alquilar (texto "Quitar filtro" junto al ×). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ─────────────────────────────────────────────────────────
    03. Tipografía utilitaria
    ───────────────────────────────────────────────────────── */
@@ -3517,6 +3531,19 @@ body[data-page-type='thank_you'] {
   border-radius: 8px;
 }
 
+/* Comprar/Alquilar (lockedOperation): sin el <select> de Operación, el grid de 5 columnas de
+   arriba (pensado para Ubicación/Operación/Tipo/Precio/Acciones) recibe un ítem menos y el
+   auto-placement de CSS Grid corre Precio a la 3ª columna (1fr, angosta) y Acciones a la 4ª
+   (1.7fr, el botón queda estirado en una columna pensada para Precio) — bug real de fondo detrás
+   de "Precio fragmentado"/"Aplicar filtros con demasiado protagonismo". Redefine el grid a 4
+   columnas explícitas (Ubicación/Tipo comparten las dos 1fr, Precio conserva su 1.7fr, Acciones
+   su auto) solo en desktop, solo con este modifier — /propiedades nunca lo recibe. */
+@media (min-width: 1121px) {
+  .twoclics-filters--locked {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(280px, 1.7fr) auto;
+  }
+}
+
 .twoclics-filter-group {
   min-width: 0;
 }
@@ -3833,6 +3860,287 @@ body[data-page-type='thank_you'] {
   height: 18px;
   accent-color: var(--navy);
   cursor: pointer;
+}
+
+/* ── Comprar/Alquilar — sistema visual propio de página (`.market-page`, sexta/séptima/octava
+   pasada) ── Mismo componente/CSS base que /propiedades (PropertyFilters, CatalogView,
+   PropertyCard sin tocar) — esto solo redecora el contenedor de filtros y ajusta densidad para
+   que Comprar/Alquilar se sientan una herramienta de búsqueda editorial, no un formulario
+   administrativo. Scope explícito con `.market-page` (en el <main> de app/comprar y
+   app/alquilar) para que /propiedades no reciba ninguno de estos cambios — pedido explícito de
+   no tocarla.
+
+   Octava pasada: se retiró por completo el Hero interior (ver app/comprar/page.tsx,
+   app/alquilar/page.tsx) — estas páginas son funcionales, no landings editoriales; la sección
+   activa ya la comunica el Header. El panel de filtros ya no necesita "acoplarse" a nada (el
+   truco de margin-top negativo de la séptima pasada quedó sin sentido sin Hero del que despegar):
+   ahora es simplemente el primer bloque de `.twoclics-catalog-section`, con aire fijo respecto al
+   Header. */
+.market-page .twoclics-catalog-section {
+  padding-top: 40px;
+}
+
+.market-page .twoclics-catalog-section .twoclics-section-heading--compact {
+  margin-bottom: 14px;
+}
+
+.market-page .twoclics-filters {
+  margin-bottom: 24px;
+  gap: 16px;
+  padding: 22px 24px 20px;
+  background: var(--white);
+  border-color: rgba(50, 86, 117, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(12, 41, 72, 0.14);
+}
+
+/* Precio gana el ancho que el LocationPicker ya no necesita (es un botón compacto, no un <select>
+   nativo con optgroups largos) — Desde/Hasta dejan de sentirse mínimos/comprimidos. */
+@media (min-width: 1121px) {
+  .market-page .twoclics-filters--locked {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(320px, 1.9fr) auto;
+  }
+}
+
+.market-page .twoclics-filter-group select,
+.market-page .twoclics-filter-price-range input {
+  border-radius: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.market-page .twoclics-filter-group select:focus-visible,
+.market-page .twoclics-filter-price-range input:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(205, 160, 79, 0.16);
+}
+
+/* "Más filtros" — sin el border-top grueso de /propiedades (acá compite con el panel ya
+   diferenciado por su propia sombra/borde) y con un signo +/− en vez de la flecha ▸, más discreto
+   como disclosure secundario. */
+.market-page .twoclics-filter-more {
+  border-top: none;
+  padding-top: 2px;
+}
+
+.market-page .twoclics-filter-more summary {
+  min-height: 40px;
+  padding: 6px 2px;
+}
+
+.market-page .twoclics-filter-more summary::before {
+  content: '+';
+  font-size: 0.9rem;
+  transition: none;
+}
+
+.market-page .twoclics-filter-more[open] summary::before {
+  content: '−';
+  transform: none;
+}
+
+@media (max-width: 680px) {
+  .market-page .twoclics-catalog-section {
+    padding-top: 24px;
+  }
+
+  .market-page .twoclics-filters {
+    margin-bottom: 18px;
+    padding: 16px 16px 14px;
+    border-radius: 12px;
+  }
+}
+
+/* ── LocationPicker — combobox propio (Comprar/Alquilar, séptima pasada) ──
+   Reemplaza el <select> nativo solo en estas dos páginas (ver PropertyFilters.tsx). Mismo alto/
+   radio/foco que el resto de los controles del panel para no introducir un segundo lenguaje
+   visual. Sin glassmorphism: fondo blanco sólido, sombra de popover normal. */
+.location-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.location-picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(50, 86, 117, 0.22);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--text);
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.location-picker-trigger:hover {
+  border-color: rgba(50, 86, 117, 0.4);
+}
+
+.location-picker-trigger:focus-visible,
+.location-picker-trigger[aria-expanded='true'] {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(205, 160, 79, 0.16);
+}
+
+.location-picker-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location-picker-caret {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--steel);
+}
+
+.location-picker-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: max(300px, 100%);
+  max-width: 360px;
+  background: var(--white);
+  border: 1px solid rgba(50, 86, 117, 0.16);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(12, 41, 72, 0.16);
+  padding: 10px;
+}
+
+.location-picker-search {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(50, 86, 117, 0.2);
+  border-radius: 8px;
+  background: var(--ivory);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.location-picker-search:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(205, 160, 79, 0.16);
+}
+
+.location-picker-listbox {
+  max-height: 300px;
+  overflow-y: auto;
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.location-picker-group {
+  margin-top: 8px;
+}
+
+.location-picker-group:first-of-type {
+  margin-top: 2px;
+}
+
+.location-picker-group-label {
+  display: block;
+  padding: 4px 10px 4px;
+  color: var(--steel);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.location-picker-group-options {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.location-picker-option {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.location-picker-option:hover,
+.location-picker-option.is-active {
+  background: rgba(205, 160, 79, 0.14);
+}
+
+.location-picker-option.is-selected {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.location-picker-empty {
+  padding: 12px 10px;
+  color: var(--text-soft);
+  font-size: 0.86rem;
+  font-style: italic;
+}
+
+@media (max-width: 680px) {
+  .location-picker-popover {
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* ── Filtros activos (Comprar/Alquilar, séptima pasada) — chips discretos debajo del panel ── */
+.twoclics-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.twoclics-active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 12px;
+  border-radius: 999px;
+  background: rgba(12, 41, 72, 0.06);
+  border: 1px solid rgba(50, 86, 117, 0.16);
+  color: var(--navy);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+.twoclics-active-filter-chip:hover {
+  background: rgba(12, 41, 72, 0.1);
+}
+
+.twoclics-active-filter-chip:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.twoclics-active-filter-chip span[aria-hidden] {
+  color: var(--steel);
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 .twoclics-listing-block + .twoclics-listing-block {

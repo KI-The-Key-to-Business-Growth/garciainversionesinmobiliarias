@@ -12,8 +12,9 @@ import CuratedDevelopmentCard from '@/components/properties/CuratedDevelopmentCa
 import CuratedDevelopmentDetailView from '@/components/properties/CuratedDevelopmentDetailView';
 import FeaturedSpotlight from '@/components/properties/FeaturedSpotlight';
 import InvestmentOpportunityDetailView from '@/components/properties/InvestmentOpportunityDetailView';
+import LocationPicker, { groupOptions } from '@/components/properties/LocationPicker';
 import { adaptPublicProperty } from '@/lib/2clics/adapters';
-import type { PropertyCatalogResult } from '@/lib/2clics/listings';
+import { removeFilterHref, type ListingLocationOption, type PropertyCatalogResult } from '@/lib/2clics/listings';
 import {
   CURATED_PROPERTIES,
   DEVELOPMENTS,
@@ -254,15 +255,319 @@ describe('CatalogView — /comprar y /alquilar reutilizan el motor de /propiedad
     expect(html).toContain('action="/propiedades"');
     expect(html).toContain('id="operacion"');
   });
+
+  it('/alquilar: operación Alquiler forzada, sin selector Operación, filtros principales + Más filtros presentes', () => {
+    const excludedFaena = property({ propertyId: 187676 });
+    const excludedMiami = property({ propertyId: 206734 });
+    const included = property({ propertyId: 222 });
+    const catalog = emptyCatalogResult({
+      filters: {
+        location: 'all',
+        operation: 'alquiler',
+        propertyTypeId: null,
+        bedrooms: null,
+        rooms: null,
+        aptoCredito: false,
+        price: { currency: '', min: null, max: null },
+        offset: 0,
+        limit: 30,
+      },
+      properties: [included],
+      propertyTotalCount: 1,
+    });
+    const html = render(
+      React.createElement(CatalogView, {
+        catalog,
+        showDevelopments: false,
+        actionPath: '/alquilar',
+        lockedOperation: 'alquiler',
+      }),
+    );
+    expect(html).toContain('action="/alquilar"');
+    expect(html).not.toContain('id="operacion"');
+    expect(html).toContain('name="operacion" value="alquiler"');
+    expect(html).toContain('/propiedades/222');
+    expect(html).not.toContain(`/propiedades/${excludedFaena.propertyId}`);
+    expect(html).not.toContain(`/propiedades/${excludedMiami.propertyId}`);
+    // Filtros principales visibles + disclosure "Más filtros" (mismo motor que /propiedades).
+    // Séptima pasada: Ubicación pasó del <select> nativo al LocationPicker propio.
+    expect(html).toContain('location-picker-trigger');
+    expect(html).toContain('name="ubicacion"');
+    expect(html).toContain('id="tipo"');
+    expect(html).toContain('Precio');
+    expect(html).toContain('Buscar propiedades');
+    expect(html).toContain('Más filtros');
+  });
+
+  it('/comprar: filtros principales (LocationPicker/Tipo/Precio/Buscar propiedades) y Más filtros presentes', () => {
+    const catalog = emptyCatalogResult({ properties: [property({ propertyId: 1 })], propertyTotalCount: 1 });
+    const html = render(
+      React.createElement(CatalogView, { catalog, showDevelopments: false, actionPath: '/comprar', lockedOperation: 'venta' }),
+    );
+    expect(html).toContain('location-picker-trigger');
+    expect(html).toContain('name="ubicacion"');
+    expect(html).toContain('id="tipo"');
+    expect(html).toContain('Precio');
+    expect(html).toContain('Buscar propiedades');
+    expect(html).toContain('Más filtros');
+  });
+
+  it('PropertyCard no fue alterada por el rediseño de Comprar/Alquilar (overlay/gradient/badges/CTA intactos)', () => {
+    const catalog = emptyCatalogResult({ properties: [property({ propertyId: 1 })], propertyTotalCount: 1 });
+    const html = render(
+      React.createElement(CatalogView, { catalog, showDevelopments: false, actionPath: '/comprar', lockedOperation: 'venta' }),
+    );
+    expect(html).toContain('twoclics-card twoclics-card--overlay');
+    expect(html).toContain('twoclics-card-gradient');
+    expect(html).toContain('twoclics-card-badges');
+    expect(html).toContain('twoclics-card-overlay-info');
+    expect(html).toContain('twoclics-card-overlay-cta');
+    expect(html).toContain('Ver propiedad →');
+  });
+
+  it('con lockedOperation, el form recibe el modifier CSS que corrige el grid de 4 columnas (bug real de auto-placement); sin lockedOperation, no', () => {
+    const catalog = emptyCatalogResult({ properties: [property({ propertyId: 1 })], propertyTotalCount: 1 });
+    const locked = render(
+      React.createElement(CatalogView, { catalog, showDevelopments: false, actionPath: '/comprar', lockedOperation: 'venta' }),
+    );
+    const unlocked = render(React.createElement(CatalogView, { catalog, showDevelopments: true }));
+    expect(locked).toContain('twoclics-filters--locked');
+    expect(unlocked).not.toContain('twoclics-filters--locked');
+  });
 });
 
-describe('/comprar, /alquilar — copy público sin jerga técnica', () => {
-  it('el copy de las páginas no menciona detalles de implementación', () => {
-    const comprarSource = readFileSync('app/comprar/page.tsx', 'utf8');
-    const alquilarSource = readFileSync('app/alquilar/page.tsx', 'utf8');
+describe('/comprar, /alquilar — sin Hero interior (octava pasada), páginas funcionales', () => {
+  const comprarSource = readFileSync('app/comprar/page.tsx', 'utf8');
+  const alquilarSource = readFileSync('app/alquilar/page.tsx', 'utf8');
+
+  it('ambas páginas usan <main className="market-page"> y ya NO renderizan el Hero navy', () => {
     for (const source of [comprarSource, alquilarSource]) {
-      expect(source).not.toContain('mismos filtros del catálogo completo');
+      expect(source).toContain('className="market-page"');
+      expect(source).not.toContain('twoclics-catalog-hero');
+      expect(source).not.toContain('twoclics-catalog-hero--compact');
     }
+  });
+
+  it('"Propiedades para comprar/alquilar" ya no se renderiza visible — solo como <h1 className="sr-only">', () => {
+    expect(comprarSource).toContain('<h1 className="sr-only">Propiedades para comprar</h1>');
+    expect(alquilarSource).toContain('<h1 className="sr-only">Propiedades para alquilar</h1>');
+    for (const source of [comprarSource, alquilarSource]) {
+      expect(source).not.toContain('className="eyebrow"');
+      expect(source).not.toMatch(/<h1>[^<]/);
+    }
+  });
+
+  it('metadata SEO (title/description/canonical) se mantiene aunque el H1 visual se haya retirado', () => {
+    expect(comprarSource).toContain("title: 'Propiedades para comprar | García Inversiones Inmobiliarias'");
+    expect(comprarSource).toContain("canonical: '/comprar'");
+    expect(alquilarSource).toContain("title: 'Propiedades para alquilar | García Inversiones Inmobiliarias'");
+    expect(alquilarSource).toContain("canonical: '/alquilar'");
+  });
+
+  it('el copy de las páginas no menciona detalles de implementación', () => {
+    const forbidden = [
+      'mismos filtros del catálogo completo',
+      'catálogo completo',
+      'exclusión curatorial',
+      'inventario real',
+      'operación forzada',
+      '2Clics',
+      ' API ',
+    ];
+    for (const source of [comprarSource, alquilarSource]) {
+      for (const phrase of forbidden) {
+        expect(source).not.toContain(phrase);
+      }
+    }
+  });
+
+  it('CTA principal es "Buscar propiedades" en Comprar/Alquilar; /propiedades conserva "Aplicar filtros"', () => {
+    const catalog = emptyCatalogResult({ properties: [property({ propertyId: 1 })], propertyTotalCount: 1 });
+    const marketHtml = render(
+      React.createElement(CatalogView, { catalog, showDevelopments: false, actionPath: '/comprar', lockedOperation: 'venta' }),
+    );
+    const masterHtml = render(React.createElement(CatalogView, { catalog, showDevelopments: true }));
+    expect(marketHtml).toContain('Buscar propiedades');
+    expect(marketHtml).not.toContain('>Aplicar filtros<');
+    expect(masterHtml).toContain('Aplicar filtros');
+    expect(masterHtml).not.toContain('Buscar propiedades');
+  });
+});
+
+// ── LocationPicker — combobox propio de Comprar/Alquilar (séptima pasada) ──────────────────
+describe('LocationPicker — agrupado por mercado, dinámico, value técnico preservado', () => {
+  const fakeOptions: ListingLocationOption[] = [
+    { value: 'state:3', label: 'Argentina', kind: 'state', count: 5, region: 'AR', shortLabel: 'Argentina' },
+    { value: 'city:10', label: 'Tigre · Argentina', kind: 'city', count: 3, region: 'AR', shortLabel: 'Tigre' },
+    {
+      value: 'neighborhood:20',
+      label: 'Benavídez · Tigre · Argentina',
+      kind: 'neighborhood',
+      count: 2,
+      region: 'AR',
+      shortLabel: 'Benavídez',
+    },
+    {
+      value: 'neighborhood:99',
+      label: 'Villa Fantasía Test · Tigre · Argentina',
+      kind: 'neighborhood',
+      count: 1,
+      region: 'AR',
+      shortLabel: 'Villa Fantasía Test',
+    },
+    { value: 'state:9', label: 'Estados Unidos', kind: 'state', count: 2, region: 'US', shortLabel: 'Estados Unidos' },
+    {
+      value: 'neighborhood:91',
+      label: 'Miami · Florida · Estados Unidos',
+      kind: 'neighborhood',
+      count: 2,
+      region: 'US',
+      shortLabel: 'Miami',
+    },
+  ];
+
+  // El popover (con las opciones agrupadas) solo se monta en el DOM cuando `open` es true — un
+  // estado que solo cambia por click/teclado. Este repo no tiene jsdom/testing-library (Vitest
+  // corre en `environment: 'node'`, ver vitest.config.ts), así que ningún test de la suite simula
+  // eventos de interacción real; el patrón establecido es probar la lógica pura por separado.
+  // `groupOptions` (exportada de LocationPicker.tsx) es exactamente esa lógica de agrupación —
+  // se prueba directo acá, y el resto de los tests de este describe cubren lo que sí es visible
+  // en el render inicial (trigger cerrado, hidden input, atributos ARIA).
+  it('agrupa por mercado con nombres públicos (Buenos Aires/Miami), nunca la estructura técnica', () => {
+    const groups = groupOptions(fakeOptions);
+    expect(groups.map((g) => g.marketLabel)).toEqual(['Buenos Aires', 'Miami']);
+    const allLabels = groups.flatMap((g) => [g.marketLabel, ...g.options.map((o) => o.shortLabel)]);
+    expect(allLabels).not.toContain('Mercado');
+    expect(allLabels).not.toContain('Ciudad / localidad');
+    expect(allLabels).not.toContain('Barrio');
+    expect(allLabels).not.toContain('Argentina');
+    expect(allLabels).not.toContain('Estados Unidos');
+    // El nivel "state" (Mercado técnico) no se ofrece como opción clickeable — ya está
+    // representado por el propio encabezado de grupo.
+    expect(groups.every((g) => g.options.every((o) => o.kind !== 'state'))).toBe(true);
+  });
+
+  it('opciones 100% derivadas de las facets recibidas — un nombre inventado en el fixture aparece, nada hardcodeado', () => {
+    const groups = groupOptions(fakeOptions);
+    const shortLabels = groups.flatMap((g) => g.options.map((o) => o.shortLabel));
+    expect(shortLabels).toContain('Villa Fantasía Test');
+    expect(shortLabels).toContain('Benavídez');
+    expect(shortLabels).toContain('Tigre');
+    expect(shortLabels).toContain('Miami');
+  });
+
+  it('muestra el nombre corto (sin repetir país/mercado) — no el label compuesto completo', () => {
+    const html = render(React.createElement(LocationPicker, { name: 'ubicacion', options: fakeOptions, defaultValue: 'all' }));
+    expect(html).not.toContain('Benavídez · Tigre · Argentina');
+    expect(html).not.toContain('Miami · Florida · Estados Unidos');
+  });
+
+  it('con un value ya activo, conserva el id técnico en el hidden input y muestra el shortLabel en el trigger', () => {
+    const html = render(
+      React.createElement(LocationPicker, { name: 'ubicacion', options: fakeOptions, defaultValue: 'neighborhood:20' }),
+    );
+    expect(html).toContain('name="ubicacion" value="neighborhood:20"');
+    expect(html).toContain('>Benavídez<');
+  });
+
+  it('accesibilidad básica: trigger tipo botón con aria-haspopup/aria-expanded, popover cerrado no está en el DOM', () => {
+    const html = render(React.createElement(LocationPicker, { name: 'ubicacion', options: fakeOptions, defaultValue: 'all' }));
+    expect(html).toContain('aria-haspopup="listbox"');
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).not.toContain('role="listbox"');
+    expect(html).not.toContain('Buscar ubicación');
+  });
+
+  it('/propiedades sigue con el <select> nativo de Ubicación — el LocationPicker no se usa ahí', () => {
+    const catalog = emptyCatalogResult({ properties: [property({ propertyId: 1 })], propertyTotalCount: 1 });
+    const html = render(React.createElement(CatalogView, { catalog, showDevelopments: true }));
+    expect(html).toContain('id="ubicacion"');
+    expect(html).not.toContain('location-picker-trigger');
+  });
+});
+
+// ── Filtros activos — chips removibles individualmente (Comprar/Alquilar, séptima pasada) ──
+describe('Filtros activos — chips en Comprar/Alquilar, URL/server state sin duplicar', () => {
+  it('removeFilterHref preserva todos los filtros salvo el indicado, sin tocar operación (forzada)', () => {
+    const filters = {
+      location: 'neighborhood:20' as const,
+      operation: 'venta' as const,
+      propertyTypeId: 2,
+      bedrooms: 2,
+      rooms: 3,
+      aptoCredito: true,
+      price: { currency: 'U$D', min: 100000, max: 300000 },
+      offset: 0,
+      limit: 30,
+    };
+    const withoutLocation = removeFilterHref(filters, '/comprar', 'ubicacion');
+    expect(withoutLocation).not.toContain('ubicacion=');
+    expect(withoutLocation).toContain('tipo=2');
+    expect(withoutLocation).toContain('moneda=U%24D');
+    expect(withoutLocation).not.toContain('operacion=');
+
+    const withoutPrice = removeFilterHref(filters, '/comprar', 'precio');
+    expect(withoutPrice).not.toContain('moneda=');
+    expect(withoutPrice).not.toContain('precioMin=');
+    expect(withoutPrice).not.toContain('precioMax=');
+    expect(withoutPrice).toContain('ubicacion=neighborhood%3A20');
+  });
+
+  it('con filtros activos, CatalogView renderiza chips informativos con label público y × para quitar', () => {
+    const catalog = emptyCatalogResult({
+      filters: {
+        location: 'neighborhood:20',
+        operation: 'venta',
+        propertyTypeId: 2,
+        bedrooms: null,
+        rooms: null,
+        aptoCredito: false,
+        price: { currency: '', min: null, max: null },
+        offset: 0,
+        limit: 30,
+      },
+      availableLocations: [
+        { value: 'neighborhood:20', label: 'Benavídez · Tigre · Argentina', kind: 'neighborhood', count: 1, region: 'AR', shortLabel: 'Benavídez' },
+      ],
+      propertyTypes: [{ typeId: 2, name: 'Departamento', appId: '5792' }],
+      properties: [property({ propertyId: 1 })],
+      propertyTotalCount: 1,
+    });
+    const html = render(
+      React.createElement(CatalogView, { catalog, showDevelopments: false, actionPath: '/comprar', lockedOperation: 'venta' }),
+    );
+    expect(html).toContain('twoclics-active-filters');
+    expect(html).toContain('twoclics-active-filter-chip');
+    expect(html).toContain('>Benavídez');
+    expect(html).toContain('>Departamento');
+  });
+
+  it('sin filtros activos, no se renderiza la lista de chips', () => {
+    const catalog = emptyCatalogResult({ properties: [property({ propertyId: 1 })], propertyTotalCount: 1 });
+    const html = render(
+      React.createElement(CatalogView, { catalog, showDevelopments: false, actionPath: '/comprar', lockedOperation: 'venta' }),
+    );
+    expect(html).not.toContain('twoclics-active-filters');
+  });
+
+  it('/propiedades nunca renderiza chips de filtros activos (feature exclusiva de Comprar/Alquilar)', () => {
+    const catalog = emptyCatalogResult({
+      filters: {
+        location: 'neighborhood:20',
+        operation: 'venta',
+        propertyTypeId: 2,
+        bedrooms: null,
+        rooms: null,
+        aptoCredito: false,
+        price: { currency: '', min: null, max: null },
+        offset: 0,
+        limit: 30,
+      },
+      properties: [property({ propertyId: 1 })],
+      propertyTotalCount: 1,
+    });
+    const html = render(React.createElement(CatalogView, { catalog, showDevelopments: true }));
+    expect(html).not.toContain('twoclics-active-filters');
   });
 });
 

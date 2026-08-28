@@ -1,14 +1,22 @@
 import React from 'react';
 import Link from 'next/link';
+import LocationPicker from '@/components/properties/LocationPicker';
 import {
   BEDROOM_ROOM_FILTER_OPTIONS,
+  removeFilterHref,
   type ListingLocationOption,
   type ListingOperationFilter,
   type PriceFacet,
   type PropertyListingFilters,
+  type RemovableFilterKey,
   type ResolvedPriceFilter,
 } from '@/lib/2clics/listings';
 import type { TwoclicsPropertyType } from '@/lib/2clics/types';
+
+function formatChipPrice(currency: string, min: number, max: number): string {
+  const format = (value: number) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(value);
+  return `${currency} ${format(min)} – ${format(max)}`.trim();
+}
 
 type PropertyFiltersProps = {
   filters: PropertyListingFilters;
@@ -356,32 +364,86 @@ export default function PropertyFilters({
     filters.price.max ?? '',
   ].join('|');
 
+  // WEB GARCÍA V2 (Comprar/Alquilar, sexta pasada) — cuando `lockedOperation` está activo, el
+  // <select> de Operación no se renderiza (no solo se oculta), así que el grid de 5 columnas
+  // pensado para Ubicación/Operación/Tipo/Precio/Acciones (`.twoclics-filters`, 3×1fr + 1.7fr +
+  // auto) recibía un ítem menos y el auto-placement de CSS Grid corría Precio a la 3ª columna
+  // (1fr, angosta) y Acciones a la 4ª (1.7fr, dejando el botón estirado en una columna pensada
+  // para Precio) — el bug real detrás de "Precio se ve fragmentado"/"Aplicar filtros con
+  // demasiado protagonismo" reportado en la revisión visual. Este modifier redefine el grid a 4
+  // columnas (2×1fr + 1.7fr + auto) solo cuando corresponde — /propiedades (sin lockedOperation)
+  // no la recibe y no cambia.
+  const filtersClassName = lockedOperation ? 'twoclics-filters twoclics-filters--locked' : 'twoclics-filters';
+  // WEB GARCÍA V2 (Comprar/Alquilar, séptima pasada) — el LocationPicker (popover accesible,
+  // agrupado por mercado) reemplaza al <select> nativo SOLO acá. `/propiedades` (sin
+  // lockedOperation) sigue con el <select> nativo tal cual, sin ningún cambio — pedido explícito
+  // de no introducir regresión visual en el catálogo maestro. Mismo `name="ubicacion"` en ambos
+  // casos: el contrato de searchParams que recibe `getPropertyCatalog` no cambia.
+  const isMarketPage = Boolean(lockedOperation);
+
+  // Filtros activos (Comprar/Alquilar, sección 15 del pedido) — chips informativos que también
+  // remueven ESE filtro puntual vía una navegación GET real a `removeFilterHref` (mismo
+  // searchParams, sin JS, sin segundo estado). No incluye Operación (forzada, no removible).
+  const activeChips: Array<{ key: RemovableFilterKey; label: string }> = [];
+  if (isMarketPage) {
+    if (filters.location !== 'all') {
+      const match = availableLocations.find((option) => option.value === filters.location);
+      activeChips.push({ key: 'ubicacion', label: match?.shortLabel || 'Ubicación seleccionada' });
+    }
+    if (filters.propertyTypeId) {
+      const match = propertyTypes.find((type) => type.typeId === filters.propertyTypeId);
+      activeChips.push({ key: 'tipo', label: match?.name || 'Tipo seleccionado' });
+    }
+    if (resolvedPrice.status === 'ready' && resolvedPrice.appliedMin !== null && resolvedPrice.appliedMax !== null) {
+      activeChips.push({
+        key: 'precio',
+        label: formatChipPrice(resolvedPrice.currency, resolvedPrice.appliedMin, resolvedPrice.appliedMax),
+      });
+    }
+    if (filters.bedrooms !== null) {
+      activeChips.push({ key: 'dormitorios', label: `${filters.bedrooms} dormitorio${filters.bedrooms === 1 ? '' : 's'}` });
+    }
+    if (filters.rooms !== null) {
+      activeChips.push({ key: 'ambientes', label: `${filters.rooms} ambiente${filters.rooms === 1 ? '' : 's'}` });
+    }
+    if (filters.aptoCredito) {
+      activeChips.push({ key: 'aptoCredito', label: 'Apto crédito' });
+    }
+  }
+
   return (
-    <form key={formKey} className="twoclics-filters" action={actionPath}>
+    <>
+    <form key={formKey} className={filtersClassName} action={actionPath}>
       <input type="hidden" name="limit" value={filters.limit} />
       {lockedOperation ? <input type="hidden" name="operacion" value={lockedOperation} /> : null}
-      <div className="twoclics-filter-group twoclics-filter-group--location">
-        <label htmlFor="ubicacion">Ubicación</label>
-        <select id="ubicacion" name="ubicacion" defaultValue={filters.location}>
-          <option value="all">Todas</option>
-          {!hasCurrentLocationOption ? (
-            <option value={filters.location}>Ubicación seleccionada</option>
-          ) : null}
-          {(['state', 'city', 'neighborhood'] as const).map((kind) => {
-            const options = availableLocations.filter((option) => option.kind === kind);
-            if (!options.length) return null;
-            return (
-              <optgroup key={kind} label={LOCATION_KIND_LABELS[kind]}>
-                {options.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-            );
-          })}
-        </select>
-      </div>
+      {isMarketPage ? (
+        <div className="twoclics-filter-group twoclics-filter-group--location">
+          <LocationPicker name="ubicacion" options={availableLocations} defaultValue={filters.location} />
+        </div>
+      ) : (
+        <div className="twoclics-filter-group twoclics-filter-group--location">
+          <label htmlFor="ubicacion">Ubicación</label>
+          <select id="ubicacion" name="ubicacion" defaultValue={filters.location}>
+            <option value="all">Todas</option>
+            {!hasCurrentLocationOption ? (
+              <option value={filters.location}>Ubicación seleccionada</option>
+            ) : null}
+            {(['state', 'city', 'neighborhood'] as const).map((kind) => {
+              const options = availableLocations.filter((option) => option.kind === kind);
+              if (!options.length) return null;
+              return (
+                <optgroup key={kind} label={LOCATION_KIND_LABELS[kind]}>
+                  {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })}
+          </select>
+        </div>
+      )}
 
       {!lockedOperation ? (
         <div className="twoclics-filter-group">
@@ -418,8 +480,12 @@ export default function PropertyFilters({
       <MoreFiltersSection filters={filters} />
 
       <div className="twoclics-filter-actions">
-        <button className="btn btn-dark" type="submit">
-          Aplicar filtros
+        {/* Comprar/Alquilar (isMarketPage): CTA principal reutiliza .btn-primary (gold/navy, mismo
+            botón ya aprobado en Hero/CTAs del sitio) con copy "Buscar propiedades" — más cercano a
+            una acción de búsqueda que a un formulario. /propiedades mantiene "Aplicar filtros" en
+            navy (.btn-dark) sin cambios. */}
+        <button className={isMarketPage ? 'btn btn-primary' : 'btn btn-dark'} type="submit">
+          {isMarketPage ? 'Buscar propiedades' : 'Aplicar filtros'}
         </button>
         {hasActiveFilters ? (
           <Link className="twoclics-filters-clear" href={actionPath}>
@@ -428,5 +494,20 @@ export default function PropertyFilters({
         ) : null}
       </div>
     </form>
+
+    {activeChips.length ? (
+      <ul className="twoclics-active-filters" aria-label="Filtros activos">
+        {activeChips.map((chip) => (
+          <li key={chip.key}>
+            <Link className="twoclics-active-filter-chip" href={removeFilterHref(filters, actionPath, chip.key)}>
+              {chip.label}
+              <span aria-hidden="true">×</span>
+              <span className="sr-only">Quitar filtro</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    ) : null}
+    </>
   );
 }
