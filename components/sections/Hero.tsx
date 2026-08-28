@@ -1,9 +1,15 @@
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 // HERO — imagen única condor-resort con filtro saturate(1.35) brightness(1.05) (vía .hero-slide en globals.css).
 // next/image con priority (LCP) + fill; el filtro de .hero-slide se aplica sobre la imagen.
 // Título con split de color: línea 1 blanca, "visión estratégica" en dorado (.accent).
+// WEB GARCÍA V2 (cuarta pasada — Home): el buscador libre (HeroSearch) no quedó aprobado para
+// esta etapa y se retiró — Hero vuelve a la versión limpia (título/bajada/CTA humano). El CTA
+// "Hablar con un asesor" no abre WhatsApp: lleva a la landing de contacto (`/contacto`, mismo
+// destino que usa el botón "Contacto" del Header — ver docs/ai/WEB_GARCIA_V2.md). Quinta pasada:
+// antes apuntaba a `/#contacto` (sección del Home); ahora Contacto es una página propia.
 export default function Hero() {
   return (
     <section className="hero" id="inicio">
@@ -33,18 +39,9 @@ export default function Hero() {
               mirada comercial y patrimonial.
             </p>
             <div className="hero-actions">
-              <Link className="btn btn-primary" href="/propiedades">
-                Ver propiedades
-              </Link>
-              <a
-                className="btn btn-secondary"
-                href="https://wa.me/5491167240353"
-                target="_blank"
-                rel="noopener"
-                data-whatsapp-location="hero"
-              >
+              <Link className="btn btn-secondary" href="/contacto">
                 Hablar con un asesor
-              </a>
+              </Link>
             </div>
           </div>
         </div>

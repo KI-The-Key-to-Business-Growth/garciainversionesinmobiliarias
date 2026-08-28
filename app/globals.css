@@ -29,6 +29,7 @@
    26. Responsive global
    27. Responsive data-page-type
    28. Performance / Accesibilidad
+   29. WEB GARCÍA V2 — navegación por intención
    ========================================================= */
 
 /* ─────────────────────────────────────────────────────────
@@ -240,15 +241,20 @@ select {
     box-shadow 0.45s ease;
 }
 
-/* ── Home: fijo, transparente al inicio ── */
-body[data-page-type='home'] .site-header {
+/* ── Home real: fijo, transparente al inicio ──
+   WEB GARCÍA V2 (tercera pasada) — antes esto colgaba de `body[data-page-type='home']`, un
+   atributo hardcodeado en TODAS las páginas (ver Header.tsx) que hacía flotar el Header sobre
+   cualquier hero interior sin reservar su alto. Ahora depende de una clase que el propio Header
+   decide según la ruta real (`usePathname`) — solo `/` la recibe. Toda página interior usa el
+   `.site-header` sticky de más arriba, que SIEMPRE reserva sus 92px. */
+.site-header--floating {
   position: fixed;
   inset: 0 0 auto 0;
   background: transparent;
   border-bottom: none;
   box-shadow: none;
 }
-body[data-page-type='home'] .site-header.is-scrolled {
+.site-header--floating.is-scrolled {
   background: rgba(7, 22, 40, 0.97);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -306,8 +312,8 @@ body[data-page-type='home'] .site-header.is-scrolled {
   color: var(--gold);
 }
 
-/* ── Contacto telefónico ── */
-.hdr-phone-link {
+/* ── Botón Contacto del Header (cuarta pasada — antes mostraba el teléfono) ── */
+.hdr-contact-link {
   display: flex;
   align-items: center;
   height: 38px;
@@ -319,17 +325,15 @@ body[data-page-type='home'] .site-header.is-scrolled {
   border: 1px solid rgba(255, 255, 255, 0.24);
   text-decoration: none;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   transition:
     background 0.2s ease,
     border-color 0.2s ease;
-  letter-spacing: 0.02em;
 }
-.hdr-phone-link:hover {
+.hdr-contact-link:hover {
   background: rgba(255, 255, 255, 0.09);
   border-color: rgba(255, 255, 255, 0.48);
-}
-.hdr-phone-short {
-  display: none;
 }
 
 /* ── Hamburguesa — oculto en desktop ── */
@@ -357,7 +361,7 @@ body[data-page-type='home'] .site-header.is-scrolled {
 
 /* ── Ocultar nav y CTA cuando el menú está abierto ── */
 body.menu-open .hdr-nav,
-body.menu-open .hdr-phone-link {
+body.menu-open .hdr-contact-link {
   opacity: 0;
   pointer-events: none;
 }
@@ -973,9 +977,12 @@ body.menu-open .hdr-phone-link {
   background: linear-gradient(180deg, #f7f5ef, #f2eee6);
   box-shadow: 0 10px 30px rgba(12, 41, 72, 0.04);
 }
+.contact-panel h1,
 .contact-panel h3 {
+  font-family: var(--font-cormorant), serif;
   font-size: 2rem;
   margin-bottom: 14px;
+  color: var(--navy);
 }
 .contact-panel p {
   color: var(--text-soft);
@@ -1065,6 +1072,95 @@ body.menu-open .hdr-phone-link {
 .newsletter-input:focus {
   border-color: var(--gold);
   box-shadow: 0 0 0 4px rgba(205, 160, 79, 0.14);
+}
+
+/* ── Contacto compacto del Home (WEB GARCÍA V2, cuarta pasada) ──
+   Mismo contrato de dos columnas / mismos campos — solo se reduce aire para que el bloque entre
+   en (o cerca de) un viewport en desktop, sin sentirse eterno. */
+.contact--compact .contact-grid {
+  gap: 26px;
+}
+
+.contact--compact .contact-panel,
+.contact--compact .contact-form {
+  padding: 24px 26px;
+  border-radius: 20px;
+}
+
+.contact--compact .contact-panel h1,
+.contact--compact .contact-panel h3 {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+}
+
+.contact--compact .contact-panel > .eyebrow {
+  margin-bottom: 6px;
+}
+
+.contact--compact .contact-panel > p {
+  margin-bottom: 16px;
+}
+
+.contact-list--compact {
+  display: grid;
+  gap: 0;
+}
+
+.contact-list--compact .contact-item {
+  padding: 12px 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.contact-list--compact .contact-item:last-child {
+  border-bottom: none;
+}
+.contact-list--compact .contact-item strong {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.contact--compact .form-grid {
+  gap: 12px;
+}
+
+.contact--compact .field {
+  gap: 5px;
+}
+
+.contact--compact .field input,
+.contact--compact .field select {
+  padding: 11px 14px;
+  border-radius: 12px;
+}
+
+.contact--compact .field textarea {
+  min-height: 84px;
+  padding: 11px 14px;
+  border-radius: 12px;
+}
+
+.contact--compact .field label {
+  font-size: 0.82rem;
+}
+
+.contact--compact .form-legal {
+  font-size: 0.76rem;
+}
+
+/* ── /contacto como landing propia (WEB GARCÍA V2, quinta pasada) ──
+   Antes esta sección era la 4ª del Home (después de Hero/Trayectoria/Oportunidades) y su padding
+   de .section-sm (72px) tenía sentido ahí. Ahora es lo primero que se ve debajo del Header en una
+   página propia, así que se reduce para que el encabezado + ambas columnas se entiendan sin scroll
+   excesivo en el primer viewport. */
+.section-sm.contact--compact {
+  padding: 40px 0 64px;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -1437,16 +1533,16 @@ body.menu-open .hdr-phone-link {
 .footer-premium {
   background: linear-gradient(160deg, #0c2240 0%, #07172a 100%);
   color: var(--white);
-  padding: 72px 0 0;
+  padding: 48px 0 0;
   border-top: 2px solid rgba(205, 160, 79, 0.38);
 }
 
 .footer-premium-grid {
   display: grid;
   grid-template-columns: 1.9fr 1fr 1fr 1fr;
-  gap: 52px;
+  gap: 40px;
   align-items: start;
-  padding-bottom: 64px;
+  padding-bottom: 44px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.09);
 }
 
@@ -2313,15 +2409,9 @@ body[data-page-type='thank_you'] {
     width: auto;
     max-width: 300px;
   }
-  .hdr-phone-link {
+  .hdr-contact-link {
     height: 38px;
     padding: 0 16px;
-  }
-  .hdr-phone-full {
-    display: none;
-  }
-  .hdr-phone-short {
-    display: inline;
   }
 }
 
@@ -2398,7 +2488,7 @@ body[data-page-type='thank_you'] {
     width: auto;
     max-width: 52vw;
   }
-  .hdr-phone-link {
+  .hdr-contact-link {
     font-size: 0.76rem;
     padding: 0 12px;
     height: 34px;
@@ -2464,12 +2554,12 @@ body[data-page-type='thank_you'] {
   }
 
   .footer-premium {
-    padding: 52px 0 0;
+    padding: 36px 0 0;
   }
   .footer-premium-grid {
     grid-template-columns: 1fr;
-    gap: 36px;
-    padding-bottom: 44px;
+    gap: 28px;
+    padding-bottom: 32px;
   }
   .footer-logo-link img {
     height: 44px;
@@ -2708,34 +2798,6 @@ body[data-page-type='thank_you'] {
   font-size: 0.82rem;
   display: block;
   margin-top: 2px;
-}
-
-/* ─────────────────────────────────────────────────────────
-   31. Trust badges
-   ───────────────────────────────────────────────────────── */
-.trust-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-
-.trust-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  background: rgba(205, 160, 79, 0.09);
-  border: 1px solid rgba(205, 160, 79, 0.28);
-  border-radius: 999px;
-  font-size: 0.85rem;
-  color: var(--navy);
-  font-weight: 600;
-}
-.trust-icon {
-  color: var(--gold);
-  font-weight: 800;
-  font-size: 0.9rem;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -3342,10 +3404,15 @@ body[data-page-type='thank_you'] {
 /* ─────────────────────────────────────────────────────────────
    43. 2Clics API UI — catalogo, cards y fichas
    ───────────────────────────────────────────────────────────── */
+/* WEB GARCÍA V2 (tercera pasada) — el padding-top ya no compensa un Header flotante (ese bug se
+   corrigió en el propio Header, ver .site-header--floating más arriba): el Header sticky ahora
+   reserva sus 92px/80px/68px reales, así que acá solo hace falta aire visual, no distancia de
+   escape. Mismo criterio en .twoclics-detail-hero y --compact más abajo — sistema de hero
+   interior unificado. */
 .twoclics-catalog-hero {
   background: var(--navy);
   color: var(--white);
-  padding: 86px 0 42px;
+  padding: 48px 0 40px;
 }
 
 .twoclics-catalog-hero h1 {
@@ -3380,6 +3447,18 @@ body[data-page-type='thank_you'] {
 
 .twoclics-catalog-hero .eyebrow {
   margin-bottom: 10px;
+}
+
+/* WEB GARCÍA V2 — hero interior compacto, reutilizado en todas las landings nuevas (Comprar,
+   Alquilar, Desarrollos, Invertir, Vender, Nosotros, Servicios) para una altura/tamaño de H1
+   consistente entre sí. El `/propiedades` original no lo usa — mantiene su hero tal cual. */
+.twoclics-catalog-hero--compact {
+  padding: 36px 0 30px;
+}
+
+.twoclics-catalog-hero--compact h1 {
+  font-size: clamp(2.1rem, 3.4vw, 3rem);
+  margin-top: 0;
 }
 
 @media (min-width: 1121px) {
@@ -4342,7 +4421,7 @@ body[data-page-type='thank_you'] {
 .twoclics-detail-hero {
   background: var(--navy);
   color: var(--white);
-  padding: 84px 0 38px;
+  padding: 48px 0 38px;
 }
 
 .twoclics-detail-hero--property {
@@ -5528,7 +5607,11 @@ body[data-page-type='thank_you'] {
 @media (max-width: 680px) {
   .twoclics-catalog-hero,
   .twoclics-detail-hero {
-    padding: 86px 0 44px;
+    padding: 28px 0 26px;
+  }
+
+  .twoclics-catalog-hero--compact {
+    padding: 24px 0 22px;
   }
 
   .twoclics-detail-hero--property {
@@ -5866,5 +5949,362 @@ body[data-page-type='thank_you'] {
 
   .twoclics-inquiry-modal h3 {
     font-size: 1.32rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   29. WEB GARCÍA V2 (Home, /comprar, /alquilar, /desarrollos,
+   /invertir, /vender, /nosotros, /servicios). Reutiliza tokens y
+   clases existentes (.container, .section, .eyebrow, .btn,
+   .twoclics-catalog-hero, .twoclics-grid, .twoclics-detail-*) —
+   estas reglas cubren solo lo genuinamente nuevo.
+   ───────────────────────────────────────────────────────── */
+
+/* Home — Trayectoria/cifras (WEB GARCÍA V2, cuarta pasada). Editorial, no "dashboard de
+   estadísticas": mucho aire, sin cards, sin sombras, sin íconos — separadores muy sutiles en vez
+   de cajas. Cifras en Cormorant, gold solo como acento, labels en Jost. */
+.trayectoria {
+  background: var(--ivory);
+}
+
+.trayectoria-intro {
+  max-width: 640px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.trayectoria-intro .eyebrow {
+  display: block;
+}
+
+.trayectoria-intro p {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+  color: var(--navy);
+  line-height: 1.4;
+}
+
+.trayectoria-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+
+.trayectoria-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 32px;
+  text-align: center;
+  border-left: 1px solid var(--line);
+}
+.trayectoria-stat:first-child {
+  border-left: none;
+}
+
+.trayectoria-stat-number {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(2.4rem, 4vw, 3.2rem);
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1;
+}
+.trayectoria-stat-number--market {
+  font-size: clamp(1.5rem, 2.6vw, 1.9rem);
+}
+
+.trayectoria-stat-label {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.86rem;
+  color: var(--text-soft);
+  letter-spacing: 0.01em;
+}
+
+/* /desarrollos, /invertir — spotlight editorial de mayor escala. Un único componente
+   (FeaturedSpotlight) cubre ambos casos: "Conocer proyecto" en Desarrollos, "Conocer esta
+   inversión" en Invertir. */
+.featured-spotlight-list {
+  display: grid;
+  gap: 32px;
+}
+
+.featured-spotlight {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 32px;
+  align-items: stretch;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.featured-spotlight-media {
+  position: relative;
+  min-height: 320px;
+}
+
+.featured-spotlight-media .listing-image-frame,
+.featured-spotlight-media .listing-image-fallback {
+  position: absolute;
+  inset: 0;
+}
+
+.featured-spotlight-body {
+  padding: 36px 36px 36px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.featured-spotlight-body h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.7rem, 3.2vw, 2.4rem);
+  color: var(--navy);
+}
+
+.featured-spotlight-meta {
+  font-size: 0.86rem;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.featured-spotlight-note {
+  color: var(--text-soft);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.featured-spotlight-body .btn {
+  width: fit-content;
+  margin-top: 10px;
+}
+
+/* /desarrollos con un único proyecto — una sola spotlight centrada, sin grilla vacía alrededor */
+.featured-spotlight-list--single {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* /desarrollos/[slug], /invertir/[slug] — layout de una sola columna (sin aside) */
+.twoclics-detail-layout--single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* /invertir — "Cómo analizamos cada oportunidad" */
+.criteria-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 8px;
+}
+
+.criteria-item {
+  padding: 20px 22px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.criteria-item strong {
+  display: block;
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.15rem;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+
+.criteria-item p {
+  font-size: 0.86rem;
+  color: var(--text-soft);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.criteria-following-heading {
+  margin-top: 48px;
+}
+
+/* CTA dentro del hero de proyecto (/desarrollos/[slug], /invertir/[slug]) */
+.project-hero-cta {
+  margin-top: 18px;
+}
+
+/* CTA centrado genérico — cierre de landing (Vender y otras) */
+.section-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+/* /vender — línea de tiempo editorial (jerarquía/progresión/aire) */
+.sell-process-intro {
+  max-width: 640px;
+  margin: 0 auto 40px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.sell-process-list {
+  list-style: none;
+  max-width: 640px;
+  margin: 0 auto 40px;
+}
+
+.sell-process-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 24px;
+  padding: 20px 0;
+}
+
+.sell-process-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 31px;
+  top: 60px;
+  bottom: -20px;
+  width: 1px;
+  background: var(--line);
+}
+
+.sell-process-index {
+  font-family: var(--font-cormorant), serif;
+  font-size: 2.1rem;
+  line-height: 1;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.sell-process-text {
+  padding-top: 10px;
+  color: var(--navy);
+  font-size: 1.06rem;
+  line-height: 1.5;
+}
+
+.sell-intro {
+  max-width: 640px;
+  margin: 0 auto 40px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.sell-section-spacing {
+  margin-top: 48px;
+}
+
+.sell-owner-services {
+  list-style: none;
+  max-width: 640px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 24px;
+}
+
+.sell-owner-services li {
+  position: relative;
+  padding-left: 20px;
+  color: var(--text);
+  font-size: 0.96rem;
+}
+.sell-owner-services li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.sell-differentials {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.sell-differential-chip {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--ivory);
+  color: var(--navy);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+@media (max-width: 680px) {
+  .criteria-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .contact--compact .contact-panel,
+  .contact--compact .contact-form {
+    padding: 20px;
+  }
+
+  .section-sm.contact--compact {
+    padding: 24px 0 40px;
+  }
+
+  .contact-list--compact .contact-item {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .trayectoria-stats {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .trayectoria-stat {
+    text-align: center;
+  }
+
+  .featured-spotlight {
+    grid-template-columns: 1fr;
+  }
+
+  .featured-spotlight-media {
+    min-height: 220px;
+  }
+
+  .featured-spotlight-body {
+    padding: 22px;
+  }
+
+  .sell-process-item {
+    grid-template-columns: 44px 1fr;
+    gap: 16px;
+  }
+
+  .sell-owner-services {
+    grid-template-columns: 1fr;
+  }
+
+  .sell-process-item:not(:last-child)::after {
+    left: 21px;
+    top: 44px;
+  }
+
+  .sell-process-index {
+    font-size: 1.6rem;
   }
 }

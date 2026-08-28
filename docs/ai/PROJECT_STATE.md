@@ -25,6 +25,90 @@ IMPLEMENTADO/APROBADO, no como pendiente.
   propiedades" silencioso).
 - **Newsletter** vía Supabase: vigente, sin cambios.
 
+## Web García V2 — navegación por intención (en curso, segunda pasada)
+
+Segunda pasada tras revisión visual real en localhost — reemplaza decisiones de la primera
+(documentado como actualización de arquitectura, no corrección silenciosa; detalle completo en
+`docs/ai/WEB_GARCIA_V2.md`):
+
+- **Curaduría con exclusión por item**: `lib/site-curation.ts` ahora tiene
+  `classification`/`excludeFromStandardCatalog` por propertyId. Faena (187676) y el proyecto
+  especial de Miami (206734) quedan fuera de `/comprar`/`/alquilar`, pero siguen completos en
+  `/propiedades`.
+- **`/comprar` y `/alquilar` son el catálogo completo** (mismo motor/componentes que
+  `/propiedades`, operación forzada + exclusión curatorial) — ya no una landing de 3 cards.
+- **Home reducido**: sin la grilla "¿Qué estás buscando?" (no aprobada). Hero → buscador
+  compacto (`HomeSearch`, Server Action) → Oportunidades seleccionadas → bloque editorial breve
+  (Invertir/Vender/Conocé García) → Contacto → Footer.
+- **`/nosotros` y `/servicios` son páginas reales** (antes anclas del Home), reutilizando
+  contenido institucional ya aprobado sin inventar cifras.
+- **`/invertir` replanteado**: sin las 3 cards fijas; landing editorial + oportunidades reales
+  confirmadas (`INVESTMENT_OPPORTUNITIES`), hoy una: "Proyecto especial Miami" (206734), con
+  nombre/nota editorial neutral (sin definir fondo/coinversión/etc. sin documentación oficial).
+- **`/desarrollos`**: presentación editorial de mayor escala para pocos proyectos, sin jerga
+  interna de arquitectura en el copy público.
+
+El catálogo maestro (`/propiedades`), la ficha canónica (`/propiedades/[id]`) y el flujo legacy de
+desarrollos nativos de 2Clics (`/api/development`) no cambiaron de comportamiento.
+
+### Tercera pasada (2026-09) — sistema coherente, bug de Header, live search
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Resumen:
+
+- **Bug sistémico corregido**: el Header flotaba (sin reservar su alto) sobre TODAS las páginas
+  por un `data-page-type="home"` hardcodeado en `app/layout.tsx` que nunca cambiaba — tapaba el H1
+  de cualquier hero interior. Corregido en el propio `Header.tsx` (`usePathname()` decide
+  floating vs. sticky), no con parches por página.
+- **Home Search**: el form de 3 selects (`HomeSearch.tsx`, segunda pasada) se reemplazó por un
+  buscador de texto libre integrado al Hero (`HeroSearch.tsx` + `GET /api/search` +
+  `searchPublicProperties()` en `lib/2clics/listings.ts`). Busca sobre TODO el inventario público,
+  incluidas las propiedades curadas (Faena, proyecto especial) — `excludeFromStandardCatalog`
+  sigue aplicando solo a `/comprar`/`/alquilar`, nunca a esta búsqueda global.
+  `HomeSearch.tsx`/`HomeEditorialLinks.tsx`/`IntentGrid.tsx`/`actions/home-search.ts` se borraron
+  (sin uso remanente).
+- **Copy público de 206734 corregido**: se quitó la mención a Marcelo Chami y la frase sobre
+  estructura "todavía no confirmada" — nunca estuvo aprobada como comunicación pública. Esa
+  información es interna (documentada en `WEB_GARCIA_V2.md`), nunca en código de frontend.
+- **`/desarrollos`, `/desarrollos/faena`, `/invertir`, `/vender`**: evolución visual/de contenido
+  (ver `WEB_GARCIA_V2.md`) reutilizando siempre datos reales de 2Clics o copy ya aprobado — sin
+  inventar developer, retornos, FAQ ni capacidades nuevas.
+
+### Cuarta pasada (2026-09) — Home definitivo (única ruta tocada)
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Resumen:
+
+- **Live Search retirado del Home** — decisión de producto/UX tras revisión visual, NO una falla
+  técnica. `HeroSearch.tsx`, `app/api/search/`, `searchPublicProperties()`/`PublicSearchResult`
+  (`lib/2clics/listings.ts`), `PublicProperty.code` (adapter/types) y
+  `getCurationEditorialNames()` (`lib/site-curation.ts`) se borraron — cero uso remanente. De
+  paso se encontró y borró `getOperationInventoryFacets()`, huérfana desde la tercera pasada
+  (pertenecía al form de 3 selects de la segunda pasada, ya borrado entonces).
+- **Home definitivo**: Header → Hero (limpio, sin buscador) → Trayectoria (nueva, cifras
+  reutilizadas de `/nosotros`: +500, +20 años, Buenos Aires + Miami) → Oportunidades
+  seleccionadas (sin cambios) → Contacto (compactado) → Newsletter → Footer.
+- **Hero**: "Hablar con un asesor" ya no abre WhatsApp — lleva a `/#contacto`.
+- **Header**: el botón de la derecha pasó de mostrar el teléfono a decir "Contacto" (mismo
+  `/#contacto`). El teléfono sigue visible en Contacto y Footer.
+- **Contacto**: mismos 4 canales y mismo formulario/backend, presentación más compacta; se
+  retiraron los chips "Atención personalizada/Atención directa/Sin compromiso" sin reemplazo.
+- Ninguna otra ruta V2 (`/comprar`, `/alquilar`, `/desarrollos`, `/invertir`, `/vender`,
+  `/nosotros`, `/servicios`, fichas) se tocó en esta pasada.
+
+### Quinta pasada (2026-08) — Contacto sale del Home, landing propia `/contacto`
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual (no una ronda general V2):
+
+- **Contacto deja de ser una sección del Home**: `app/page.tsx` ya no importa/renderiza `Contact`.
+  Home definitivo: Header → Hero → Trayectoria → Oportunidades seleccionadas → Newsletter → Footer.
+- **`/contacto` es ahora una landing real**: Header → `Contact` (mismos 4 canales + mismo
+  formulario/backend, con un encabezado editorial propio "Hablemos") → Footer. Metadata y sitemap
+  propios.
+- **Header y Hero apuntan a `/contacto`**, no a `/#contacto`. Igual el link de Contacto del Footer,
+  el CTA "Quiero vender mi propiedad" de `/vender`, el fallback "Contactar a García" de
+  `ListingState.tsx` y el redirect legacy de `InquiryCta.tsx` (desarrollos nativos numéricos).
+- Ninguna otra ruta V2 ni el flujo de leads específico de propiedad (`PropertyInquiryPanel.tsx` →
+  `POST /api/lead/message`) se tocó en esta pasada.
+
 ## Pendiente de decisión (no confundir con "roto")
 
 - **Formulario de contacto general** (`lib/crm/leads.ts`, host `api.2clics.com.ar` legacy):

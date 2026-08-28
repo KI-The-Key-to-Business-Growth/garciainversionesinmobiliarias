@@ -908,12 +908,16 @@ describe('2Clics featured and related properties', () => {
   });
 
   // `FeaturedProperties` es un Server Component async (`getFeaturedPublicProperties`) — igual que
-  // el contador de resultados de `app/propiedades/page.tsx` más abajo, se confirma la variante de
-  // card en el código fuente en vez de renderizar el árbol completo, que requeriría datos reales
-  // de 2Clics para tener sentido como test unitario.
+  // el contador de resultados de `components/properties/CatalogView.tsx` más abajo, se confirma
+  // la variante de card en el código fuente en vez de renderizar el árbol completo, que
+  // requeriría datos reales de 2Clics para tener sentido como test unitario.
+  // WEB GARCÍA V2 (segunda pasada): el bloque de resultados que antes vivía inline en
+  // `app/propiedades/page.tsx` se extrajo a `CatalogView.tsx` para que /comprar y /alquilar lo
+  // reutilicen sin duplicar el motor de filtros — /propiedades sigue usándolo, solo cambió dónde
+  // vive el JSX.
   it('wires Home ("Oportunidades seleccionadas") to overlay-home and the catalog to overlay-catalog, reusing the same PropertyCard component — no duplicated card', () => {
     const homeSource = readFileSync('components/properties/FeaturedProperties.tsx', 'utf8');
-    const catalogSource = readFileSync('app/propiedades/page.tsx', 'utf8');
+    const catalogSource = readFileSync('components/properties/CatalogView.tsx', 'utf8');
 
     expect(homeSource).toContain("import PropertyCard from '@/components/properties/PropertyCard'");
     expect(homeSource).toContain('variant="overlay-home"');
@@ -2426,10 +2430,12 @@ describe('2Clics result counter reliability (Fase 1.1)', () => {
   });
 
   it('shows a stable fallback label instead of hiding the counter when the total is not reliable', () => {
-    // El contador vive en app/propiedades/page.tsx (Server Component async, no una unidad
+    // El contador vive en components/properties/CatalogView.tsx (Server Component, no una unidad
     // aislada) — se confirma el fallback en el código fuente en vez de renderizar la página
     // completa, que requeriría datos reales de 2Clics para tener sentido como test unitario.
-    const pageSource = readFileSync('app/propiedades/page.tsx', 'utf8');
+    // WEB GARCÍA V2 (segunda pasada): relocado desde app/propiedades/page.tsx a CatalogView.tsx
+    // para que /comprar y /alquilar lo reutilicen — mismo comportamiento, mismo componente.
+    const pageSource = readFileSync('components/properties/CatalogView.tsx', 'utf8');
     expect(pageSource).toContain('Resultados filtrados');
     expect(pageSource).toContain('catalog.propertyTotalCount !== null');
   });

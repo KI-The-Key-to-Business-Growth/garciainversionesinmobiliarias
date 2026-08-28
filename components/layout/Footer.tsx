@@ -1,4 +1,5 @@
 // Footer premium — mercados activos Argentina/Buenos Aires y Estados Unidos/Miami.
+import React from 'react';
 import Link from 'next/link';
 
 export default function Footer() {
@@ -56,22 +57,37 @@ export default function Footer() {
             <h3 className="footer-column-title">Navegación</h3>
             <ul className="footer-links">
               <li>
-                <Link href="/#inicio">Inicio</Link>
+                <Link href="/comprar">Comprar</Link>
+              </li>
+              <li>
+                <Link href="/alquilar">Alquilar</Link>
+              </li>
+              <li>
+                <Link href="/desarrollos">Desarrollos</Link>
+              </li>
+              <li>
+                <Link href="/invertir">Invertir</Link>
+              </li>
+              <li>
+                <Link href="/vender">Vender</Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="footer-col">
+            <h3 className="footer-column-title">García</h3>
+            <ul className="footer-links">
+              <li>
+                <Link href="/nosotros">Nosotros</Link>
+              </li>
+              <li>
+                <Link href="/servicios">Servicios</Link>
+              </li>
+              <li>
+                <Link href="/contacto">Contacto</Link>
               </li>
               <li>
                 <Link href="/propiedades">Propiedades</Link>
-              </li>
-              <li>
-                <Link href="/#servicios">Servicios</Link>
-              </li>
-              <li>
-                <Link href="/#nosotros">Nosotros</Link>
-              </li>
-              <li>
-                <Link href="/#mercados">Mercados</Link>
-              </li>
-              <li>
-                <Link href="/#contacto">Contacto</Link>
               </li>
             </ul>
           </div>
@@ -87,16 +103,6 @@ export default function Footer() {
                 <span className="footer-market-primary">Estados Unidos</span>
                 <span className="footer-market-detail">Miami</span>
               </li>
-            </ul>
-          </div>
-
-          <div className="footer-col">
-            <h3 className="footer-column-title">Servicios</h3>
-            <ul className="footer-links">
-              <li>Asesoramiento en inversiones</li>
-              <li>Compra, venta y alquiler</li>
-              <li>Propietarios</li>
-              <li>Desarrollos seleccionados</li>
             </ul>
           </div>
         </div>

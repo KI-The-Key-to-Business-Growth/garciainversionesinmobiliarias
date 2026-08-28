@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTurnstile } from './useTurnstile';
 import { submitContact } from '@/actions/contact';
 

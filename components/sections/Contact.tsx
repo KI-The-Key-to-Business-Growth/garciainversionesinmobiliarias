@@ -1,18 +1,23 @@
+import React from 'react';
 import ContactForm from '@/components/forms/ContactForm';
 
-// CONTACTO — badge "Atención directa" (§3.2), botón "Enviar consulta" dorado.
+// CONTACTO — landing independiente /contacto (WEB GARCÍA V2, quinta pasada). Antes vivía como
+// sección del Home (`/#contacto`); ahora es la única consumidora de este componente, así que el
+// encabezado editorial (eyebrow + H1 "Hablemos") vive directamente acá en vez de en un Hero aparte.
+// Mismos canales/formulario/backend de siempre — no se agregó ninguna promesa nueva.
 export default function Contact() {
   return (
-    <section className="section contact" id="contacto">
+    <section className="section-sm contact contact--compact" id="contacto">
       <div className="container">
         <div className="contact-grid">
           <div className="contact-panel reveal">
             <span className="eyebrow">Contacto</span>
+            <h1>Hablemos</h1>
             <p>
               Completá el formulario o escribinos directamente por WhatsApp para recibir atención
               personalizada.
             </p>
-            <div className="contact-list">
+            <div className="contact-list contact-list--compact">
               <div className="contact-item">
                 <strong>WhatsApp</strong>
                 <a
@@ -43,17 +48,6 @@ export default function Contact() {
             </div>
           </div>
           <div className="contact-right-col">
-            <div className="trust-badges reveal">
-              <span className="trust-badge">
-                <span className="trust-icon">✓</span>Atención personalizada
-              </span>
-              <span className="trust-badge">
-                <span className="trust-icon">✓</span>Atención directa
-              </span>
-              <span className="trust-badge">
-                <span className="trust-icon">✓</span>Sin compromiso
-              </span>
-            </div>
             <ContactForm />
           </div>
         </div>

@@ -38,7 +38,7 @@ export default function ListingState(props: ListingStateProps) {
   return (
     <div className="twoclics-state" role="status">
       <p>{listingStateMessage(props)}</p>
-      <Link className="btn btn-outline" href="/#contacto">
+      <Link className="btn btn-outline" href="/contacto">
         Contactar a García
       </Link>
     </div>

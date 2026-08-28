@@ -10,7 +10,7 @@ export default function InquiryCta({ propertyId, developmentId, label }: Inquiry
   const params = new URLSearchParams();
   if (propertyId) params.set('property_app_id', String(propertyId));
   if (developmentId) params.set('development_app_id', String(developmentId));
-  const href = params.size ? `/?${params.toString()}#contacto` : '/#contacto';
+  const href = params.size ? `/contacto?${params.toString()}` : '/contacto';
 
   return (
     <a

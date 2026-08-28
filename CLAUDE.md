@@ -53,6 +53,7 @@ npm run test:e2e      # Playwright
 | Necesito saber... | Archivo |
 |---|---|
 | Arquitectura general y rol de Supabase | `docs/ai/ARCHITECTURE.md` |
+| Navegación por intención V2 (Comprar/Alquilar/Desarrollos/Invertir/Vender), curaduría editorial | `docs/ai/WEB_GARCIA_V2.md` |
 | Estado actual del proyecto (qué está implementado/aprobado/pendiente) | `docs/ai/PROJECT_STATE.md` |
 | Endpoints, campos, auth, caching de 2Clics | `docs/ai/2CLICS_EXTERNAL_API.md` |
 | Decisiones de UX ya aprobadas (catálogo, fichas, mobile) | `docs/ai/PROPERTY_UX_DECISIONS.md` |

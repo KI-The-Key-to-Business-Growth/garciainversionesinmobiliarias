@@ -17,6 +17,15 @@ type PropertyFiltersProps = {
   availableOperations: ListingOperationFilter[];
   priceFacet: PriceFacet;
   resolvedPrice: ResolvedPriceFilter;
+  // WEB GARCÍA V2 (/comprar, /alquilar) — ambos opcionales, sin valor por defecto se comportan
+  // EXACTAMENTE como hasta ahora (/propiedades no pasa ninguno de los dos).
+  // `actionPath`: a dónde postea el form GET — /comprar y /alquilar necesitan quedarse en su
+  // propia URL en vez de terminar siempre en /propiedades.
+  // `lockedOperation`: cuando se pasa, oculta el <select> de Operación (queda implícita por la
+  // página) y la manda como campo oculto — evita un control que, si el usuario lo cambiara,
+  // igual no tendría efecto (la operación real se fuerza server-side en /comprar y /alquilar).
+  actionPath?: string;
+  lockedOperation?: 'venta' | 'alquiler';
 };
 
 const OPERATION_LABELS: Record<ListingOperationFilter, string> = {
@@ -282,13 +291,15 @@ export default function PropertyFilters({
   availableOperations,
   priceFacet,
   resolvedPrice,
+  actionPath = '/propiedades',
+  lockedOperation,
 }: PropertyFiltersProps) {
   const operations = new Set<ListingOperationFilter>(['all', 'venta', 'alquiler']);
   for (const operation of availableOperations) operations.add(operation);
   if (filters.operation === 'temporario') operations.add('temporario');
   const hasActiveFilters =
     filters.location !== 'all' ||
-    filters.operation !== 'all' ||
+    (!lockedOperation && filters.operation !== 'all') ||
     filters.propertyTypeId !== null ||
     filters.bedrooms !== null ||
     filters.rooms !== null ||
@@ -346,8 +357,9 @@ export default function PropertyFilters({
   ].join('|');
 
   return (
-    <form key={formKey} className="twoclics-filters" action="/propiedades">
+    <form key={formKey} className="twoclics-filters" action={actionPath}>
       <input type="hidden" name="limit" value={filters.limit} />
+      {lockedOperation ? <input type="hidden" name="operacion" value={lockedOperation} /> : null}
       <div className="twoclics-filter-group twoclics-filter-group--location">
         <label htmlFor="ubicacion">Ubicación</label>
         <select id="ubicacion" name="ubicacion" defaultValue={filters.location}>
@@ -371,16 +383,18 @@ export default function PropertyFilters({
         </select>
       </div>
 
-      <div className="twoclics-filter-group">
-        <label htmlFor="operacion">Operación</label>
-        <select id="operacion" name="operacion" defaultValue={filters.operation}>
-          {Array.from(operations).map((operation) => (
-            <option key={operation} value={operation}>
-              {OPERATION_LABELS[operation]}
-            </option>
-          ))}
-        </select>
-      </div>
+      {!lockedOperation ? (
+        <div className="twoclics-filter-group">
+          <label htmlFor="operacion">Operación</label>
+          <select id="operacion" name="operacion" defaultValue={filters.operation}>
+            {Array.from(operations).map((operation) => (
+              <option key={operation} value={operation}>
+                {OPERATION_LABELS[operation]}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <div className="twoclics-filter-group">
         <label htmlFor="tipo">Tipo de propiedad</label>
@@ -408,7 +422,7 @@ export default function PropertyFilters({
           Aplicar filtros
         </button>
         {hasActiveFilters ? (
-          <Link className="twoclics-filters-clear" href="/propiedades">
+          <Link className="twoclics-filters-clear" href={actionPath}>
             Limpiar filtros
           </Link>
         ) : null}

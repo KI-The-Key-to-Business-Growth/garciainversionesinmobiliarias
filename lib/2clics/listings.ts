@@ -238,7 +238,9 @@ export function parsePropertyListingFilters(
 // CRUDOS (no de los valores resueltos/completados contra la faceta) — misma lógica de siempre
 // para Ubicación/Operación/Tipo; Precio sigue el mismo criterio para no ensuciar la URL con
 // datos derivados que el usuario no escribió.
-export function nextPageHref(filters: PropertyListingFilters): string {
+// `basePath` por defecto preserva el comportamiento original (/propiedades). /comprar y /alquilar
+// pasan su propia ruta para que "Ver más" nunca saque al usuario de la página en la que está.
+export function nextPageHref(filters: PropertyListingFilters, basePath = '/propiedades'): string {
   const params = new URLSearchParams();
   if (filters.location !== 'all') params.set('ubicacion', filters.location);
   if (filters.operation !== 'all') params.set('operacion', filters.operation);
@@ -251,7 +253,7 @@ export function nextPageHref(filters: PropertyListingFilters): string {
   if (filters.price.max !== null) params.set('precioMax', String(filters.price.max));
   params.set('offset', String(filters.offset + filters.limit));
   params.set('limit', String(filters.limit));
-  return `/propiedades?${params.toString()}`;
+  return `${basePath}?${params.toString()}`;
 }
 
 function parseLocationFilter(value: string): ListingLocationFilter {
@@ -942,14 +944,56 @@ export function rankRelatedProperties(
     .map((entry) => entry.candidate);
 }
 
+export type PropertyCatalogOptions = {
+  // WEB GARCÍA V2 (/comprar, /alquilar) — ids que García clasificó con
+  // `excludeFromStandardCatalog: true` (`lib/site-curation.ts`). Vacío/omitido = comportamiento
+  // sin cambios (usado por `/propiedades`, el catálogo maestro, que nunca excluye nada). No es un
+  // filtro de 2Clics: se resuelve acá, sobre el resultado ya adaptado, para no tocar el contrato
+  // de `TwoclicsPropertyFilters` ni la semántica de ningún filtro existente.
+  excludePropertyIds?: number[];
+};
+
+// Replica la semántica exacta de los filtros activos (mismo criterio que `baseApiFilters`/
+// `resolvePriceFilter` ya documentan) para decidir si una propiedad EXCLUIDA del catálogo
+// estándar habría matcheado la consulta actual — necesario para que `propertyTotalCount` en
+// /comprar y /alquilar seguya siendo un número real y nunca inventado, en vez de ignorar la
+// exclusión o mostrar "Resultados filtrados" todo el tiempo.
+function propertyMatchesActiveFilters(
+  property: PublicProperty,
+  filters: PropertyListingFilters,
+  resolvedPrice: ResolvedPriceFilter,
+): boolean {
+  if (filters.operation !== 'all' && operationFromPublicProperty(property) !== filters.operation) return false;
+  if (filters.propertyTypeId && property.propertyType?.typeId !== filters.propertyTypeId) return false;
+  if (filters.bedrooms && property.amountBedroom !== filters.bedrooms) return false;
+  if (filters.rooms && property.amountRoom !== filters.rooms) return false;
+  if (filters.aptoCredito && !property.aptCredit) return false;
+  if (!propertyMatchesLocation(property, filters.location)) return false;
+  if (resolvedPrice.status === 'ready') {
+    if (resolvedPrice.currency && property.currency !== resolvedPrice.currency) return false;
+    if (resolvedPrice.appliedMin !== null && (property.price === null || property.price < resolvedPrice.appliedMin)) {
+      return false;
+    }
+    if (resolvedPrice.appliedMax !== null && (property.price === null || property.price > resolvedPrice.appliedMax)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function getPropertyCatalog(
   searchParams: Record<string, string | string[] | undefined>,
+  options: PropertyCatalogOptions = {},
 ): Promise<PropertyCatalogResult> {
   const filters = parsePropertyListingFilters(searchParams);
   if (!hasConfiguredCredentials()) {
     console.info('[2clics] API key is not configured; property catalog rendered as unavailable.');
     return emptyCatalog('unconfigured', filters);
   }
+
+  const excludeIds = new Set(
+    (options.excludePropertyIds || []).filter((id) => Number.isInteger(id) && id > 0),
+  );
 
   try {
     const cacheOptions = getTwoclicsReadCacheOptions();
@@ -967,9 +1011,11 @@ export async function getPropertyCatalog(
     const locationFacetResponses = await Promise.all(
       regions.map((region) => twoclicsClient.getProperties(region, locationFacetRequest(), cacheOptions)),
     );
-    const locationFacetProperties = locationFacetResponses.flatMap((response, index) =>
-      (response.properties || []).map((property) => adaptPublicProperty(property, regions[index])),
-    );
+    const locationFacetProperties = locationFacetResponses
+      .flatMap((response, index) =>
+        (response.properties || []).map((property) => adaptPublicProperty(property, regions[index])),
+      )
+      .filter((property) => !(property.propertyId && excludeIds.has(property.propertyId)));
     const propertyTypes = buildAvailablePropertyTypes(locationFacetProperties);
     const propertyTypeAppId = resolvePropertyTypeAppId(filters.propertyTypeId, propertyTypes);
 
@@ -1038,7 +1084,7 @@ export async function getPropertyCatalog(
         ),
       )
       .filter((property) => propertyMatchesLocation(property, filters.location)),
-    );
+    ).filter((property) => !(property.propertyId && excludeIds.has(property.propertyId)));
     const developments = developmentResponses
       .flatMap((response, index) =>
         (response.developments || []).map((development) =>
@@ -1046,8 +1092,25 @@ export async function getPropertyCatalog(
         ),
       )
       .filter((development) => developmentMatchesLocation(development, filters.location));
-    const totalPropertyCount = countedBuckets.reduce((sum, bucket) => sum + bucket.count, 0);
+    let totalPropertyCount = countedBuckets.reduce((sum, bucket) => sum + bucket.count, 0);
     const hasReliablePropertyTotal = countedBuckets.every((bucket) => bucket.reliable);
+
+    // Los buckets DESTACADO/SIMPLE cuentan TODA propiedad que matchee la consulta, sin saber de
+    // exclusión curatorial — si alguno de los ids excluidos hubiera matcheado esta consulta
+    // (misma operación/tipo/ubicación/precio/dormitorios/ambientes activos), se resta acá para
+    // que el contador nunca quede inflado. `getPublicPropertyById` está cacheado (React `cache()`
+    // + fetch cache de Next), así que esto no agrega llamadas nuevas por request en la práctica.
+    if (excludeIds.size && hasReliablePropertyTotal) {
+      const excludedResults = await Promise.all(
+        Array.from(excludeIds).map((id) => getPublicPropertyById(id)),
+      );
+      for (const result of excludedResults) {
+        if (result.property && propertyMatchesActiveFilters(result.property, filters, resolvedPrice)) {
+          totalPropertyCount -= 1;
+        }
+      }
+      totalPropertyCount = Math.max(0, totalPropertyCount);
+    }
 
     return {
       status: 'ready',
