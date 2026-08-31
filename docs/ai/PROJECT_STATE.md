@@ -153,6 +153,102 @@ demás de esa ronda —LocationPicker, filtros, Precio, CTA, chips— quedó apr
 - CSS de "docking" (margin-top negativo del panel contra el Hero) retirado por completo, sin
   reglas muertas — el panel ahora es el primer bloque bajo el Header con aire fijo.
 
+### Novena pasada (2026-08) — Desarrollos/Faena, cierre visual y funcional
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Trabajo exclusivo sobre `/desarrollos` y
+`/desarrollos/faena` — arquitectura sin cambios (curaduría editorial sobre propertyIds reales,
+sin `/api/development`, `/propiedades/[id]` sigue siendo la ficha canónica).
+
+- `/desarrollos`: bajada dinámica (`activeMarketsPhrase()` en `lib/desarrollos.ts`) — dice "Miami"
+  hoy (único proyecto real), nunca "Buenos Aires y Miami" sin un proyecto real en cada mercado.
+- Faena: nuevo Hero con fotografía protagonista (`.project-hero`) en vez de reutilizar el hero
+  navy sin foto de la ficha. "Datos del proyecto" ya no muestra Tipo/Superficie de la unidad fuente
+  como si fueran atributos del desarrollo — solo "Unidades disponibles". CTA final corregido de
+  WhatsApp directo a `/contacto`.
+- **Limitación real encontrada y reportada en esta pasada** (`[FABIANAGA-456]`): **corregida en la
+  décima pasada**, ver abajo.
+
+### Décima pasada (2026-08) — `/desarrollos` sin Hero, catálogo visual + saneamiento del tag interno
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Corrección puntual sobre `/desarrollos` y el
+saneamiento público de descripción; `/desarrollos/faena` no se rediseñó (solo se benefició del
+saneamiento compartido).
+
+- Hero navy de `/desarrollos` eliminado por completo, sin reemplazo — `<h1 className="sr-only">`
+  para SEO/accesibilidad. Composición: Header → catálogo visual → Footer.
+- Índice pasa a un único sistema de grilla (`.development-grid`, 2 columnas desktop / 1 mobile)
+  para cualquier cantidad de proyectos — se eliminó la rama `FeaturedSpotlight` (1-2) / grilla
+  (3+). `FeaturedSpotlight` sigue en uso en `/invertir`, no se borró.
+- `CuratedDevelopmentCard` rediseñada (imagen protagonista, sin extracto largo, sin conteo de
+  unidades, solo imagen/nombre/ubicación/link). Sin mapa. Sin filtros de status (no hay datos
+  confirmados todavía).
+- Helpers net-new sin uso eliminados de `lib/desarrollos.ts`: `activeMarketsPhrase()`,
+  `shouldUseFeaturedLayout()`, `excerpt()` (todos de la novena pasada, reemplazados por esta).
+- **`[FABIANAGA-<número>]` corregido**: nueva `stripInternalDescriptionTags()`
+  (`lib/2clics/metadata.ts`), aplicada en el único punto donde se resuelve `metadata.description`
+  para toda propiedad — cubre `/propiedades/[id]`, `/desarrollos` y `/desarrollos/[slug]` a la vez,
+  sin tocar la respuesta cruda de 2Clics. Patrón estrecho, no borra corchetes legítimos.
+  Verificado en build de producción real (no solo dev) que no queda ningún rastro del tag ni de
+  `meta_data` crudo en las tres superficies públicas.
+
+### Undécima pasada (2026-08) — /desarrollos y /desarrollos/faena, landing editorial compacta
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Corrección sobre la décima pasada: la card de
+Faena en el índice era demasiado grande y la landing seguía sintiéndose como una ficha
+inmobiliaria fragmentada. Fuente de datos sin cambios (187676, sin `/api/development`).
+
+- `/desarrollos`: sin contador de proyectos; grilla reutiliza `.twoclics-grid` (mismo sistema que
+  Comprar/Alquilar/propiedades — una card no se estira aunque sea la única); `CuratedDevelopmentCard`
+  reducida a huella de card de catálogo.
+- `/desarrollos/faena`: hero full-width de 60vh retirado, reemplazado por `.project-intro`
+  (introducción compacta cream, texto + imagen real en dos columnas). Contenido editorial
+  reutiliza `.twoclics-ficha-section` (mismo lenguaje "sin caja" ya aprobado en
+  `PropertyDetailView.tsx`). "Datos del proyecto" eliminado. Amenities con umbral (2+ = sección,
+  1 = mención discreta, 0 = nada), nunca inferidos de la descripción libre. Mapa eliminado por
+  completo de esta landing únicamente — fichas canónicas y `/propiedades/[id]` sin cambios.
+- Sin cambios: `PropertyCard`, `PropertyDetailView`, saneamiento de `[FABIANAGA-*]`, integración
+  2Clics, mapas de fichas.
+
+### Duodécima pasada (2026-08) — /desarrollos y /desarrollos/faena, landing 100% editorial
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Reescritura
+sobre la undécima pasada: la introducción-en-caja + galería/descripción tipo ficha seguía sin
+sentirse una presentación de desarrollo. Fuente de datos sin cambios (187676, sin
+`/api/development`). Decisión rectora: **las landings de desarrollos son una capa editorial
+construida sobre datos reales de propiedades curadas de 2Clics — no replican la UX de una ficha
+inmobiliaria ni inventan estructura inmobiliaria que la fuente no provea.**
+
+- **Nombre público real**: se dejó de usar `curation.name` ("Proyecto Faena", nombre editorial
+  interno) para mostrar el desarrollo. El nombre público ahora es `sourceProperty.title`, resuelto
+  desde 2Clics — para 187676 es **"Faena Residences Miami"**. `curation.name` se mantiene en
+  `lib/site-curation.ts` solo como referencia administrativa interna (comentario agregado),
+  ningún componente lo vuelve a usar para texto visible.
+- `CuratedDevelopmentCard`: eyebrow "Proyecto"→"Desarrollo", título real (no "Proyecto Faena"),
+  CTA "Conocer desarrollo →".
+- `/desarrollos/faena`: reescrita como landing editorial (`lib/desarrollos.ts`:
+  `selectEditorialImages`/`editorialDescriptionParagraphs`) — imagen protagonista + apertura,
+  luego bloques alternados imagen/texto con fotos reales únicas (sin repetir portada) y
+  fragmentos reales de la descripción (sin resumir/inventar). Retirados por completo:
+  `PropertyGallery` (sin thumbnails/contador "1/N"/flechas), el CTA "Ver propiedades disponibles",
+  y el mapa (ya venía retirado). "Propiedades disponibles" ahora es condicional
+  (`units.length > 1`) — con Faena representado hoy por un único registro real (187676), la
+  sección no se muestra (evita redundancia con su propio registro maestro); la arquitectura queda
+  lista para cuando existan unidades reales independientes. Amenities: mismo umbral que la
+  undécima pasada (2+ = sección, 1 = mención discreta, 0 = nada).
+- **"Consultar desarrollo"** reutiliza sin modificar `PropertyInquiryPanel`
+  (`components/properties/PropertyInquiryPanel.tsx`) — el mismo mecanismo ya aprobado de
+  `PropertyDetailView.tsx` (`POST /api/lead/message`, `property_app_id`). Nunca `/contacto`. La
+  consulta queda asociada a `sourceProperty.propertyId` (187676 para Faena). Sin integración
+  2Clics nueva.
+- **Exclusión deliberada y documentada** (no silenciosa): la descripción real de 187676 también
+  trae precios por tipología ("... desde U$D ...") y un cronograma de señas con fechas de obra
+  estimadas ("DEPOSITOS Y FECHAS", "at top-off/closing"). Es contenido real, pero las reglas de
+  esta landing prohíben mostrar precio/plazos/estado de obra como dato público confirmado —
+  `editorialDescriptionParagraphs()` excluye esos bloques puntuales por patrón de contenido; el
+  resto del texto real se conserva intacto. Detalle en `docs/ai/PROPERTY_UX_DECISIONS.md`.
+- Sin cambios: `PropertyCard`, `PropertyDetailView`, `PropertyInquiryPanel` (reutilizado, no
+  modificado), saneamiento de `[FABIANAGA-*]`, integración 2Clics, `/comprar`/`/alquilar`.
+
 ## Pendiente de decisión (no confundir con "roto")
 
 - **Formulario de contacto general** (`lib/crm/leads.ts`, host `api.2clics.com.ar` legacy):

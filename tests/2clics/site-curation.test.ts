@@ -756,19 +756,182 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
   const faena = getDevelopmentBySlug('faena')!;
   const source = property({ propertyId: 187676 });
 
-  it('CuratedDevelopmentCard usa el nombre editorial y linkea al slug curado', () => {
+  it('CuratedDevelopmentCard usa el nombre real de la fuente (2Clics), no el nombre editorial interno, y linkea al slug curado', () => {
     const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, sourceProperty: source }));
-    expect(html).toContain('Proyecto Faena');
+    expect(html).toContain(source.title);
+    expect(html).not.toContain('>Proyecto Faena<');
     expect(html).toContain('href="/desarrollos/faena"');
   });
 
-  it('CuratedDevelopmentDetailView linkea cada unidad a su ficha canónica, sin reproducirla, con CTA humano', () => {
+  it('CuratedDevelopmentDetailView linkea cada unidad a su ficha canónica cuando hay más de un registro real, sin reproducirla', () => {
+    const otherUnit = property({ propertyId: 187677 });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: faena,
+        sourceProperty: source,
+        units: [source, otherUnit],
+      }),
+    );
+    expect(html).toContain('href="/propiedades/187676"');
+    expect(html).toContain('href="/propiedades/187677"');
+    expect(html).not.toContain('twoclics-essential-strip');
+  });
+
+  it('"Consultar desarrollo" reutiliza el flujo de consulta específico de propiedad (PropertyInquiryPanel) asociado a 187676 — nunca /contacto ni WhatsApp directo, una única vez (solo al cierre)', () => {
     const html = render(
       React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
     );
-    expect(html).toContain('href="/propiedades/187676"');
-    expect(html).not.toContain('twoclics-essential-strip');
-    expect(html).toContain('Hablar con un asesor');
+    expect(html).not.toContain('href="/contacto"');
+    expect(html).not.toContain('wa.me');
+    expect(html).not.toContain('data-whatsapp-location="desarrollo"');
+    expect(html).toContain('data-property-app-id="187676"');
+    expect(html).toContain('>Consultar desarrollo<');
+    // Decimotercera pasada: una sola instancia fuerte de consulta, al final — sin CTA en la apertura.
+    expect((html.match(/data-property-app-id="187676"/g) || []).length).toBe(1);
+  });
+
+  it('sin CTA en la apertura — la sección project-open no contiene el botón de consulta', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+    );
+    const openSection = html.match(/<section class="project-open">[\s\S]*?<\/section>/);
+    expect(openSection).not.toBeNull();
+    expect(openSection![0]).not.toContain('data-property-app-id');
+    expect(openSection![0]).not.toContain('Consultar desarrollo');
+  });
+
+  it('landing editorial (decimotercera pasada): apertura con imagen real protagonista, sin hero full-width ni galería tradicional', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+    );
+    expect(html).toContain('class="project-open"');
+    // next/image reescribe el src a /_next/image?url=<encoded>... — se verifica la URL real
+    // codificada, no el string crudo.
+    expect(html).toContain(encodeURIComponent(source.images[0].displayUrl));
+    // El hero fotográfico full-width de 60vh (novena pasada), el hero navy de texto, y la
+    // introducción-en-caja con galería tradicional (undécima pasada) quedaron retirados.
+    expect(html).not.toContain('class="project-hero"');
+    expect(html).not.toContain('class="twoclics-detail-hero"');
+    expect(html).not.toContain('twoclics-gallery');
+  });
+
+  it('curaduría real: reconoce y separa los bloques "El edificio" y "Residencias" de la descripción real de Faena, sin inventar contenido ni repetir la frase de apertura', () => {
+    const fullDescription = property({
+      propertyId: 187676,
+      meta_data: [
+        {
+          metaKey: 'description',
+          metaValue:
+            'Tras haber transformado Miami Beach en un centro global de arte, cultura, hospitalidad y diseño, ahora nos embarcamos en un nuevo viaje que promete crear un epicentro cultural innovador a lo largo del Rio Miami. Con nuestro compromiso inquebrantable con la belleza, la creatividad y la innovación, este proyecto inspirara. Alan Faena.\n\nEl edificio\nParque privado\nInstalaciones de bienestar\nMarina\nArte público\nSala Club\nRestaurante\nSala de proyecciones\nResidencias\nElevadores privados\nTechos de 3 a 3.6 metros de altura\nBaños tipo spa con duchas y bañeras tipo lluvia\n\n1 Habitación desde U$D 1.300.000',
+        },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: fullDescription, units: [fullDescription] }),
+    );
+    expect(html).toContain('<h2>El proyecto</h2>');
+    expect(html).toContain('<h2>El edificio</h2>');
+    expect(html).toContain('<h2>Residencias</h2>');
+    // Items reales de la fuente, sin inventar.
+    expect(html).toContain('Parque privado');
+    expect(html).toContain('Marina');
+    expect(html).toContain('Elevadores privados');
+    expect(html).toContain('Baños tipo spa con duchas y bañeras tipo lluvia');
+    // La primera oración (apertura) no se repite dentro de "El proyecto".
+    const openMatch = html.match(/class="project-open-text">([^<]*)</);
+    const proyectoMatch = html.match(/<h2>El proyecto<\/h2><p>([^<]*)</);
+    expect(openMatch).not.toBeNull();
+    expect(proyectoMatch).not.toBeNull();
+    expect(proyectoMatch![1]).not.toBe(openMatch![1]);
+    expect(proyectoMatch![1]).not.toContain(openMatch![1]!);
+  });
+
+  it('nunca muestra precios ni cronograma de señas/fechas de obra extraídos de la descripción libre', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+    );
+    expect(html).not.toContain('desde U$D');
+    expect(html).not.toContain('DEPOSITOS Y FECHAS');
+    expect(html).not.toContain('groundbreaking');
+    expect(html).not.toContain('at closing');
+    expect(html).not.toContain('at top-off');
+  });
+
+  it('nunca muestra amenities estructurados ni "Permite mascotas", aunque existan datos reales — la landing no tiene sección de amenities', () => {
+    const withAmenities = property({
+      propertyId: 187676,
+      amenities: [
+        { amenitieId: '1', name: 'Permite mascotas', type: 'general' },
+        { amenitieId: '2', name: 'Pileta', type: 'general' },
+        { amenitieId: '3', name: 'Gimnasio', type: 'general' },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: withAmenities, units: [withAmenities] }),
+    );
+    expect(html).not.toContain('Permite mascotas');
+    expect(html).not.toContain('Amenities y servicios');
+    expect(html).not.toContain('twoclics-chip-list');
+  });
+
+  it('no repite la portada ni duplica ninguna imagen entre bloques (apertura, momento visual, edificio, residencias)', () => {
+    const manyImages = property({
+      propertyId: 187676,
+      images: Array.from({ length: 8 }, (_, i) => ({ imageId: `img${i}`, url: `https://cdn.2clics.com/${i}.jpg` })),
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: manyImages, units: [manyImages] }),
+    );
+    const imgTags = html.match(/<img[^>]*>/g) || [];
+    const usedUrls = manyImages.images
+      .map((img) => encodeURIComponent(img.displayUrl))
+      .filter((enc) => imgTags.some((tag) => tag.includes(enc)));
+    // Cada URL real usada debe aparecer en un único <img> (nunca la misma foto en dos bloques).
+    for (const enc of usedUrls) {
+      const tagsWithThisUrl = imgTags.filter((tag) => tag.includes(enc));
+      expect(tagsWithThisUrl.length).toBe(1);
+    }
+  });
+
+  it('ninguna imagen editorial usa sizes="100vw" en solitario (causa de las imágenes borrosas — la auditoría de resolución real limita el ancho de render)', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+    );
+    expect(html).not.toContain('sizes="100vw"');
+  });
+
+  it('sin imágenes, la apertura se degrada con gracia (sin columna de imagen, sin romper)', () => {
+    const noImages = property({ propertyId: 187676, images: [] });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: noImages, units: [noImages] }),
+    );
+    expect(html).toContain('class="project-open"');
+    expect(html).not.toContain('class="project-open-media"');
+    expect(html).toContain(noImages.title);
+  });
+
+  it('sin sección "Datos del proyecto" — el conteo de unidades ya lo comunica la grilla de abajo', () => {
+    const sourceWithUnitData = property({ propertyId: 187676, totalArea: 320, propertyType: { typeId: 2, name: 'Departamento', appId: '5792' } });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: faena,
+        sourceProperty: sourceWithUnitData,
+        units: [sourceWithUnitData],
+      }),
+    );
+    expect(html).not.toContain('Datos del proyecto');
+    expect(html).not.toContain('<dt>Tipo</dt>');
+    expect(html).not.toContain('<dt>Superficie total</dt>');
+    expect(html).not.toContain('Unidades disponibles');
+    // "Departamento" sí puede aparecer en la PropertyCard de "Propiedades disponibles" (describe
+    // esa unidad puntual) — eso está bien, ya no hay una sección de highlights de proyecto.
+  });
+
+  it('sin video real, no renderiza sección "Video" (sin placeholder)', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+    );
+    expect(html).not.toContain('>Video<');
   });
 
   it('FeaturedSpotlight ("Conocer proyecto"/"Conocer esta inversión") linkea al slug esperado', () => {
@@ -799,5 +962,279 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
     expect(html).toContain('Ver ficha de la propiedad');
     expect(html.toLowerCase()).not.toContain('marcelo');
     expect(html.toLowerCase()).not.toContain('chami');
+  });
+});
+
+// ── /desarrollos — catálogo visual de proyectos, sin Hero, escalable (décima pasada) ────────
+describe('/desarrollos — sin Hero navy, catálogo visual con H1 sr-only', () => {
+  const desarrollosSource = readFileSync('app/desarrollos/page.tsx', 'utf8');
+
+  it('no renderiza el Hero navy ni su copy (eyebrow/H1 visible/bajada) — la revisión visual no lo aprobó', () => {
+    expect(desarrollosSource).not.toContain('twoclics-catalog-hero');
+    expect(desarrollosSource).not.toContain('<h1>Proyectos seleccionados</h1>');
+    expect(desarrollosSource).not.toContain('className="eyebrow"');
+    expect(desarrollosSource).not.toContain('activeMarketsPhrase');
+    // La metadata SEO (title/description) sí puede seguir mencionando "proyectos seleccionados"
+    // como texto — lo que se retiró es el H1/eyebrow/bajada VISIBLES del Hero, no el copy de SEO.
+    expect(desarrollosSource).not.toMatch(/<h1>[^<]/);
+  });
+
+  it('mantiene un H1 semántico oculto (sr-only) para accesibilidad/SEO, no visible', () => {
+    expect(desarrollosSource).toContain('<h1 className="sr-only">Desarrollos</h1>');
+  });
+
+  it('metadata SEO (title/description/canonical) se mantiene sin el Hero visual', () => {
+    expect(desarrollosSource).toContain("title: 'Desarrollos | García Inversiones Inmobiliarias'");
+    expect(desarrollosSource).toContain("canonical: '/desarrollos'");
+  });
+
+  it('no implementa mapa ni reserva espacio de split-screen', () => {
+    expect(desarrollosSource).not.toContain('PropertyMap');
+    expect(desarrollosSource).not.toContain('twoclics-map');
+  });
+
+  it('no agrega filtros de status ficticios (pre-construction/under construction/etc.)', () => {
+    const forbidden = ['Pre-construction', 'Under construction', 'Completed', 'Top Off'];
+    for (const phrase of forbidden) {
+      expect(desarrollosSource).not.toContain(phrase);
+    }
+  });
+
+  it('el copy no menciona detalles de implementación', () => {
+    const forbidden = [
+      'curaduría técnica',
+      'property id',
+      'propertyId',
+      'CRM',
+      '2Clics',
+      'Emprendimientos',
+      'arquitectura',
+      '/api/development',
+    ];
+    for (const phrase of forbidden) {
+      expect(desarrollosSource).not.toContain(phrase);
+    }
+  });
+
+  it('no usa el módulo /api/development de 2Clics para la navegación V2', () => {
+    expect(desarrollosSource).not.toContain('getPublicDevelopmentById');
+    expect(desarrollosSource).not.toContain('DevelopmentDetailView');
+  });
+
+  it('no muestra el contador "N proyecto(s)" (undécima pasada: información innecesaria)', () => {
+    expect(desarrollosSource).not.toContain('1 proyecto');
+    expect(desarrollosSource).not.toContain('countLabel');
+    expect(desarrollosSource).not.toContain('development-count');
+  });
+
+  it('la grilla reutiliza .twoclics-grid (mismo sistema de Comprar/Alquilar/propiedades) — una card no se estira aunque sea la única', () => {
+    expect(desarrollosSource).toContain('className="twoclics-grid"');
+    expect(desarrollosSource).not.toContain('development-grid');
+  });
+});
+
+describe('CuratedDevelopmentCard — grilla escalable, solo datos respaldados (decimotercera pasada)', () => {
+  const faena = getDevelopmentBySlug('faena')!;
+  const source = property({ propertyId: 187676 });
+
+  it('eyebrow "Desarrollo" (no "Proyecto"), nombre real de la fuente (no concatenado con "Proyecto"), ubicación pública y link al slug — sin CTA textual redundante', () => {
+    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, sourceProperty: source }));
+    expect(html).toContain('>Desarrollo<');
+    expect(html).not.toContain('>Proyecto<');
+    expect(html).toContain(source.title);
+    expect(html).not.toContain(`Proyecto ${source.title}`);
+    expect(html).toContain('Nordelta');
+    expect(html).toContain('href="/desarrollos/faena"');
+    expect(html).toContain(source.images[0].displayUrl);
+    // Decimotercera pasada: sin "Conocer desarrollo →" — la card completa ya es el link.
+    expect(html).not.toContain('Conocer desarrollo');
+    // Un único <a> por card (toda la card es el link), no tres links sueltos apuntando al mismo href.
+    expect((html.match(/<a /g) || []).length).toBe(1);
+  });
+
+  it('no incluye el extracto largo de la descripción, ni conteo de unidades ni precio (la card debe ser compacta y visual)', () => {
+    const withDescription = property({
+      propertyId: 187676,
+      meta_data: [{ metaKey: 'description', metaValue: 'Tras haber transformado Miami Beach en un centro global de arte y cultura, este proyecto marca un antes y un después.' }],
+    });
+    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, sourceProperty: withDescription }));
+    expect(html).not.toContain('Tras haber transformado Miami Beach');
+  });
+
+  it('nunca muestra precio, unidades, año, estado, developer ni fecha de entrega — no está oficialmente respaldado', () => {
+    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, sourceProperty: source }));
+    const forbidden = [
+      'U$D',
+      'AR$',
+      'propiedad asociada',
+      'propiedades asociadas',
+      'Developer',
+      'Pre-construction',
+      'Under construction',
+      'Entrega',
+      'Rentabilidad',
+    ];
+    for (const phrase of forbidden) {
+      expect(html).not.toContain(phrase);
+    }
+  });
+});
+
+describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin mapa, sin datos sensibles', () => {
+  const faena = getDevelopmentBySlug('faena')!;
+  const source = property({ propertyId: 187676 });
+
+  it('sin PropertyMap ni Google Maps embed — solo la ubicación textual, únicamente en esta landing', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+    );
+    expect(html).not.toContain('twoclics-map');
+    expect(html).not.toContain('google.com/maps');
+    expect(html).not.toContain('Abrir en Google Maps');
+    expect(html).toContain('Nordelta');
+  });
+
+  it('sin galería tradicional: sin PropertyGallery, sin thumbnails, sin "Ver las N fotos", sin contador "1/N", sin flechas', () => {
+    const manyImages = property({
+      propertyId: 187676,
+      images: [
+        { imageId: 'cover', url: 'https://cdn.2clics.com/cover.jpg' },
+        { imageId: 'a', url: 'https://cdn.2clics.com/a.jpg' },
+        { imageId: 'b', url: 'https://cdn.2clics.com/b.jpg' },
+        { imageId: 'c', url: 'https://cdn.2clics.com/c.jpg' },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: manyImages, units: [manyImages] }),
+    );
+    expect(html).not.toContain('twoclics-gallery');
+    expect(html).not.toContain('twoclics-gallery-thumb');
+    expect(html).not.toMatch(/Ver las \d+ fotos/);
+    expect(html).not.toMatch(/\b1\s*\/\s*4\b/);
+  });
+
+  it('imágenes editoriales reales y únicas: la portada aparece una sola vez, sin repetir fotos entre bloques', () => {
+    const manyImages = property({
+      propertyId: 187676,
+      images: [
+        { imageId: 'cover', url: 'https://cdn.2clics.com/cover.jpg' },
+        { imageId: 'a', url: 'https://cdn.2clics.com/a.jpg' },
+        { imageId: 'b', url: 'https://cdn.2clics.com/b.jpg' },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: manyImages, units: [manyImages] }),
+    );
+    // next/image reescribe cada <img> a /_next/image?url=<encoded>&w=...&q=75 con varios anchos
+    // en el srcSet — un solo <img> real genera múltiples apariciones del string crudo. Se cuentan
+    // elementos <img> distintos que referencian la portada, no substrings.
+    const imgTags = html.match(/<img[^>]*>/g) || [];
+    const coverImgTags = imgTags.filter((tag) => tag.includes(encodeURIComponent('https://cdn.2clics.com/cover.jpg')));
+    expect(coverImgTags.length).toBe(1);
+    // Al menos otra foto real distinta de la portada aparece en la narrativa editorial.
+    const otherImgTags = imgTags.filter(
+      (tag) =>
+        tag.includes(encodeURIComponent('https://cdn.2clics.com/a.jpg')) ||
+        tag.includes(encodeURIComponent('https://cdn.2clics.com/b.jpg')),
+    );
+    expect(otherImgTags.length).toBeGreaterThan(0);
+  });
+
+  it('la narrativa excluye precios por tipología y el cronograma de señas/fechas de obra (contenido real, pero no confirmable como dato público)', () => {
+    const withPricing = property({
+      propertyId: 187676,
+      meta_data: [
+        {
+          metaKey: 'description',
+          metaValue:
+            'Tras haber transformado Miami Beach en un centro global de arte y cultura.\n\nEl edificio\nParque privado\nMarina\n\n1 Habitación desde U$D 1.300.000\n2 Habitación desde U$D 1.900.000\n\n DEPOSITOS Y FECHAS:\n\n 20% firma del contrato de inmediato.\n 20% at groundbreaking julio 2025.',
+        },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: withPricing, units: [withPricing] }),
+    );
+    expect(html).toContain('Tras haber transformado Miami Beach');
+    expect(html).toContain('Parque privado');
+    expect(html).not.toContain('desde U$D');
+    expect(html).not.toContain('DEPOSITOS Y FECHAS');
+    expect(html).not.toContain('groundbreaking');
+    expect(html).not.toContain('at closing');
+  });
+
+  it('"Propiedades disponibles" no se muestra cuando el desarrollo hoy es un único registro real (evita redundancia con su propio registro maestro)', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+    );
+    expect(html).not.toContain('Propiedades disponibles');
+    expect(html).not.toContain('href="/propiedades/187676"');
+  });
+
+  it('"Propiedades disponibles" se muestra cuando el desarrollo tiene más de un registro real asociado', () => {
+    const otherUnit = property({ propertyId: 187677 });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: faena,
+        sourceProperty: source,
+        units: [source, otherUnit],
+      }),
+    );
+    expect(html).toContain('Propiedades disponibles');
+  });
+
+  it('no muestra el CTA "Ver propiedades disponibles" (eliminado — duodécima pasada, se mantiene retirado)', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+    );
+    expect(html).not.toContain('Ver propiedades disponibles');
+  });
+
+  it('nunca infiere amenities desde la descripción libre (marina/club/parque mencionados en texto no son datos estructurados)', () => {
+    const richDescription = property({
+      propertyId: 187676,
+      amenities: [],
+      meta_data: [
+        {
+          metaKey: 'description',
+          metaValue: 'El edificio cuenta con Parque privado Marina Club Restaurante Sala de proyecciones.',
+        },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: richDescription, units: [richDescription] }),
+    );
+    expect(html).not.toContain('Amenities y servicios');
+    expect(html).not.toContain('twoclics-chip-list');
+  });
+
+  it('no expone metadata privada/cruda: sin FABIANAGA, meta_data, info_contact, agent, realEstate ni private_note', () => {
+    const taggedSource = property({
+      propertyId: 187676,
+      meta_data: [
+        { metaKey: 'description_plain_text', metaValue: '[FABIANAGA-456]\n\nTras haber transformado Miami Beach.' },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: taggedSource, units: [taggedSource] }),
+    );
+    const forbidden = ['FABIANAGA', 'meta_data', 'metaKey', 'info_contact', 'private_note', 'agent', 'realEstate'];
+    for (const phrase of forbidden) {
+      expect(html).not.toContain(phrase);
+    }
+    expect(html).toContain('Tras haber transformado Miami Beach.');
+  });
+});
+
+describe('/desarrollos/faena — canonical independiente, legacy /api/development sin borrar', () => {
+  const detailSource = readFileSync('app/desarrollos/[id]/page.tsx', 'utf8');
+
+  it('el slug editorial tiene su propio canonical, nunca apunta a /propiedades/187676', () => {
+    expect(detailSource).toContain('alternates: { canonical: `/desarrollos/${curation.slug}` }');
+    expect(detailSource).not.toContain('canonical: `/propiedades/${curation.sourcePropertyId}`');
+  });
+
+  it('el flujo legacy numérico (/api/development) sigue presente, sin usarse desde /desarrollos', () => {
+    expect(detailSource).toContain('getPublicDevelopmentById');
+    expect(detailSource).toContain('DevelopmentDetailView');
   });
 });

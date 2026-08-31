@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { adaptPublicDevelopment, adaptPublicProperty } from '@/lib/2clics/adapters';
-import { inspectPublicMetadata, parsePublicMetadata } from '@/lib/2clics/metadata';
+import { inspectPublicMetadata, parsePublicMetadata, stripInternalDescriptionTags } from '@/lib/2clics/metadata';
 
 describe('parsePublicMetadata', () => {
   it('maps known public keys and keeps private values out', () => {
@@ -78,6 +78,61 @@ describe('parsePublicMetadata', () => {
     ]);
     expect(diagnostics.unknownPublicKeys).toEqual(['unknown_publicish']);
     expect(diagnostics.internalKeysPresent).toEqual(['private_note']);
+  });
+
+  // WEB GARCÍA V2 (Desarrollos, décima pasada) — la descripción pública de la propiedad 187676
+  // (fuente de Faena) trae un tag interno de CRM/broker confirmado contra datos reales:
+  // "[FABIANAGA-456]" como prefijo, seguido de una línea en blanco. `cleanMetaValue` (llamado por
+  // `parseMetadata` para target === 'description') lo saca ANTES de que `metadata.description`
+  // llegue a cualquier página — /propiedades/[id], /desarrollos y /desarrollos/[slug] leen todas
+  // el mismo campo ya saneado, sin tocar la respuesta cruda de 2Clics.
+  it('quita el tag interno "[FABIANAGA-<número>]" de la descripción pública sin tocar el resto del texto', () => {
+    const parsed = parsePublicMetadata([
+      {
+        metaKey: 'description_plain_text',
+        metaValue: '[FABIANAGA-456] Tras haber transformado Miami Beach en un centro global de arte, cultura, hospitalidad y diseño.',
+      },
+    ]);
+    expect(parsed.description).toBe(
+      'Tras haber transformado Miami Beach en un centro global de arte, cultura, hospitalidad y diseño.',
+    );
+    expect(parsed.description).not.toContain('FABIANAGA');
+  });
+
+  it('quita el tag real con salto de línea en blanco después (formato exacto confirmado contra 2Clics)', () => {
+    const parsed = parsePublicMetadata([
+      { metaKey: 'description_plain_text', metaValue: '[FABIANAGA-456]\n\nTras haber transformado Miami Beach...' },
+    ]);
+    expect(parsed.description).toBe('Tras haber transformado Miami Beach...');
+  });
+
+  it('reconoce variantes reales del mismo identificador (distintos números, confirmadas contra el dataset)', () => {
+    for (const id of ['185', '490', '455', '427', '430', '428']) {
+      const parsed = parsePublicMetadata([
+        { metaKey: 'description_plain_text', metaValue: `[FABIANAGA-${id}]\n\n¡Bienvenido a un proyecto real!` },
+      ]);
+      expect(parsed.description).toBe('¡Bienvenido a un proyecto real!');
+    }
+  });
+
+  it('NO borra corchetes legítimos que no coincidan con el patrón interno confirmado', () => {
+    const parsed = parsePublicMetadata([
+      { metaKey: 'description_plain_text', metaValue: 'Unidad reciclada [año 2020], a metros de la Rambla.' },
+    ]);
+    expect(parsed.description).toBe('Unidad reciclada [año 2020], a metros de la Rambla.');
+  });
+
+  it('stripInternalDescriptionTags: cobertura directa input/output (unitaria, sin pasar por meta_data)', () => {
+    expect(stripInternalDescriptionTags('[FABIANAGA-456] Tras haber transformado Miami Beach...')).toBe(
+      'Tras haber transformado Miami Beach...',
+    );
+    expect(stripInternalDescriptionTags('[FABIANAGA-456]\n\nTexto real.')).toBe('Texto real.');
+    expect(stripInternalDescriptionTags('Sin ningún tag interno, texto normal.')).toBe(
+      'Sin ningún tag interno, texto normal.',
+    );
+    expect(stripInternalDescriptionTags('Un texto con [corchetes legítimos] en el medio.')).toBe(
+      'Un texto con [corchetes legítimos] en el medio.',
+    );
   });
 });
 
@@ -190,6 +245,24 @@ describe('2Clics public adapters', () => {
     expect(development.developmentId).toBe(50);
     expect(development.properties).toHaveLength(1);
     expect(development.properties[0]?.price).toBe(150000);
+  });
+
+  it('adapts a property whose description carries the internal CRM tag without exposing it in the public DTO', () => {
+    const property = adaptPublicProperty(
+      {
+        propertyId: 187676,
+        address: 'Faena, Miami',
+        meta_data: [
+          {
+            metaKey: 'description_plain_text',
+            metaValue: '[FABIANAGA-456]\n\nTras haber transformado Miami Beach en un centro global de arte.',
+          },
+        ],
+      },
+      'US',
+    );
+    expect(property.description).toBe('Tras haber transformado Miami Beach en un centro global de arte.');
+    expect(JSON.stringify(property)).not.toContain('FABIANAGA');
   });
 
   it('classifies a Buenos Aires development by geographic data', () => {

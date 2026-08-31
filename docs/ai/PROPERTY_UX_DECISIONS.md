@@ -718,6 +718,229 @@ por completo — sin Hero, no tenían función. El panel es ahora el primer bloq
 .twoclics-catalog-section`, con `padding-top: 40px` (desktop) / `24px` (mobile) fijo respecto al
 Header — mismo criterio ya usado en `/contacto` para "primer bloque bajo el Header".
 
+## Desarrollos / Faena — cierre visual y funcional (2026-08, novena pasada)
+
+`/desarrollos/[slug]` es una landing EDITORIAL de proyecto, distinta de la ficha canónica
+`/propiedades/[id]` — no es "la ficha con otro template". Fuente de datos: `PublicProperty`
+sanitizada de la propiedad fuente (hoy 187676 para Faena) + metadata editorial mínima de
+`lib/site-curation.ts` (slug/nombre/propertyIds — nunca precio/superficie/amenities/fotos
+duplicados ahí).
+
+**Regla congelada — dato de unidad vs. dato de proyecto:** antes de mostrar cualquier campo en
+"Datos del proyecto", preguntarse si describe el DESARROLLO o solo la ficha fuente puntual.
+Dormitorios/baños/superficie/precio/tipo de UNA unidad nunca son highlights de proyecto — se
+retiraron "Tipo" y "Superficie total" (eran atributos de 187676, no de Faena) por esta regla. El
+único highlight legítimo hoy es "Unidades disponibles" (`units.length`, cuenta la curaduría
+editorial en sí). No inventar developer, fecha de entrega, status, cantidad total de unidades,
+payment plan, rentabilidad, ticket ni disponibilidad global — si 2Clics no lo trae, no se muestra.
+
+**Hero de proyecto con fotografía protagonista** (`.project-hero`, `CuratedDevelopmentDetailView.tsx`):
+imagen real de portada + degradé navy (mismo lenguaje visual que el Hero de Home), escala
+controlada (`min-height:58vh / max-height:620px`, nunca pantalla completa). Deliberadamente
+distinto del hero navy sin foto que usa la ficha de propiedad (`.twoclics-detail-hero`) — esa
+diferencia visual es la que comunica "esto es un proyecto, no una ficha". CTA primario ("Ver
+propiedades disponibles", ancla interna) + CTA secundario ("Consultar proyecto" → `/contacto`).
+Sin foto de portada disponible, cae a un hero de texto (fallback defensivo, no esperado en Faena).
+
+**CTA final → `/contacto`, nunca WhatsApp directo** — mismo criterio ya vigente en el resto del
+sitio desde que Contacto es landing propia (Header/Hero/Footer/`ListingState`/`InquiryCta`).
+
+**Galería/Amenities/Video**: reutilizan `PropertyGallery`/`PropertyMap` sin modificar (evita
+duplicar lógica ya aprobada). Amenities solo si hay datos estructurados reales (`amenities.length`)
+— nunca inferidos de la descripción o de fotos. Video solo si `metadata.videoUrl` existe — sin
+placeholder si no hay.
+
+**Escalabilidad del índice** (`/desarrollos`, sin cambios de esta pasada, confirmado vigente): 1-2
+proyectos → `FeaturedSpotlight` editorial; 3+ → grilla `CuratedDevelopmentCard`. Umbral extraído a
+`shouldUseFeaturedLayout()` (`lib/desarrollos.ts`) para no tener que rediseñar al sumar proyectos.
+
+**Bajada del índice, dinámica, nunca overclaim**: `activeMarketsPhrase()` (`lib/desarrollos.ts`)
+menciona solo los mercados con al menos un proyecto real curado — hoy "Miami" únicamente (Faena).
+Nunca "Buenos Aires y Miami" sin un proyecto real en cada uno.
+
+**Limitación real, no corregida en esta pasada:** la descripción pública de 187676 trae un tag
+interno de CRM filtrado por 2Clics (`[FABIANAGA-456]`), visible tanto acá como en la ficha
+canónica — requiere tocar el pipeline compartido de descripción (fuera de scope, protegido). Ver
+`PROJECT_STATE.md`, sección "Pendiente de decisión".
+
+## `/desarrollos` — catálogo visual sin Hero (2026-08, décima pasada)
+
+Corrección puntual sobre la novena pasada (arriba): esa versión del índice (Hero navy + bajada
+dinámica + FeaturedSpotlight/grilla alternando por cantidad) **no fue aprobada** en la revisión
+visual. `/desarrollos/faena` no cambió en esta pasada.
+
+**Sin Hero editorial**: eliminado por completo — sin eyebrow, sin H1 visible, sin bajada, sin
+bloque navy intermedio. `<h1 className="sr-only">Desarrollos</h1>` cubre semántica/SEO. La sección
+activa del Header (dorado) ya comunica dónde está el usuario — mismo criterio que Comprar/Alquilar
+sin Hero (séptima/octava pasada).
+
+**Catálogo visual, un único sistema de grilla** (`.development-grid`, 2 columnas desktop / 1
+mobile): reemplaza la rama que alternaba `FeaturedSpotlight` (1-2) / grilla (3+) — un solo sistema
+que funciona igual con 1 proyecto que con 10, sin rediseño al agregar el segundo/tercero.
+`FeaturedSpotlight` sigue vigente en `/invertir`, no se tocó ni se borró.
+
+**Card de proyecto** (`CuratedDevelopmentCard`, adaptada en el lugar — única consumidora, no se
+creó un componente nuevo): imagen protagonista, eyebrow pequeño "Proyecto", nombre editorial,
+ubicación pública, CTA discreto "Conocer proyecto →". Toda la card es un único `<Link>` (mismo
+patrón ya aprobado de PropertyCard overlay). Se retiraron el extracto largo de descripción y el
+conteo "N propiedades asociadas" — la card no debe leerse como un bloque de texto. Solo datos
+respaldados: imagen + nombre + ubicación + link. Nunca precio/unidades/año/estado/developer/fecha
+de entrega/rentabilidad/payment plan.
+
+**Sin mapa, sin split-screen** — decisión explícita, toda el área es para la grilla. **Sin filtros
+de status** (pre-construction/under construction/etc.) — no hay datos estructurados/confirmados
+para construirlos; la grilla queda diseñada para poder agregarlos después sin rediseño mayor.
+
+## Saneamiento de descripción pública — tokens internos de CRM (2026-08, décima pasada)
+
+**Regla congelada:** ningún identificador interno de CRM/broker debe llegar a texto público.
+Confirmado contra datos reales: la descripción de varias propiedades trae un prefijo tipo
+`[FABIANAGA-<número>]` (verificado con múltiples números reales: 456, 185, 490, 455, 427, 430,
+428) seguido de una línea en blanco.
+
+**Dónde se resuelve:** `stripInternalDescriptionTags()` (`lib/2clics/metadata.ts`), invocada
+dentro de `cleanMetaValue()` — el único punto donde CUALQUIER propiedad resuelve
+`metadata.description`, antes de `adaptPublicProperty`/`adaptPublicDevelopment`. Cubre
+`/propiedades/[id]`, `/desarrollos` y `/desarrollos/[slug]` a la vez porque los tres leen el mismo
+`sourceProperty.description` ya saneado — no se sanea por página, se sanea en el origen del dato.
+No se tocó la respuesta cruda de 2Clics ni `PropertyDescription.tsx`/`PropertyDetailView.tsx`.
+
+**Patrón deliberadamente estrecho** (`/\[FABIANAGA-\d+\]/g`) — nunca "borrar todo lo que esté entre
+corchetes". Texto legítimo con corchetes (ej. "[año 2020]") se conserva. Si en el futuro aparece
+una variante confirmada del mismo identificador con otro prefijo, agregar con evidencia real, no
+por sospecha — mismo criterio que `INTERNAL_KEY_FRAGMENTS` (blocklist de `meta_data`) ya usa.
+
+## `/desarrollos` y `/desarrollos/faena` — landing editorial compacta (2026-08, undécima pasada)
+
+Corrección sobre la décima pasada (arriba): la card de Faena en el índice quedó demasiado grande,
+y la landing de proyecto seguía sintiéndose como una ficha inmobiliaria larga y fragmentada (hero
+de 60vh + cajas `.twoclics-detail-panel` apiladas). Referencia usada solo para arquitectura de
+información/jerarquía (páginas de desarrollos con fuerte protagonismo fotográfico) — sin copiar
+diseño, colores, componentes ni layout de ningún sitio de referencia.
+
+**`/desarrollos` — card del tamaño de una card de catálogo:** sin contador "N proyecto(s)". La
+grilla pasó de una clase propia (`.development-grid`, 2 columnas) a reutilizar directamente
+`.twoclics-grid` (mismo sistema de 3 columnas/densidad que Comprar/Alquilar/`/propiedades`) — con
+un único proyecto, la card ocupa una celda normal, nunca se estira. `CuratedDevelopmentCard`
+reducida a la huella visual de una card de catálogo (imagen `1.62/1`, body 14-16px, H3 1.18rem).
+
+**`/desarrollos/faena` — de "ficha con otro template" a landing editorial:**
+
+- **Hero full-width de 60vh retirado** (`.project-hero*`, novena pasada) — sin reemplazo
+  equivalente en tamaño. Nueva `.project-intro`: introducción compacta sobre cream, dos columnas
+  en desktop (texto + imagen real de portada). CTA principal invertido respecto a la novena
+  pasada: ahora "Consultar proyecto" (→ `/contacto`) es el primario; "Ver propiedades disponibles"
+  (→ ancla interna) pasa a secundario.
+- **Introducción con adelanto real de la descripción**: un recorte por límite de palabra del mismo
+  texto real que se muestra completo en "Sobre el proyecto" más abajo — nunca copy inventado, es
+  la misma fuente en dos extensiones distintas (teaser + lectura completa).
+- **Contenido editorial reutiliza `.twoclics-ficha-section`** (la misma clase ya aprobada en
+  `PropertyDetailView.tsx` para secciones "sin caja" separadas por un divisor fino) en vez de
+  `.twoclics-detail-panel` con borde/fondo propio — mismo lenguaje editorial que la ficha, CSS
+  compartido sin duplicar ni tocar el archivo de la ficha.
+- **"Datos del proyecto" eliminado**: con "Unidades disponibles: 1" como único dato, no
+  justificaba una sección propia — la grilla de "Propiedades disponibles" ya lo comunica. Regla
+  para el futuro: si el único dato disponible ya se ve en otra sección, no crear una caja solo
+  para repetirlo.
+- **Amenities — regla de umbral congelada**: 2+ amenities estructurados reales (`sourceProperty.amenities`,
+  nunca inferidos del texto libre) → sección propia "Amenities y servicios". Exactamente 1 → mención
+  discreta junto a la ubicación, sin caja. 0 → nada. Menciones de amenities dentro de la
+  descripción libre (ej. "marina", "club", "parque") NUNCA se convierten en chips — solo cuentan
+  los datos que 2Clics entrega como `amenities` estructurados.
+- **Mapa eliminado — alcance exclusivo de esta landing**: sin `PropertyMap`, sin embed de Google
+  Maps, sin botón "Abrir en Google Maps" en `/desarrollos/faena` únicamente. La ubicación textual
+  se mantiene. `/propiedades/[id]` y el resto de las fichas canónicas conservan su mapa intacto —
+  el problema general de mapas del catálogo sigue siendo una tarea aparte, no resuelta acá.
+- **Propiedades disponibles y CTA final**: mismo contenido/componentes/destino que la décima
+  pasada, solo con padding vertical reducido (secciones `.project-units`/`.project-cta-final`) para
+  la densidad general pedida.
+
+## `/desarrollos` y `/desarrollos/faena` — landing 100% editorial (2026-08, duodécima pasada)
+
+Reescritura sobre la undécima pasada (arriba): la introducción-en-caja + galería tradicional +
+"Sobre el proyecto" en bloque único todavía se sentía "ficha inmobiliaria con otro template", no
+una presentación de desarrollo. Referencia de **arquitectura de información y ritmo narrativo**
+(páginas de desarrollo tipo Cervera/Domus: imagen protagonista, texto que se descubre mientras se
+baja, imágenes grandes como parte de la narrativa) — nunca de diseño: sin copiar colores,
+componentes ni layout exacto de ningún sitio de referencia. Identidad visual García intacta
+(Cormorant/Jost, navy/ivory/gold).
+
+**Decisión rectora, explícita:** las landings de desarrollos son una capa editorial construida
+sobre datos reales de propiedades curadas de 2Clics. No replican la UX de una ficha inmobiliaria
+ni inventan estructura inmobiliaria que la fuente no provea.
+
+**Nombre público real, no editorial inventado:** `curation.name` ("Proyecto Faena") era un nombre
+editorial armado por la curaduría interna de este repo, no un dato de 2Clics. Se dejó de usar para
+todo texto público (card, H1, `<title>`/OG, CTA de cierre) — el nombre correcto es
+`sourceProperty.title`, resuelto en tiempo real desde la fuente. Para 187676, 2Clics devuelve
+**"Faena Residences Miami"**; ese es el nombre que ahora se muestra en toda la superficie pública.
+`curation.name` se conserva en `lib/site-curation.ts` únicamente como referencia administrativa
+interna (mismo rol que `humanRef`), documentado con un comentario explícito de que ya no es dato
+público.
+
+**`/desarrollos` — card sin redundancia:** eyebrow "Proyecto"→"**Desarrollo**" (dejaba de tener
+sentido mostrar "Proyecto" como eyebrow y después "Proyecto Faena" como título — quedaba
+duplicado). Título = nombre real. CTA "Conocer proyecto →"→"**Conocer desarrollo →**". Sin cambios
+de tamaño/huella — ya quedó al tamaño de una card de catálogo en la undécima pasada.
+
+**`/desarrollos/faena` — de bloques apilados a narrativa editorial:**
+
+- **Bloque de apertura** (`.project-open`): imagen real protagonista (portada) en composición
+  50/50 con el copy — no el hero full-width de 60vh de la novena pasada, ni la introducción
+  compacta pero aún "de ficha" de la undécima. Eyebrow "Desarrollo", H1 = nombre real, ubicación,
+  mención discreta de amenity único (si aplica), primer párrafo real de la descripción, y un único
+  CTA: "Consultar desarrollo".
+- **Sin galería tradicional**: `PropertyGallery` (con thumbnails, contador "1/N", flechas) queda
+  completamente retirado de esta landing. Las fotos reales pasan a ser bloques de imagen propios
+  del scroll (`.project-editorial-image`, variantes `--full` sangrando a todo el ancho y `--wide`
+  contenida con esquinas redondeadas) — cada imagen es una sección editorial, no un carrusel.
+- **Selección de imágenes real y única** (`selectEditorialImages()` en `lib/desarrollos.ts`):
+  nunca genera, descarga ni inventa una imagen. Descarta la portada y distribuye el resto
+  espaciado a lo largo de TODO el array real de fotos (no las primeras N, que en 2Clics suelen
+  venir agrupadas por ambiente/toma similar) — más variedad visual sin análisis perceptual. Si hay
+  menos fotos reales que las pedidas, devuelve menos; nunca repite para rellenar.
+- **Descripción real dividida, no reescrita** (`editorialDescriptionParagraphs()` en
+  `lib/desarrollos.ts`): separa por los saltos de línea dobles que la propia fuente ya trae —
+  nunca resume, nunca inventa oraciones, nunca reordena. Los saltos de línea simples dentro de un
+  bloque (ej. una lista de amenities en texto, una por línea) se preservan tal cual vía
+  `white-space: pre-line` — no se convierten en `<li>`/chips que no podamos validar como amenities
+  oficiales. El primer párrafo acompaña la apertura; el resto se alterna con las imágenes
+  editoriales, en el orden original de la fuente. Con Faena, tras la exclusión de abajo, sobreviven
+  2 bloques reales (narrativa + lista de amenities en texto) — la landing es corta porque el
+  contenido real disponible es corto, no porque se haya recortado arbitrariamente. Regla explícita
+  del pedido: no crear una landing artificialmente larga inventando secciones.
+- **Exclusión deliberada de precios/plazos — no silenciosa**: la descripción real de 187676
+  también incluye una lista de precios por tipología ("1 Habitación desde U$D 1.300.000"...) y un
+  cronograma de señas con fechas de obra estimadas ("DEPOSITOS Y FECHAS", "at top-off", "at
+  closing", porcentajes). Es contenido real, no inventado — pero muestra precio/plazo/estado de
+  obra como si fueran datos públicos confirmados, algo que las reglas de esta landing prohíben
+  explícitamente. `editorialDescriptionParagraphs()` excluye esos bloques puntuales por patrón de
+  contenido (no un filtro genérico de la descripción) — el resto del texto real se conserva
+  intacto y en su orden original. Esta exclusión es una decisión de producto, documentada acá a
+  propósito, no un recorte silencioso.
+- **"Ver propiedades disponibles" eliminado** del bloque de apertura — ya no existe como CTA.
+- **"Propiedades disponibles" — condicional, no artificial**: antes se mostraba siempre, aunque
+  hoy Faena solo tenga un registro real (187676) y terminara mostrando una card de la misma
+  propiedad que originó el desarrollo dentro de su propia landing — puramente redundante. Ahora
+  solo se renderiza si `units.length > 1` (más de un `propertyId` real asociado en
+  `curation.propertyIds`). Con Faena hoy, la sección no aparece. El día que existan unidades reales
+  independientes asociadas al desarrollo, la sección vuelve a aparecer sin tocar este componente —
+  la arquitectura queda lista, no se muestra nada artificial mientras tanto.
+- **Amenities — mismo umbral que la undécima pasada, sin cambios**: 2+ reales → sección propia; 1 →
+  mención discreta sin caja (evita una caja "Amenities y servicios" para un solo chip); 0 → nada.
+  Nunca inferidos de la descripción libre.
+- **Mapa**: sigue eliminado, solo en esta landing (ya definido en la undécima pasada, sin cambios).
+- **"Consultar desarrollo" reutiliza el mecanismo ya aprobado, sin nueva integración**:
+  `PropertyInquiryPanel` (`components/properties/PropertyInquiryPanel.tsx`) se usa sin
+  modificación, con `propertyId={sourceProperty.propertyId}` — el mismo componente que
+  `PropertyDetailView.tsx` ya usa para "Solicitar asesoramiento". La consulta se envía por
+  `POST /api/lead/message` con `property_app_id` = 187676 (verificado vía
+  `data-property-app-id="187676"` en el botón, tanto en la apertura como en el cierre). Nunca
+  `/contacto`, nunca WhatsApp directo. No se confirma nada sobre notificaciones por email — eso no
+  se verificó en esta pasada.
+- Sin cambios: `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
+  no modificado), saneamiento de `[FABIANAGA-*]`, integración base con 2Clics.
+
 ## Mapa futuro del catálogo (NO implementado)
 
 Existe la idea de una vista `MAPA | LISTADO` para `/propiedades` (20/21 propiedades auditadas

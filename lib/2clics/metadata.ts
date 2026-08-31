@@ -38,6 +38,29 @@ const META_KEY_ALIASES: Record<keyof PublicMetadata, string[]> = {
   tourUrl: ['tour', 'tour_url', 'virtual_tour', 'matterport', '360'],
 };
 
+// WEB GARCÍA V2 (Desarrollos, décima pasada) — saneamiento estrecho de un token interno de
+// CRM/broker confirmado contra datos reales de 2Clics: la descripción pública de la propiedad
+// 187676 trae literalmente "[FABIANAGA-456]" como prefijo (verificado byte a byte contra la
+// respuesta real — no es una suposición). Ese identificador es interno de García/CRM y no debe
+// llegar nunca al usuario. Patrón DELIBERADAMENTE ESTRECHO: solo corchetes conteniendo
+// "FABIANAGA-" + uno o más dígitos — nunca "todo lo que esté entre []" (eso borraría texto
+// legítimo con corchetes, ej. aclaraciones editoriales). Si en el futuro aparece una variante
+// confirmada del mismo identificador interno (mismo formato "PREFIJO-número"), agregar acá con
+// evidencia real, no por sospecha.
+const INTERNAL_DESCRIPTION_TAG_PATTERN = /\[FABIANAGA-\d+\]/g;
+
+// Exportada para test directo (input/output) y para que cualquier otro punto de la capa pública
+// que alguna vez necesite sanear texto libre de 2Clics reutilice la misma regla en vez de
+// reimplementarla. Quita el/los token(s) confirmados y normaliza el espacio en blanco que queda
+// (el prefijo real trae un salto de línea en blanco después del tag) sin tocar el resto del texto.
+export function stripInternalDescriptionTags(value: string): string {
+  return value
+    .replace(INTERNAL_DESCRIPTION_TAG_PATTERN, '')
+    .replace(/^\s+/, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trimEnd();
+}
+
 const INTERNAL_KEY_FRAGMENTS = [
   'private_note',
   'partner_note',
@@ -140,6 +163,11 @@ function cleanMetaValue(target: string, value: string, rawKey: string): string {
   if (target === 'antiquity' && normalizeKey(rawKey) === 'building_date_number') {
     return /^\d+$/.test(value.trim()) ? `${value.trim()} años` : value.trim();
   }
+  // Único punto de entrada de `description` a la capa pública (ver adaptPublicProperty/
+  // adaptPublicDevelopment en lib/2clics/adapters.ts, ambos leen `metadata.description`) — sanear
+  // acá cubre /propiedades/[id], /desarrollos y /desarrollos/[slug] a la vez, sin tocar la
+  // respuesta cruda de 2Clics ni duplicar la regla en cada página.
+  if (target === 'description') return stripInternalDescriptionTags(value.trim());
   return value.trim();
 }
 

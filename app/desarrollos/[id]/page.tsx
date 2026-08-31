@@ -34,13 +34,16 @@ export async function generateMetadata({ params }: DevelopmentDetailPageProps): 
   const curation = getDevelopmentBySlug(id);
   if (curation) {
     const source = await getPublicPropertyById(curation.sourcePropertyId);
+    // Nombre real de 2Clics (duodécima pasada) — `curation.name` queda solo como fallback
+    // defensivo si la propiedad fuente no se puede resolver.
+    const displayName = source.property?.title || curation.name;
     const description = source.property?.description || (source.property ? formatLocation(source.property.location) : undefined);
     return {
-      title: `${curation.name} | García Inversiones Inmobiliarias`,
+      title: `${displayName} | García Inversiones Inmobiliarias`,
       description,
       alternates: { canonical: `/desarrollos/${curation.slug}` },
       openGraph: {
-        title: curation.name,
+        title: displayName,
         description,
         images: source.property?.images[0]?.displayUrl ? [source.property.images[0].displayUrl] : undefined,
       },

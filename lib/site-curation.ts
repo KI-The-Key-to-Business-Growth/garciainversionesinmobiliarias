@@ -66,6 +66,12 @@ export function getCurationForPropertyId(propertyId: number | null | undefined):
 // 2Clics — esto solo declara que un grupo de propertyIds pertenece al mismo proyecto editorial.
 export type DevelopmentCuration = {
   slug: string;
+  // Nombre editorial INTERNO de referencia (administrativo, tipo `humanRef`) — desde la duodécima
+  // pasada YA NO se usa para mostrar públicamente el nombre del desarrollo (H1, card, <title>/OG,
+  // CTAs). El nombre público correcto es el real de la fuente: `sourceProperty.title` (2Clics),
+  // resuelto en runtime por cada consumidor (CuratedDevelopmentCard, CuratedDevelopmentDetailView,
+  // app/desarrollos/[id]/page.tsx). Se mantiene el campo porque no aporta duplicar el inventario
+  // sacándolo, pero ningún componente debe volver a usarlo como nombre público.
   name: string;
   sourcePropertyId: number;
   humanRef: string;

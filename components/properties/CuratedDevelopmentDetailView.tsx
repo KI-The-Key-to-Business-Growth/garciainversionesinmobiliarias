@@ -1,12 +1,12 @@
 import React from 'react';
-import Link from 'next/link';
+import Image from 'next/image';
+import PropertyInquiryPanel from '@/components/properties/PropertyInquiryPanel';
 import PropertyCard from '@/components/properties/PropertyCard';
-import PropertyDescription from '@/components/properties/PropertyDescription';
-import PropertyGallery from '@/components/properties/PropertyGallery';
-import PropertyMap from '@/components/properties/PropertyMap';
-import { formatArea, formatLocation, formatPublicLocation } from '@/lib/2clics/format';
+import { formatPublicLocation } from '@/lib/2clics/format';
+import { getDevelopmentEditorialCuration, resolveSectionImages, resolveSourceTextSegment } from '@/lib/desarrollos';
+import type { DevelopmentSection } from '@/lib/desarrollos';
 import type { DevelopmentCuration } from '@/lib/site-curation';
-import type { PublicProperty } from '@/lib/2clics/types';
+import type { PublicImage, PublicProperty } from '@/lib/2clics/types';
 
 type CuratedDevelopmentDetailViewProps = {
   curation: DevelopmentCuration;
@@ -14,147 +14,165 @@ type CuratedDevelopmentDetailViewProps = {
   units: PublicProperty[];
 };
 
-const UNITS_ANCHOR = 'propiedades-disponibles';
-
-// Landing de PROYECTO (WEB GARCÍA V2, tercera pasada) — no una ficha de propiedad reciclada.
-// Todo el contenido (fotos/descripción/ubicación/amenities/video/superficies) sale de
-// `sourceProperty`, una propiedad real de 2Clics — el único dato editorial que no viene de la
-// API es `curation.name`. No se inventa developer, forma de pago, etapa ni disponibilidad: si
-// 2Clics no trae ese dato, esta vista tampoco lo muestra. Cada unidad de "Propiedades
-// disponibles" linkea a su ficha canónica `/propiedades/[id]` — esta landing nunca la reproduce.
+// Landing EDITORIAL de desarrollo (WEB GARCÍA V2 — decimotercera pasada). Reescrita sobre la
+// duodécima pasada: alternar mecánicamente imagen/fragmento de texto (por espaciado, sin relación
+// temática real entre ambos) seguía sin sentirse una presentación de proyecto — y varias imágenes
+// reales de Faena, al mostrarse a un ancho mayor a su resolución nativa, se veían borrosas (ver
+// auditoría en docs/ai/PROPERTY_UX_DECISIONS.md). Este componente ahora es puramente un
+// RENDERIZADOR: la curaduría real (qué imagen, qué fragmento, qué layout) vive en
+// `lib/desarrollos.ts` (`getDevelopmentEditorialCuration`) — acá solo se resuelve esa curaduría
+// contra los datos reales de `sourceProperty` y se pinta. 2Clics sigue siendo la única fuente de
+// verdad: cada fragmento de texto se extrae en runtime de `sourceProperty.description` (ya
+// sanitizado), cada imagen es una de `sourceProperty.images` — nada se copia ni se inventa acá.
 export default function CuratedDevelopmentDetailView({
   curation,
   sourceProperty,
   units,
 }: CuratedDevelopmentDetailViewProps) {
+  const displayName = sourceProperty.title || curation.name;
   const location = formatPublicLocation(sourceProperty.location, sourceProperty.region);
-  const mapLocation = formatLocation(sourceProperty.location);
-  const videoUrl = sourceProperty.metadata.videoUrl || '';
-  const typeName = sourceProperty.propertyType?.name || '';
-  const totalArea = formatArea(sourceProperty.totalArea);
+  const description = sourceProperty.description || '';
+  const editorial = getDevelopmentEditorialCuration(curation.slug);
 
-  // Solo datos confirmados — nunca developer/etapa/forma de pago inventados.
-  const highlights = [
-    typeName ? { label: 'Tipo', value: typeName } : null,
-    totalArea ? { label: 'Superficie total', value: totalArea } : null,
-    units.length ? { label: 'Unidades disponibles', value: String(units.length) } : null,
-  ].filter((entry): entry is { label: string; value: string } => entry !== null);
+  // Sin curaduría editorial declarada para este desarrollo: degrada con gracia a apertura + CTA
+  // de cierre, sin inventar secciones ni intentar adivinar bloques de una descripción no curada.
+  const heroImage = editorial ? sourceProperty.images[editorial.heroImageIndex] : sourceProperty.images[0];
+  const introSegment = editorial ? editorial.introSegment : ({ type: 'firstParagraphLead' } as const);
+  const introText = resolveSourceTextSegment(description, introSegment);
+
+  const hasIndependentUnits = units.length > 1;
 
   return (
-    <>
-      {/* A. Hero de proyecto */}
-      <section className="twoclics-detail-hero">
-        <div className="container twoclics-detail-hero-inner">
-          <div>
-            <p className="eyebrow">Proyecto</p>
-            <h1>{curation.name}</h1>
-            {location ? <p className="twoclics-detail-location">{location}</p> : null}
-            {units.length ? (
-              <Link className="btn btn-primary project-hero-cta" href={`#${UNITS_ANCHOR}`}>
-                Ver propiedades disponibles
-              </Link>
-            ) : null}
+    <div className="development-detail">
+      {/* Apertura — imagen real + presentación. Sin CTA acá (una sola instancia fuerte de
+          consulta, al final) y sin mención de amenities sueltos (ver docs/ai/PROPERTY_UX_DECISIONS.md). */}
+      <section className="project-open">
+        <div className="container project-open-grid">
+          {heroImage ? (
+            <div className="project-open-media">
+              <Image
+                src={heroImage.displayUrl}
+                alt=""
+                fill
+                priority
+                sizes="(max-width: 900px) 100vw, 600px"
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
+              />
+            </div>
+          ) : null}
+          <div className="project-open-copy">
+            <p className="eyebrow">Desarrollo</p>
+            <h1>{displayName}</h1>
+            {location ? <p className="project-open-location">{location}</p> : null}
+            {typeof introText === 'string' && introText ? <p className="project-open-text">{introText}</p> : null}
           </div>
         </div>
       </section>
 
-      <section className="twoclics-detail-section">
-        <div className="container twoclics-detail-layout twoclics-detail-layout--single">
-          <main className="twoclics-detail-main">
-            {/* B. Sobre el proyecto */}
-            {sourceProperty.description ? (
-              <section className="twoclics-detail-panel">
-                <h2>Sobre el proyecto</h2>
-                <PropertyDescription text={sourceProperty.description} />
-              </section>
-            ) : null}
+      {editorial ? editorial.sections.map((section) => renderSection(section, sourceProperty, description)) : null}
 
-            {/* C. Datos confirmados */}
-            {highlights.length ? (
-              <section className="twoclics-detail-panel">
-                <h2>Datos del proyecto</h2>
-                <dl className="twoclics-spec-list twoclics-spec-list--compact">
-                  {highlights.map((entry) => (
-                    <div key={entry.label}>
-                      <dt>{entry.label}</dt>
-                      <dd>{entry.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ) : null}
-
-            {/* D. Galería */}
-            <PropertyGallery images={sourceProperty.images} title={curation.name} />
-
-            {/* E. Amenities */}
-            {sourceProperty.amenities.length ? (
-              <section className="twoclics-detail-panel">
-                <h2>Amenities y servicios</h2>
-                <ul className="twoclics-chip-list twoclics-chip-list--compact">
-                  {sourceProperty.amenities.map((amenity) =>
-                    amenity.name ? <li key={`${amenity.amenitieId || amenity.name}`}>{amenity.name}</li> : null,
-                  )}
-                </ul>
-              </section>
-            ) : null}
-
-            {videoUrl ? (
-              <section className="twoclics-detail-panel">
-                <h2>Video</h2>
-                <a className="btn btn-outline" href={videoUrl} target="_blank" rel="noopener">
-                  Ver video
-                </a>
-              </section>
-            ) : null}
-
-            <PropertyMap
-              title={curation.name}
-              lat={sourceProperty.lat}
-              long={sourceProperty.long}
-              address={sourceProperty.address}
-              number={sourceProperty.number}
-              location={sourceProperty.location}
-              locationText={mapLocation}
-            />
-          </main>
-        </div>
-      </section>
-
-      {/* F. Propiedades disponibles */}
-      <section className="twoclics-related-section" id={UNITS_ANCHOR}>
-        <div className="container">
-          <div className="twoclics-section-heading twoclics-section-heading--compact">
-            <h2>Propiedades disponibles</h2>
+      {hasIndependentUnits ? (
+        <section className="twoclics-related-section project-units">
+          <div className="container">
+            <div className="twoclics-section-heading twoclics-section-heading--compact">
+              <h2>Propiedades disponibles</h2>
+            </div>
+            <div className="twoclics-grid">
+              {units.map((unit) => (
+                <PropertyCard key={unit.propertyId || unit.title} property={unit} variant="overlay-catalog" />
+              ))}
+            </div>
           </div>
-          <div className="twoclics-grid">
-            {units.map((unit) => (
-              <PropertyCard key={unit.propertyId || unit.title} property={unit} variant="overlay-catalog" />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      {/* G. CTA final */}
-      <section className="section-sm">
+      {/* Cierre — única instancia de CTA en toda la landing. Reutiliza el mismo mecanismo de
+          consulta específica que PropertyDetailView.tsx (PropertyInquiryPanel → /api/lead/message
+          con property_app_id), nunca /contacto. */}
+      <section className="section-sm project-cta-final">
         <div className="container">
           <div className="cta-band">
             <div>
-              <h2>¿Querés conocer más sobre {curation.name}?</h2>
-              <p>Coordiná una conversación con García para recibir información actualizada del proyecto.</p>
+              <h2>¿Querés conocer más sobre {displayName}?</h2>
+              <p>Coordiná una conversación con García para recibir información actualizada del desarrollo.</p>
             </div>
-            <a
-              className="btn btn-primary"
-              href="https://wa.me/5491167240353"
-              target="_blank"
-              rel="noopener"
-              data-whatsapp-location="desarrollo"
-            >
-              Hablar con un asesor
-            </a>
+            <PropertyInquiryPanel
+              propertyId={sourceProperty.propertyId}
+              propertyTitle={displayName}
+              propertyRegion={sourceProperty.region}
+              label="Consultar desarrollo"
+            />
           </div>
         </div>
       </section>
-    </>
+    </div>
+  );
+}
+
+function renderSection(section: DevelopmentSection, sourceProperty: PublicProperty, description: string) {
+  const images: PublicImage[] = resolveSectionImages(sourceProperty.images, section.imageIndexes);
+  const segment = resolveSourceTextSegment(description, section.sourceTextSegment);
+  const items = Array.isArray(segment) ? segment : [];
+  const text = typeof segment === 'string' ? segment : '';
+  const hasImage = images.length > 0;
+
+  if (section.layout === 'image-large') {
+    if (!hasImage) return null;
+    return (
+      <section key={section.key} className="project-momento">
+        <div className="project-momento-frame">
+          <Image
+            src={images[0].displayUrl}
+            alt=""
+            fill
+            sizes="(max-width: 1200px) 100vw, 1160px"
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+          />
+        </div>
+      </section>
+    );
+  }
+
+  if (section.layout === 'text-only') {
+    if (!text) return null;
+    return (
+      <section key={section.key} className="project-editorial-text">
+        <div className="container project-editorial-text-inner">
+          {section.title ? <h2>{section.title}</h2> : null}
+          <p>{text}</p>
+        </div>
+      </section>
+    );
+  }
+
+  // image-left / image-right
+  if (!items.length && !hasImage) return null;
+  const modifier = section.layout === 'image-left' ? 'left' : 'right';
+  return (
+    <section key={section.key} className={`project-block project-block--${modifier}`}>
+      <div className="container project-block-grid">
+        {hasImage ? (
+          <div className="project-block-media">
+            <Image
+              src={images[0].displayUrl}
+              alt=""
+              fill
+              sizes="(max-width: 900px) 100vw, 560px"
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
+            />
+          </div>
+        ) : null}
+        <div className="project-block-content">
+          {section.title ? <h2>{section.title}</h2> : null}
+          {items.length ? (
+            <ul className="project-block-list">
+              {items.map((item, index) => (
+                <li key={`${section.key}-${index}`}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }

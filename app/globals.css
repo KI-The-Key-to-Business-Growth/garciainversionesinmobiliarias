@@ -5337,11 +5337,12 @@ body[data-page-type='thank_you'] {
   gap: 12px;
 }
 
-/* ── Ficha de propiedad — contenido editorial (Descripción hacia abajo) ────
-   Reemplaza los .twoclics-detail-panel individuales por secciones sin caja,
-   separadas por divisores finos. Alcance: solo PropertyDetailView.tsx — no
-   toca .twoclics-detail-panel/.twoclics-chip-list base (los sigue usando
-   DevelopmentDetailView y la tarjeta de asesoramiento/mapa). */
+/* ── Contenido editorial "sin caja" (Descripción hacia abajo) ────
+   Reemplaza los .twoclics-detail-panel individuales por secciones sin caja, separadas por
+   divisores finos. Usado por PropertyDetailView.tsx (ficha) y, desde la undécima pasada, por
+   CuratedDevelopmentDetailView.tsx (Desarrollos/Faena) — mismas clases, sin duplicar CSS. No
+   toca .twoclics-detail-panel/.twoclics-chip-list base (los sigue usando el flujo legacy
+   DevelopmentDetailView y la tarjeta de asesoramiento/mapa de la ficha). */
 
 .twoclics-ficha-section {
   padding-top: 30px;
@@ -6391,10 +6392,84 @@ body[data-page-type='thank_you'] {
   margin-top: 10px;
 }
 
-/* /desarrollos con un único proyecto — una sola spotlight centrada, sin grilla vacía alrededor */
+/* /invertir con una única oportunidad — una sola spotlight centrada, sin grilla vacía alrededor. */
 .featured-spotlight-list--single {
   max-width: 960px;
   margin: 0 auto;
+}
+
+/* ── /desarrollos — catálogo visual de proyectos (décima pasada; card/grilla ajustadas en la
+   undécima) ── Sin Hero, sin mapa, sin filtros todavía, sin contador "N proyecto(s)". El
+   contenedor de la grilla reutiliza directamente `.twoclics-grid` (mismo sistema de 3 columnas/
+   densidad ya usado por Comprar/Alquilar/`/propiedades`, sin clase propia) — una sola card ocupa
+   una celda normal, nunca se estira a media página. Solo la card en sí (`.twoclics-card--development`
+   + `.development-card-*`) es propia de Desarrollos, dimensionada para tener la misma huella
+   visual que una PropertyCard de catálogo. */
+.twoclics-card--development {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(12, 41, 72, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.twoclics-card--development:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(12, 41, 72, 0.09);
+}
+
+.development-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.development-card-link:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+.development-card-media {
+  position: relative;
+  aspect-ratio: 1.62 / 1;
+  background: #dfe5ea;
+  overflow: hidden;
+}
+
+.development-card-media .listing-image-frame {
+  position: absolute;
+  inset: 0;
+}
+
+.development-card-body {
+  padding: 14px 16px 16px;
+}
+
+.development-card-eyebrow {
+  display: block;
+  font-family: var(--font-jost), sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.twoclics-card--development h3 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.15;
+  margin: 0 0 4px;
+}
+
+.development-card-location {
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  margin: 0;
 }
 
 /* /desarrollos/[slug], /invertir/[slug] — layout de una sola columna (sin aside) */
@@ -6438,9 +6513,255 @@ body[data-page-type='thank_you'] {
   margin-top: 48px;
 }
 
-/* CTA dentro del hero de proyecto (/desarrollos/[slug], /invertir/[slug]) */
-.project-hero-cta {
-  margin-top: 18px;
+/* Landing editorial de desarrollo (Desarrollos/Faena, decimotercera pasada) — reemplaza por
+   completo el sistema anterior de alternancia mecánica imagen/fragmento por espaciado
+   (`.project-editorial-image*`, retirados, sin consumidores). Ahora cada bloque tiene un tema
+   real curado a mano (`lib/desarrollos.ts`) — apertura, un momento visual solo, y dos bloques
+   imagen+contenido con ritmo alternado (izquierda/derecha). Referencia de ARQUITECTURA DE
+   INFORMACIÓN (no de diseño) tomada de páginas de desarrollo tipo Cervera/Domus. Identidad visual
+   García intacta (Cormorant/Jost, navy/ivory/gold). Nunca la ficha de propiedad usa nada de este
+   bloque — exclusivo de CuratedDevelopmentDetailView.
+   RESOLUCIÓN REAL DE IMÁGENES (auditoría decimotercera pasada — ver
+   docs/ai/PROPERTY_UX_DECISIONS.md): las 14 imágenes reales de Faena en 2Clics no superan
+   1200px en su lado mayor (varias son 850/1000/1200px, algunas verticales de 600-865px). Ninguna
+   imagen de esta landing se renderiza a un ancho CSS mayor a su resolución nativa — de ahí los
+   `max-width`/`sizes` explícitos de cada bloque en vez de "full width porque queda premium". */
+.project-open {
+  background: var(--ivory);
+  padding: 44px 0 40px;
+}
+
+.project-open-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+}
+
+.project-open-media {
+  position: relative;
+  aspect-ratio: 6 / 5;
+  max-width: 620px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.project-open-copy {
+  max-width: 480px;
+}
+
+.project-open-copy h1 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(2.05rem, 3.4vw, 2.9rem);
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.05;
+  margin: 6px 0 8px;
+}
+
+.project-open-location {
+  color: var(--text-soft);
+  font-size: 0.94rem;
+  margin: 0 0 16px;
+}
+
+.project-open-text {
+  color: var(--text-soft);
+  font-size: 1rem;
+  line-height: 1.68;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .project-open-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .project-open-copy {
+    max-width: none;
+  }
+
+  .project-open-media {
+    aspect-ratio: 4 / 3;
+    max-width: none;
+    order: -1;
+  }
+}
+
+@media (max-width: 680px) {
+  .project-open {
+    padding: 28px 0 32px;
+  }
+}
+
+/* Momento visual — una única imagen real como pausa editorial, sin texto. Contenida a 1160px
+   (bajo la resolución nativa de 1200px de la foto usada hoy — el rooftop pool de Faena), nunca a
+   100vw: en un viewport ancho, forzar la imagen a todo el ancho la escalaría por encima de su
+   resolución real y se vería borrosa. */
+.project-momento {
+  padding: 0 0 8px;
+}
+
+.project-momento-frame {
+  position: relative;
+  width: min(100% - 40px, 1160px);
+  margin: 0 auto;
+  aspect-ratio: 16 / 10;
+  background: #dfe5ea;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+@media (max-width: 680px) {
+  .project-momento-frame {
+    aspect-ratio: 4 / 3;
+    border-radius: 8px;
+  }
+}
+
+/* Bloque de texto sin imagen ("El proyecto") — columna angosta centrada, ritmo de lectura
+   editorial. */
+.project-editorial-text {
+  padding: 48px 0;
+}
+
+.project-editorial-text-inner {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.project-editorial-text-inner p {
+  color: var(--text-soft);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  margin: 0;
+}
+
+.project-editorial-text-inner h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.5rem;
+  color: var(--navy);
+  margin: 0 0 14px;
+}
+
+@media (max-width: 680px) {
+  .project-editorial-text {
+    padding: 32px 0;
+  }
+
+  .project-editorial-text-inner p {
+    font-size: 0.98rem;
+    line-height: 1.68;
+  }
+}
+
+/* Bloques imagen + contenido real ("El edificio"/"Residencias") — markers literales de la
+   descripción de 2Clics como título, items reales como grilla de dos columnas con divisores
+   finos (sin chips, sin cards, sin bullets). `--left`/`--right` alternan el lado de la imagen
+   para dar ritmo visual; en mobile la imagen siempre queda primero. Los aspect-ratio de cada
+   variante corresponden a la orientación real de las fotos curadas para Faena (edificio:
+   horizontal 1000×600; residencias: vertical 600×800) — un desarrollo futuro con fotos de otra
+   orientación necesita su propia curaduría, no hereda estos ratios a ciegas. */
+.project-block {
+  padding: 56px 0;
+}
+
+.project-block-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 44px;
+  align-items: center;
+}
+
+.project-block-media {
+  position: relative;
+  background: #dfe5ea;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.project-block--left .project-block-media {
+  aspect-ratio: 5 / 3;
+  order: 1;
+}
+
+.project-block--left .project-block-content {
+  order: 2;
+}
+
+.project-block--right .project-block-media {
+  aspect-ratio: 3 / 4;
+  max-width: 420px;
+  margin-left: auto;
+  order: 2;
+}
+
+.project-block--right .project-block-content {
+  order: 1;
+}
+
+.project-block-content h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.5rem;
+  color: var(--navy);
+  margin: 0 0 18px;
+}
+
+.project-block-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+
+.project-block-list li {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.92rem;
+  color: var(--text-soft);
+  line-height: 1.5;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+@media (max-width: 900px) {
+  .project-block-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .project-block--left .project-block-media,
+  .project-block--right .project-block-media {
+    order: 1;
+    max-width: none;
+    margin-left: 0;
+  }
+
+  .project-block--left .project-block-content,
+  .project-block--right .project-block-content {
+    order: 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .project-block {
+    padding: 40px 0;
+  }
+
+  .project-block-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.project-units {
+  padding-top: 40px;
+  padding-bottom: 48px;
+}
+
+.project-cta-final {
+  padding: 40px 0;
 }
 
 /* CTA centrado genérico — cierre de landing (Vender y otras) */

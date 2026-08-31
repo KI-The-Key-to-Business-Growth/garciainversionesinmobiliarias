@@ -10,37 +10,32 @@ type CuratedDevelopmentCardProps = {
   sourceProperty: PublicProperty;
 };
 
-// Card de un DESARROLLO curado (grupo de propertyIds normales), no de una propiedad suelta —
-// por eso el badge dice "Proyecto/Desarrollo" en vez de Venta/Alquiler/Destacada como
-// `PropertyCard`, para que quede claro que se está mostrando una agrupación editorial, no una
-// ficha estándar. Los datos (foto/ubicación) vienen 100% de `sourceProperty` (2Clics real) — el
-// único dato inventado acá es el nombre editorial del grupo (`curation.name`).
+// Card de proyecto para /desarrollos (décima pasada — catálogo visual, ya no spotlight/grilla
+// separadas). Imagen protagonista + un único link accesible cubriendo toda la card (mismo patrón
+// ya aprobado en PropertyCard overlay: "toda la card es un único <Link>"). Solo datos respaldados:
+// imagen + nombre editorial + ubicación pública (2Clics real) + slug curado
+// (lib/site-curation.ts). Deliberadamente SIN precio/unidades/año/estado/developer/fecha de
+// entrega/rentabilidad/payment plan — García no tiene esos datos oficialmente confirmados hoy, y
+// esta card no debe insinuarlos aunque sitios de referencia (developers/brokers) sí los muestren.
 export default function CuratedDevelopmentCard({ curation, sourceProperty }: CuratedDevelopmentCardProps) {
   const href = `/desarrollos/${curation.slug}`;
   const location = formatPublicLocation(sourceProperty.location, sourceProperty.region);
-  const unitCount = curation.propertyIds.length;
+  // Nombre real de la fuente (2Clics) — no `curation.name` (nombre editorial interno, ver
+  // lib/site-curation.ts), duodécima pasada.
+  const displayName = sourceProperty.title || curation.name;
 
   return (
     <article className="twoclics-card twoclics-card--development">
-      <Link href={href} className="twoclics-card-media" aria-label={`Ver ${curation.name}`}>
-        <ListingImage image={sourceProperty.images[0]} alt={curation.name} />
-        <div className="twoclics-card-badges">
-          <span>Proyecto / Desarrollo</span>
+      <Link href={href} className="development-card-link">
+        <div className="development-card-media">
+          <ListingImage image={sourceProperty.images[0]} alt="" />
+        </div>
+        <div className="development-card-body">
+          <span className="development-card-eyebrow">Desarrollo</span>
+          <h3>{displayName}</h3>
+          {location ? <p className="development-card-location">{location}</p> : null}
         </div>
       </Link>
-
-      <div className="twoclics-card-body">
-        <h3>
-          <Link href={href}>{curation.name}</Link>
-        </h3>
-        {location ? <p className="twoclics-card-location">{location}</p> : null}
-        <p className="twoclics-card-facts">
-          {unitCount === 1 ? '1 propiedad asociada' : `${unitCount} propiedades asociadas`}
-        </p>
-        <Link href={href} className="btn btn-dark twoclics-card-cta">
-          Ver proyecto
-        </Link>
-      </div>
     </article>
   );
 }

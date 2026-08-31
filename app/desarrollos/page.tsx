@@ -3,29 +3,16 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import CuratedDevelopmentCard from '@/components/properties/CuratedDevelopmentCard';
-import FeaturedSpotlight from '@/components/properties/FeaturedSpotlight';
 import ListingState from '@/components/properties/ListingState';
-import { formatPublicLocation } from '@/lib/2clics/format';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
 import { DEVELOPMENTS } from '@/lib/site-curation';
-import type { PublicProperty } from '@/lib/2clics/types';
-import type { DevelopmentCuration } from '@/lib/site-curation';
+import type { CuratedEntry } from '@/lib/desarrollos';
 
 export const metadata: Metadata = {
   title: 'Desarrollos | García Inversiones Inmobiliarias',
-  description: 'Proyectos seleccionados por García en Buenos Aires y Miami.',
+  description: 'Proyectos seleccionados por García en sus mercados activos.',
   alternates: { canonical: '/desarrollos' },
 };
-
-type CuratedEntry = { curation: DevelopmentCuration; sourceProperty: PublicProperty };
-
-// Extracto real de la descripción pública de 2Clics para la spotlight del índice — nunca la
-// descripción completa (eso queda para /desarrollos/[slug]), nunca texto inventado.
-function excerpt(text: string, maxLength = 200): string {
-  const clean = text.trim().replace(/\s+/g, ' ');
-  if (clean.length <= maxLength) return clean;
-  return `${clean.slice(0, maxLength).trimEnd()}…`;
-}
 
 // Si la propiedad fuente de un proyecto no está disponible (error/no configurado), ese proyecto
 // se omite en silencio de la grilla en vez de mostrar una card rota — misma postura de no
@@ -40,43 +27,29 @@ async function loadCuratedDevelopments(): Promise<CuratedEntry[]> {
   return results.filter((entry): entry is CuratedEntry => entry !== null);
 }
 
+// WEB GARCÍA V2 (Desarrollos, décima pasada; card y grilla ajustadas en la undécima) — catálogo
+// visual de proyectos, no landing editorial. Sin Hero navy (la revisión visual no lo aprobó; la
+// sección activa del Header ya comunica "Desarrollos"), sin mapa, sin filtros todavía (no hay
+// datos de status pre-construction/under construction/etc. oficialmente confirmados para
+// construirlos), sin contador "N proyecto(s)" (undécima pasada: información innecesaria — la
+// grilla ya lo comunica). Reutiliza `.twoclics-grid`, el mismo sistema de 3 columnas/densidad que
+// ya usan Comprar/Alquilar/`/propiedades` — una sola card hoy ocupa una celda normal, sin
+// estirarse a media página. `FeaturedSpotlight` no se borró como componente — sigue en uso en
+// `/invertir`, fuera de esta pasada.
 export default async function DesarrollosPage() {
   const entries = await loadCuratedDevelopments();
-  // Con pocos proyectos, una presentación editorial de mayor escala se lee mejor que una grilla
-  // chica perdida en espacio vacío — a partir de 3 proyectos pasa a grilla estándar.
-  const useFeaturedLayout = entries.length > 0 && entries.length <= 2;
 
   return (
     <>
       <Header />
       <main>
-        <section className="twoclics-catalog-hero twoclics-catalog-hero--compact">
-          <div className="container">
-            <p className="eyebrow">Desarrollos</p>
-            <h1>Proyectos seleccionados</h1>
-            <p>Proyectos en Buenos Aires y Miami que acompañamos de cerca, con unidades disponibles.</p>
-          </div>
-        </section>
-
+        {/* H1 oculto visualmente — sin Hero visible, pero con semántica de encabezado de página
+            para accesibilidad/SEO (mismo criterio que Comprar/Alquilar). */}
+        <h1 className="sr-only">Desarrollos</h1>
         <section className="twoclics-catalog-section">
           <div className="container">
             {!entries.length ? (
               <ListingState status="ready" kind="catalog" filtered={false} />
-            ) : useFeaturedLayout ? (
-              <div className="featured-spotlight-list featured-spotlight-list--single">
-                {entries.map(({ curation, sourceProperty }) => (
-                  <FeaturedSpotlight
-                    key={curation.slug}
-                    eyebrow="Proyecto"
-                    title={curation.name}
-                    meta={formatPublicLocation(sourceProperty.location, sourceProperty.region)}
-                    note={sourceProperty.description ? excerpt(sourceProperty.description) : undefined}
-                    image={sourceProperty.images[0]}
-                    ctaHref={`/desarrollos/${curation.slug}`}
-                    ctaLabel="Conocer proyecto"
-                  />
-                ))}
-              </div>
             ) : (
               <div className="twoclics-grid">
                 {entries.map(({ curation, sourceProperty }) => (
