@@ -941,6 +941,303 @@ de tamaño/huella — ya quedó al tamaño de una card de catálogo en la undéc
 - Sin cambios: `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
   no modificado), saneamiento de `[FABIANAGA-*]`, integración base con 2Clics.
 
+## `/invertir` y `/invertir/proyecto-especial-miami` — capa de curaduría propia (2026-08, decimocuarta pasada)
+
+Reescritura completa. La landing anterior reutilizaba el layout de ficha inmobiliaria mostrando
+los datos del registro técnico placeholder 206734 (título "Casa en venta en Miami", tipo "Casa",
+1000 m2, U$D 100.000, 1 dormitorio) como si describieran la inversión — la oportunidad real es una
+participación económica en el desarrollo de dos residencias waterfront en Coconut Grove, Miami, no
+la compra de esa casa.
+
+**Decisión rectora:** la oportunidad de inversión tiene una capa de curaduría propia
+(`lib/investments.ts`), separada en tres capas: (1) datos objetivos de 2Clics — hoy solo
+`propertyId`/`region`/`images`, usados exclusivamente como vínculo técnico para el lead y para las
+fotos reales; (2) contenido editorial público aprobado — specs de los dos proyectos, developer,
+riesgos, tesis, proceso, provisto directamente por García y curado acá, nunca extraído de
+`sourceProperty.description`; (3) condiciones vigentes dinámicas — separadas del relato fijo,
+listas para actualizarse sin tocar el componente.
+
+**Por qué NO se extrae texto de `sourceProperty.description` (a diferencia de Faena):** la
+descripción real de 206734 es copy de venta con promesas de rentabilidad explícitas ("Retorno
+estimado... superior al 15% anual del capital invertido", "18 meses", "USD 100.000") — mostrar eso
+como copy público violaría directamente la regla de no prometer rendimiento. En Faena la
+descripción real ERA copy público utilizable; acá no lo es, así que la estrategia de extracción por
+markers no aplica — la solución correcta es curaduría 100% explícita, no un extractor más
+permisivo.
+
+**Fuga de datos en el payload RSC — encontrada y corregida en esta misma pasada:** el componente
+nunca renderizaba `sourceProperty.title`/`description`/`address`, pero pasar el `PublicProperty`
+completo como prop igual los serializa en el payload que Next.js manda al navegador para hidratar
+`PropertyInquiryPanel` (Client Component) — visible en "ver código fuente" aunque nunca se pinte en
+pantalla. Verificado en vivo antes/después del fix (`curl` + grep sobre el HTML servido): "Casa en
+venta en Miami" y el texto con la promesa de rentabilidad aparecían en el payload antes de acotar
+la prop a `{ propertyId, region, images }`; cero apariciones después.
+
+**Auditoría de imágenes reales (18 en 2Clics para 206734), mismo criterio que Faena:**
+- Descartadas por copy promocional incrustado en el propio archivo de imagen: "100% RENTA PASIVA",
+  "ALTA RENTA 100% PASIVA EN MIAMI", "INVERSIÓN MÍNIMA USD 100.000".
+- Descartadas por pertenecer a una dirección completamente distinta impresa en la imagen misma:
+  "1000 89 St, Surfside, FL"; "5345 SW 84th St, Miami, FL 33143"; "445 N Shore, Miami Beach, FL
+  33141" — ninguna es Coconut Grove.
+- Descartadas por no poder atribuirse con certeza a ninguna de las dos casas: dos imágenes muestran
+  un edificio multi-unidad con balcones apilados, que no coincide con ninguna casa unifamiliar de
+  6-7 dormitorios de las descriptas — regla explícita del pedido ("si no es posible atribuir una
+  imagen con certeza, usar composición neutral... y explicarlo en el reporte").
+- **Corrección de atribución de dirección vs. estilo arquitectónico:** dos imágenes traen la
+  dirección real impresa (1710 y 1716 S. Bayshore Dr) y permitieron confirmar qué estilo
+  corresponde a cada domicilio. El resultado contradijo el texto tipeado inicialmente en el pedido
+  (que tenía Caribbean Colonial/contemporáneo invertidos entre las dos direcciones) — se preguntó
+  explícitamente antes de publicar y se resolvió a favor de la evidencia de la imagen etiquetada
+  (más confiable que un dato tipeado de memoria).
+- Selección final: una foto de obra real sin texto para la apertura ("momento visual"), y una foto
+  limpia por proyecto (sin repetir entre bloques, sin exceder la resolución nativa auditada de cada
+  imagen — ninguna usa `sizes="100vw"`).
+
+**Condiciones vigentes — nunca hardcodeadas en el relato:** `InvestmentCurrentConditions`
+(`lib/investments.ts`) declara los campos pedidos (`status`/`availability`/`minimumInvestment`/
+`estimatedHorizon`/`projectStage`/`lastUpdated`/`capitalRemaining`/`projectedReturn*`/`cta`). Hoy,
+sin confirmación pública fechada, se muestran mensajes "Consultar" — nunca un monto/plazo/fecha
+inventado. Si en el futuro se confirma un `projectedReturn`, debe mostrarse siempre etiquetado como
+"Proyección del developer", nunca como resultado histórico/garantizado por García.
+
+**CTA único:** `PropertyInquiryPanel` reutilizado sin modificar — mismo mecanismo aprobado que
+`PropertyDetailView.tsx` y Faena, `property_app_id` = 206734, solo en el cierre de la landing (sin
+CTA en la apertura, sin "Invertir ahora", nunca WhatsApp directo ni `/contacto`).
+
+**`/invertir` (índice):** Hero reescrito. "Cómo analizamos cada oportunidad" (4 cards idénticas en
+cajas blancas) reemplazado por "No todas las inversiones son iguales" + "Formas distintas de
+participar en real estate" — grillas editoriales con divisores finos, sin cards ni bordes. La card
+de la oportunidad pasó de `FeaturedSpotlight` (card boxeada, chica) a reutilizar `.project-open*`
+(la misma apertura editorial de Faena) — pieza protagonista, sin ticket mínimo visible, toda la
+pieza sigue siendo clickeable vía su CTA "Conocer la oportunidad".
+
+**Sin cambios:** `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
+no modificado), integración base 2Clics, `/desarrollos`, `/desarrollos/faena`.
+
+## `/invertir` y `/invertir/proyecto-especial-miami` — refuerzo educativo y compactación (2026-08, decimoquinta pasada)
+
+Refinamiento sobre la decimocuarta pasada — dirección visual ya aprobada por la usuaria, esta
+pasada no cambia el sistema visual, solo profundiza el contenido educativo y reordena/compacta la
+ficha de la oportunidad.
+
+**`/invertir` — de tres frases sueltas a contenido que realmente educa:**
+- "Formas de participar" pasó de un párrafo genérico por alternativa a 2-3 puntos concretos reales
+  por alternativa (Propiedad terminada / Unidad dentro de un desarrollo / Participación en un
+  proyecto) — deliberadamente sin mencionar estructuras jurídicas específicas como regla general
+  ("fondo" sigue prohibido) y sin afirmar que toda participación funciona igual.
+- Nueva tabla comparativa ("Qué cambia entre una alternativa y otra"): 6 factores × 3 alternativas,
+  resuelta con una tabla HTML real despojada de chrome corporativo (sin fondo de encabezado, solo
+  divisores finos) en vez de cards — cumple el pedido explícito de "no crear una tabla corporativa
+  pesada" sin renunciar a la semántica/accesibilidad de una tabla real.
+- "Cómo analiza García" pasó de 4 a 6 factores, con un mensaje de cierre explícito ("no buscamos
+  encajar a todos los clientes en una misma inversión") — nunca usa "Real estate con criterio" como
+  slogan.
+- **Card de la oportunidad reducida de escala**: la decimocuarta pasada la había hecho reutilizar
+  `.project-open` completo — la misma huella visual que la apertura entera de una landing propia
+  (Faena), demasiado protagonismo para una card dentro de un índice. Se reemplazó por clases nuevas
+  y propias (`.invest-opportunity-*`): max-width 860px (similar orden de magnitud al usado
+  históricamente para layouts de una columna), imagen 4/3 contenida (no la columna alta 6/5 de
+  `.project-open-media`), menos padding, un solo CTA. Sin ticket mínimo, igual que antes.
+
+**Ficha Coconut Grove — reorden para eliminar la ambigüedad 1710/1716:**
+- "Los dos proyectos" se movió de después de "Coconut Grove" a justo después de "Qué es esta
+  oportunidad" — el lector llega a la distinción entre las dos residencias mucho antes.
+- Se agregó una oración explícita, nueva, antes de los dos bloques: "La oportunidad está vinculada
+  a dos residencias waterfront diferentes, concebidas como productos independientes sobre terrenos
+  contiguos en S. Bayshore Drive."
+- Cada bloque de residencia se etiqueta ahora "Residencia 1 de 2"/"Residencia 2 de 2" (vía la
+  clase `.eyebrow` ya existente, reutilizada) además de mostrar su propia dirección, su propia
+  imagen (nunca la misma foto que la otra residencia) y su propia lista de datos — verificado con
+  test dedicado que ninguna spec de una aparece dentro del bloque de la otra.
+- Apertura y bloques de texto pasaron a variantes compactas EXCLUSIVAS de esta vista
+  (`.project-open--compact`, `.project-editorial-text--tight`, `.invest-process-steps--compact`,
+  todas nuevas en esta pasada) — la landing venía sintiéndose más larga/documento que Faena; se
+  resuelve recortando aire vertical y adelantando contenido con imagen (los dos proyectos), sin
+  tocar las reglas base `.project-open`/`.project-editorial-text` que Faena sigue usando sin
+  modificador.
+- "Para quién puede tener sentido": los encabezados de cada columna se reescribieron a tono de
+  análisis en vez de veredicto de aptitud financiera — "Puede tener sentido analizarla para alguien
+  que..." / "Probablemente convenga considerar otro tipo de alternativa para alguien que...". Los
+  ítems de cada lista (fits/doesNotFit) no cambiaron, solo el encabezado que los enmarca.
+
+**Estilo arquitectónico — retirado, no resuelto por memoria:** la decimocuarta pasada había
+atribuido "Caribbean Colonial" a 1710 y "contemporáneo" a 1716 basándose en dos imágenes reales de
+2Clics con el domicilio impreso en el propio archivo (idx 16 y 17). Esta pasada, la usuaria señaló
+que esa atribución contradice una ficha estratégica/handoff de Olivia Harper Homes externa a la que
+esta sesión no tiene acceso, y pidió auditar de nuevo sin resolver por memoria. Se re-descargaron y
+re-revisaron esas dos imágenes (mismo resultado: 1710 muestra la fachada con postigos/columnas
+estilo colonial, 1716 la fachada de hormigón/vidrio contemporánea) — pero, sin poder acceder a la
+fuente estratégica que la usuaria menciona, no hay manera de confirmar cuál de las dos fuentes es
+la correcta. Regla aplicada explícitamente del pedido ("es preferible publicar menos información
+antes que publicar una atribución dudosa"): se quitó la línea de estilo arquitectónico de ambos
+proyectos en `lib/investments.ts`. El resto de los datos por proyecto (superficies, ambientes,
+dormitorios/baños, amenities) no está en disputa — viene del pedido original de García sin ninguna
+contradicción señalada, y se mantiene sin cambios.
+
+**Sin cambios:** `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
+no modificado), integración base 2Clics, `/desarrollos`, `/desarrollos/faena`.
+
+## Desarrollos — clasificación editorial ampliada a 4 property_app_id (2026-08, decimosexta pasada)
+
+Decisión de negocio confirmada (captura de CRM): además de Faena (187676), se clasificaron como
+"desarrollo" **Icon Beach** (187677), **Flow House Miami Worldcenter** (187681) y **One Hollywood**
+(187682). Un quinto id de la captura (FAB-187694) no se clasificó — ver más abajo.
+
+**Auditoría real (read-only) antes de clasificar:**
+- **187677 Icon Beach** — título real: "Oportunidad Unica En Hollywood. Muy Cerca De Las Playas."
+  (aviso genérico, no es el nombre del proyecto). Departamento/Venta/Miami·Florida·US, 17 imágenes.
+  La descripción real trae el nombre confirmado ("¡Bienvenido a ICON BEACH") junto con precios,
+  cronograma de depósitos con fechas y datos de agente/matrícula — nada de eso es publicable.
+- **187681 Flow House Miami Worldcenter** — título real: "Oportunidad Unica En Downtown Miami.
+  Renta Garantizada 6 %" — **la promesa de rentabilidad está en el título mismo**, no solo en la
+  descripción. Departamento/Venta/Miami·Florida·US, 21 imágenes. Descripción confirma "¡Bienvenido
+  a Flow House Miami Worldcenter!" como nombre real.
+- **187682 One Hollywood** — mismo título genérico que 187677 (coincidencia real). 13 imágenes.
+  Descripción confirma "ONE HOLLYWOOD" como nombre real.
+- **187694** — la External API devuelve "Not found" en AR y US, confirmado en vivo. Se buscó por
+  texto en el catálogo completo y se encontró **187684** ("¡Bienvenido a PALMA Miami Beach!",
+  dirección "Miami Beach Financiado A Estrenar Y Cerca Del Mar 600", `metadata.unit` = "Suitte
+  Junior") — coincide fuertemente con el título de CRM esperado, pero queda **sin clasificar**: se
+  reportó como candidato con evidencia, sin asumirlo, tal como se pidió explícitamente.
+
+**Nombre público — por qué NO alcanza con `sourceProperty.title` acá (a diferencia de Faena):** el
+título real de estos tres registros es un aviso de venta genérico o, peor, trae un claim de
+rentabilidad no publicable directamente en el título. Mostrarlo como H1/card violaría la regla de
+no presentar un dato deficiente de 2Clics como verdad editorial. Se agregó
+`DevelopmentCuration.publicName: string | null` (`lib/site-curation.ts`) — el nombre real
+confirmado por la captura de CRM, verificado además contra el saludo real de la propia
+descripción de 2Clics (nunca inventado). Cuando existe, gana sobre `sourceProperty.title`; para
+Faena queda `null` (sin cambio de comportamiento — su título real ya era válido).
+
+**Exclusión de `/comprar` — mecanismo ya existente, sin código nuevo:** `app/comprar/page.tsx` ya
+resolvía `excludePropertyIds` desde `getExcludedPropertyIds()` (capa de datos, antes de
+renderizar, afecta también `propertyTotalCount`) — agregar los 3 ids a `CURATED_PROPERTIES` fue
+suficiente. Verificado en vivo: ninguno aparece como card ni afecta los conteos.
+
+**Generalización de la arquitectura de Faena:** `CuratedDevelopmentCard`/
+`CuratedDevelopmentDetailView` ya eran genéricos (sin "Faena" hardcodeado) — no necesitaron
+reescritura. El fallback "sin curaduría editorial propia" (existente desde la decimotercera
+pasada) pasó de tener 0 consumidores reales a tener 3: apertura con imagen real, nombre público,
+ubicación real, primer fragmento REAL de la descripción, y CTA único — sin inventar secciones
+("El edificio"/"Residencias" siguen siendo específicas de la curaduría de Faena, nunca genéricas).
+La curaduría editorial completa de cada desarrollo nuevo queda pendiente, uno por uno, en una
+pasada futura — deliberadamente no completada por inferencia esta vez.
+
+**Fuga de datos en el payload RSC — encontrada y corregida al generalizar:** con Faena, esto nunca
+fue un problema visible porque su título/descripción reales siempre fueron seguros de mostrar. Al
+generalizar a datos más crudos, se confirmó en vivo que pasar `PublicProperty` completo como prop
+—aunque el JSX nunca renderice más que el nombre/ubicación/primer fragmento— deja el título y la
+descripción CRUDOS (con la promesa de rentabilidad de Flow House, precios, datos de agente)
+serializados en el HTML servido, visibles en "ver código fuente" aunque nunca se pinten. Mismo
+mecanismo ya corregido para Invertir en la decimocuarta pasada. Fix en tres capas:
+1. `CuratedDevelopmentCard`/`CuratedDevelopmentDetailView` reciben un `source` mínimo, nunca
+   `PublicProperty` completo.
+2. El título y la descripción seguros se resuelven ANTES de armar ese objeto —
+   `app/desarrollos/page.tsx`/`app/desarrollos/[id]/page.tsx`, nunca dentro del componente. Nueva
+   `resolveSafeDescription()` (`lib/desarrollos.ts`): con curaduría editorial propia (Faena), usa
+   el texto íntegro ya aprobado; sin ella, reduce a la primera oración real.
+3. La metadata SEO/OpenGraph usa la misma descripción segura — antes exponía la descripción cruda
+   completa como `<meta name="description">` y OG description.
+
+Verificado en vivo antes/después del fix: cero apariciones de "Renta Garantizada", precios o datos
+de agente en el HTML servido de `/desarrollos` y de cada ficha individual tras el fix.
+
+**Sin cambios:** `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
+no modificado), ficha y contenido editorial de Faena, `/invertir`.
+
+## Ficha editorial de Icon Beach (decimoséptima pasada)
+
+Icon Beach (187677) pasó del fallback genérico (apertura + CTA, sin secciones propias) a una ficha
+editorial completa — primer desarrollo, además de Faena, con curaduría propia en
+`lib/desarrollos.ts`. Objetivo explícito: misma calidad/jerarquía/ritmo visual que Faena, sin
+copiar sus secciones mecánicamente — la arquitectura de Icon Beach nace solo de información real
+verificada para Icon Beach.
+
+**Por qué no se pudo extraer el texto real (a diferencia de Faena):** la descripción cruda de
+187677 mezcla saludo comercial, 350 unidades y tipologías, precio desde $900.000, cronograma de
+depósitos (20% firma / 20% groundbreaking julio 2025) y nombre + matrícula de una agente — no es
+copy editorial usable ni parcialmente. Se creó una segunda estrategia de contenido,
+`curatedText`/`curatedList` (nuevas variantes de `SourceTextSegment`), para prosa/listas
+editoriales ORIGINALES basadas en hechos verificados — nunca copiadas del CRM, nunca inventadas.
+Vive en el mismo objeto de curaduría y fluye por el mismo pipeline de render que Faena
+(`sections`/`renderSection`) — no hay una página aislada hardcodeada para Icon Beach.
+
+**Verificación externa, priorizando fuentes oficiales (WebSearch + WebFetch):** developer Related
+Group (asociado con BH Group), arquitectura CFE Architects, interiorismo Meyer Davis, paisajismo
+Witkin Hults + Partners, ubicación real Hollywood Beach — no la Miami Beach genérica que sugiere el
+bucket de ubicación de 2Clics. Cada hecho publicado está corroborado por ≥2 fuentes independientes,
+salvo arquitecto/paisajista (única fuente, Commercial Observer). Dos contradicciones encontradas y
+resueltas sin inventar: (1) una fuente atribuyó el proyecto a "Fortune and Dezer Development" contra
+la propia página oficial de Related Group + 4 notas de prensa — se usó Related Group por peso de
+evidencia; (2) 3 fuentes dieron 3 direcciones distintas (3660/3724/3824 S. Ocean Drive) — se omitió
+cualquier número de calle específico, publicando solo la ubicación general corroborada. Un dominio
+relacionado (`iconhollywoodbeach.com`) redirige a un agregador de brokers externo — descartado como
+fuente, nunca tratado como oficial.
+
+**Metodología P/S/D/C aplicada a cada dato del CRM:** ningún dato dinámico (precio, disponibilidad,
+cronograma de pagos, "ventas desde 2024") se publicó sin fuente verificable independiente y
+vigente. Sin esa verificación, se omitió — nunca se mostró "Consultar condiciones vigentes" como
+relleno genérico, y nunca se convirtió en silencio un dato viejo de CRM en un dato "actual".
+
+**Amenities — nuevo mecanismo opt-in, no automático:** `DevelopmentEditorialCuration.amenities`
+(`lib/desarrollos.ts`) se activa explícitamente por desarrollo. Solo se muestra con 2+ amenities
+reales **estructurados** de 2Clics (`source.amenities`, nunca inferidos de la descripción libre).
+Faena no lo activa — su decisión previa de no mostrar amenities con un solo dato real queda
+intacta, sin cambios de comportamiento.
+
+**Auditoría de imágenes (17 imágenes, dimensiones nativas parseadas):** descartadas por contenido
+no publicable: idx15 (eslogan comercial incrustado en los píxeles de la imagen, no solo un
+watermark discreto) e idx16 (página completa de folleto, demasiado cargada de texto para usarse
+como foto — sí se usó como fuente de datos verificables para el texto de "Ubicación", nunca
+mostrada como imagen). Descartados por casi-duplicado: idx10≈idx3, idx9≈idx5. Selección final: 6
+imágenes únicas, sin repetir (apertura, momento visual, ubicación, edificio, residencias,
+amenities), cada una con `sizes` verificado por debajo de su resolución nativa real — mismo
+criterio anti-borrosidad ya aplicado a Faena.
+
+**Nombre público sin cambios:** sigue usando `publicName: 'Icon Beach'` (agregado en la
+decimosexta pasada) — nunca el título crudo de 2Clics ("Oportunidad Unica En Hollywood...").
+
+**Sin cambios:** `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado
+sin modificar), ficha de Faena, `/invertir`, `/comprar`, `/alquilar`, Flow House, One Hollywood (no
+avanzados esta pasada).
+
+## Sistema editorial definitivo de Desarrollos (decimoctava pasada)
+
+Auditoría transversal de las 4 fichas curadas (Faena, Icon Beach, Flow House Miami Worldcenter,
+One Hollywood) y consolidación en un único sistema declarativo. Detalle completo — incluida la
+auditoría de imágenes de Flow House/One Hollywood, la verificación de fuentes oficiales de cada
+developer, la tabla P/S/D/C, y los dos bugs reales corregidos (fuga de RSC en Faena, heading
+huérfano en Icon Beach) — en `docs/ai/PROJECT_STATE.md`, sección "Decimoctava pasada". Resumen de
+reglas nuevas, aplicadas a las 4 fichas por igual:
+
+- **Ningún heading sin contenido inmediato debajo** — corregido el bug que dejaba "Hollywood Beach
+  y la ubicación" sin su párrafo.
+- **"Project Snapshot"** editorial (developer/ubicación/unidades/pisos/tipologías/arquitectura),
+  solo campos confirmados, sin cards ni iconografía — nuevo bloque reutilizable por cualquier ficha.
+- **Listas de ≤3 ítems** usan una variante de una sola columna, evitando la celda huérfana de una
+  grilla de 2 columnas con un ítem impar.
+- **Aspect-ratio de imágenes** suavizado por defecto (`3/2`/`4/5` en vez de `5/3`/`3/4`), con
+  override explícito por bloque para preservar el crop real ya aprobado (Faena lo usa).
+- **"Permite mascotas" retirado de toda sección de amenities** — idéntico en los 4 desarrollos, no
+  distingue a ninguno; filtro sistémico, no una excepción puntual.
+- Cada desarrollo tiene solo las secciones que su material real sostiene — Flow House no tiene "El
+  edificio" (sin foto de exterior limpia disponible), y eso es la decisión correcta, no un hueco.
+
+## Developer fuera de lo público + rango de precio + "Interiores" (vigésima pasada)
+
+Pasada transversal sobre las 4 fichas curadas. Detalle completo en `docs/ai/PROJECT_STATE.md`,
+sección "Vigésima pasada". Resumen de reglas nuevas:
+
+- **"Developer" no se muestra más** en ninguna ficha — decisión editorial, dato correcto pero
+  retirado de la presentación pública. Arquitectura/interiorismo/paisajismo se mantienen.
+- **"Rango de precio"** entra al snapshot como "Desde {moneda} {precio}", SIEMPRE calculado en
+  runtime contra el precio estructurado real de 2Clics — nunca hardcodeado, nunca un rango con
+  máximo inventado (2Clics no expone un campo de rango). Se omite si `hidePrice` o sin precio.
+- **"Interiores"/"Interiores y residencias"**: bloque visual nuevo (1 a 4 imágenes), siempre el
+  último antes del CTA. "...y residencias" solo cuando TODAS las imágenes son de una unidad real
+  verificable; "Interiores" cuando alguna es un espacio compartido o no hay material de unidad.
+  Nunca se rellena con imágenes de relleno — con menos material real, menos imágenes.
+
 ## Mapa futuro del catálogo (NO implementado)
 
 Existe la idea de una vista `MAPA | LISTADO` para `/propiedades` (20/21 propiedades auditadas

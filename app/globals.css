@@ -6329,9 +6329,10 @@ body[data-page-type='thank_you'] {
   letter-spacing: 0.01em;
 }
 
-/* /desarrollos, /invertir — spotlight editorial de mayor escala. Un único componente
-   (FeaturedSpotlight) cubre ambos casos: "Conocer proyecto" en Desarrollos, "Conocer esta
-   inversión" en Invertir. */
+/* Spotlight editorial de mayor escala (`FeaturedSpotlight.tsx`) — histórico de /desarrollos y
+   /invertir; ninguna de las dos rutas lo consume hoy (ambas migraron a `.project-open*`, ver más
+   abajo). Se deja sin borrar por si una futura sección lo necesita — no es código muerto sin
+   dueño, es un componente compartido momentáneamente sin consumidor. */
 .featured-spotlight-list {
   display: grid;
   gap: 32px;
@@ -6399,12 +6400,13 @@ body[data-page-type='thank_you'] {
 }
 
 /* ── /desarrollos — catálogo visual de proyectos (décima pasada; card/grilla ajustadas en la
-   undécima) ── Sin Hero, sin mapa, sin filtros todavía, sin contador "N proyecto(s)". El
-   contenedor de la grilla reutiliza directamente `.twoclics-grid` (mismo sistema de 3 columnas/
-   densidad ya usado por Comprar/Alquilar/`/propiedades`, sin clase propia) — una sola card ocupa
-   una celda normal, nunca se estira a media página. Solo la card en sí (`.twoclics-card--development`
-   + `.development-card-*`) es propia de Desarrollos, dimensionada para tener la misma huella
-   visual que una PropertyCard de catálogo. */
+   undécima; apertura editorial + selector de mercado + grilla compacta propia en la decimonovena)
+   ── Sin mapa, sin filtros de status todavía, sin contador "N proyecto(s)". La grilla del índice
+   usa `.desarrollos-grid` (propia, 4/3/2/1 columnas — ver más abajo), no `.twoclics-grid`
+   (3 columnas, la reutilizan Comprar/Alquilar/`/propiedades`, sin tocar). La card en sí
+   (`.twoclics-card--development` + `.development-card-*`) sigue siendo la de la ficha/tamaño
+   original — `.twoclics-card--development-compact` es la variante compacta EXCLUSIVA del índice
+   (`variant="compact"` en `CuratedDevelopmentCard`), nunca usada por ninguna ficha individual. */
 .twoclics-card--development {
   background: var(--white);
   border: 1px solid var(--line);
@@ -6472,45 +6474,173 @@ body[data-page-type='thank_you'] {
   margin: 0;
 }
 
-/* /desarrollos/[slug], /invertir/[slug] — layout de una sola columna (sin aside) */
-.twoclics-detail-layout--single {
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 860px;
-  margin: 0 auto;
+/* Variante compacta de la card (decimonovena pasada) — exclusiva del índice /desarrollos. Mismo
+   contenido, menor huella: imagen más panorámica (más corta a igual ancho), padding y tipografía
+   del cuerpo reducidos, sombra más discreta — para que una grilla de 4 desarrollos se recorra como
+   una selección editorial, no como cuatro banners. */
+.twoclics-card--development-compact {
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(12, 41, 72, 0.05);
 }
 
-/* /invertir — "Cómo analizamos cada oportunidad" */
-.criteria-grid {
+.twoclics-card--development-compact:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(12, 41, 72, 0.08);
+}
+
+.twoclics-card--development-compact .development-card-media {
+  aspect-ratio: 16 / 9;
+}
+
+.twoclics-card--development-compact .development-card-body {
+  padding: 10px 12px 12px;
+}
+
+.twoclics-card--development-compact .development-card-eyebrow {
+  font-size: 9px;
+  margin-bottom: 3px;
+}
+
+.twoclics-card--development-compact h3 {
+  font-size: 1rem;
+  line-height: 1.2;
+  margin: 0 0 2px;
+}
+
+.twoclics-card--development-compact .development-card-location {
+  font-size: 0.75rem;
+}
+
+/* Grilla del índice /desarrollos (decimonovena pasada) — propia, no `.twoclics-grid` (esa sigue
+   siendo exclusiva de Comprar/Alquilar/`/propiedades`, sin tocar). Pensada para escalar: hoy 4
+   desarrollos en Estados Unidos entran en una fila en desktop ancho, pero el mismo sistema
+   funciona igual con 8 o con 20 — nunca se hardcodea "4 columnas porque hoy hay 4 cards". */
+.desarrollos-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin-bottom: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
 }
 
-.criteria-item {
-  padding: 20px 22px;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 14px;
+@media (max-width: 1120px) {
+  .desarrollos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-.criteria-item strong {
-  display: block;
+@media (max-width: 900px) {
+  .desarrollos-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 680px) {
+  .desarrollos-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* Apertura editorial de /desarrollos (decimonovena pasada) — título + bajada, sobrio, sin banda de
+   color propia (el fondo ivory de `body` ya es el de toda la página, no hace falta un bloque
+   contrastado tipo landing genérica). Mismo lenguaje tipográfico que el resto del sitio. */
+.desarrollos-intro {
+  padding: 56px 0 8px;
+}
+
+.desarrollos-intro-inner {
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.desarrollos-intro-inner h1 {
   font-family: var(--font-cormorant), serif;
-  font-size: 1.15rem;
+  font-size: clamp(2rem, 3.2vw, 2.6rem);
+  font-weight: 600;
   color: var(--navy);
-  margin-bottom: 6px;
+  line-height: 1.1;
+  margin: 0 0 14px;
 }
 
-.criteria-item p {
-  font-size: 0.86rem;
+.desarrollos-intro-inner p {
   color: var(--text-soft);
-  line-height: 1.5;
+  font-size: 1.02rem;
+  line-height: 1.7;
   margin: 0;
 }
 
-.criteria-following-heading {
-  margin-top: 48px;
+@media (max-width: 680px) {
+  .desarrollos-intro {
+    padding: 40px 0 4px;
+  }
+}
+
+/* Selector de mercado (decimonovena pasada) — tabs editoriales, no botones de CTA: una línea fina
+   con dos etiquetas, estado activo marcado con una línea dorada debajo y navy en el texto. Roving
+   tabindex real (ver DesarrollosMarketTabs.tsx) — foco visible con el mismo dorado que el resto
+   del sitio. */
+.desarrollos-market-tabs {
+  margin-bottom: 32px;
+}
+
+.desarrollos-market-tablist {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  border-bottom: 1px solid var(--line);
+}
+
+.desarrollos-market-tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0 2px 12px;
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.86rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.desarrollos-market-tab:hover {
+  color: var(--navy);
+}
+
+.desarrollos-market-tab:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.desarrollos-market-tab--active {
+  color: var(--navy);
+  font-weight: 600;
+  border-bottom-color: var(--gold);
+}
+
+@media (max-width: 680px) {
+  .desarrollos-market-tablist {
+    gap: 22px;
+  }
+}
+
+/* Empty state editorial por mercado (decimonovena pasada) — nunca una grilla vacía en blanco.
+   Mismo tratamiento sobrio que el resto de ListingState, sin ícono ni caja. */
+.desarrollos-empty-state {
+  max-width: 460px;
+  margin: 24px auto 8px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.desarrollos-empty-state p {
+  color: var(--text-soft);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
 }
 
 /* Landing editorial de desarrollo (Desarrollos/Faena, decimotercera pasada) — reemplaza por
@@ -6681,8 +6811,14 @@ body[data-page-type='thank_you'] {
   border-radius: 10px;
 }
 
+/* Aspect-ratio por defecto del sistema (decimoctava pasada) — antes 5/3 (izquierda) y 3/4
+   (derecha): demasiado extremos para bloques con poco contenido (una lista corta al lado de una
+   imagen muy alta dejaba una franja vacía notoria, ej. Icon Beach "Residencias"/"Amenities"). Se
+   suavizan a 3/2 y 4/5 — menos descompensados por defecto — y se puede pisar puntualmente con
+   `imageAspect` en la curaduría (`lib/desarrollos.ts`) cuando conviene preservar el recorte real
+   de una foto ya aprobada (Faena mantiene sus 5/3 y 3/4 originales por esa vía). */
 .project-block--left .project-block-media {
-  aspect-ratio: 5 / 3;
+  aspect-ratio: 3 / 2;
   order: 1;
 }
 
@@ -6691,7 +6827,7 @@ body[data-page-type='thank_you'] {
 }
 
 .project-block--right .project-block-media {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 5;
   max-width: 420px;
   margin-left: auto;
   order: 2;
@@ -6708,6 +6844,16 @@ body[data-page-type='thank_you'] {
   margin: 0 0 18px;
 }
 
+/* Párrafo dentro de un bloque imagen+texto (decimoctava pasada) — antes este layout solo pintaba
+   listas; un bloque con un párrafo curado (`curatedText`/`firstParagraphRest`) quedaba con el
+   heading sin contenido debajo. Misma tipografía que `.project-editorial-text-inner p`. */
+.project-block-text {
+  color: var(--text-soft);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
 .project-block-list {
   list-style: none;
   margin: 0;
@@ -6715,6 +6861,14 @@ body[data-page-type='thank_you'] {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0 24px;
+}
+
+/* Listas cortas (≤3 ítems, ej. amenities de Icon Beach) — decimoctava pasada. A 2 columnas, 3
+   ítems dejan una celda huérfana y una grilla visualmente incompleta; a 1 columna se lee como una
+   lista breve intencional, no como una tabla rota. */
+.project-block-list--compact {
+  grid-template-columns: 1fr;
+  max-width: 360px;
 }
 
 .project-block-list li {
@@ -6755,6 +6909,90 @@ body[data-page-type='thank_you'] {
   }
 }
 
+/* "Interiores"/"Interiores y residencias" (FASE 4, vigésima pasada) — último bloque visual antes
+   del CTA. Editorial, no PropertyGallery: 1 a 4 fotos reales, sin thumbnails, sin contador, sin
+   flechas. Con 3 imágenes la protagonista ocupa las dos filas de la primera columna (patrón
+   "una protagonista + dos complementarias" pedido); con 1 o 2 imágenes se simplifica a una sola
+   fila. `object-fit: cover` en todos los casos — mismo criterio de recorte ya usado en el resto
+   de la ficha, nunca deformación. */
+.project-interiors {
+  padding: 56px 0 64px;
+}
+
+.project-interiors-heading {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.project-interiors-heading h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.6rem;
+  color: var(--navy);
+  margin: 0;
+}
+
+.project-interiors-grid {
+  display: grid;
+  gap: 16px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.project-interiors-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: #dfe5ea;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.project-interiors-grid--1 {
+  grid-template-columns: minmax(0, 620px);
+  justify-content: center;
+}
+
+.project-interiors-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.project-interiors-grid--3 {
+  grid-template-columns: 1.3fr 1fr;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.project-interiors-grid--3 .project-interiors-media:first-child {
+  grid-row: 1 / 3;
+  aspect-ratio: auto;
+}
+
+.project-interiors-grid--4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 780px) {
+  .project-interiors {
+    padding: 40px 0 48px;
+  }
+
+  .project-interiors-heading {
+    margin-bottom: 20px;
+  }
+
+  .project-interiors-grid--2,
+  .project-interiors-grid--3,
+  .project-interiors-grid--4 {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    gap: 14px;
+  }
+
+  .project-interiors-grid--3 .project-interiors-media:first-child {
+    grid-row: auto;
+    aspect-ratio: 4 / 5;
+  }
+}
+
 .project-units {
   padding-top: 40px;
   padding-bottom: 48px;
@@ -6762,6 +7000,410 @@ body[data-page-type='thank_you'] {
 
 .project-cta-final {
   padding: 40px 0;
+}
+
+/* "Project Snapshot" editorial (FASE 3, decimoctava pasada) — resumen discreto de datos
+   permanentes/semipermanentes verificados (developer, ubicación, unidades, pisos, tipologías,
+   arquitectura). Nunca una card inmobiliaria: sin fondo blanco, sin iconografía, sin sombra —
+   solo dos líneas finas y aire, en la línea de una cartela de museo. Se listan únicamente los
+   campos que la curaduría trae confirmados (`lib/desarrollos.ts`) — nunca placeholders. */
+.project-snapshot {
+  padding: 32px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.project-snapshot-inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 26px 52px;
+}
+
+.project-snapshot-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+}
+
+.project-snapshot-label {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.project-snapshot-value {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.1rem;
+  color: var(--navy);
+  line-height: 1.3;
+}
+
+@media (max-width: 680px) {
+  .project-snapshot {
+    padding: 24px 0;
+  }
+
+  .project-snapshot-inner {
+    gap: 18px 32px;
+  }
+}
+
+/* /invertir reutiliza `.project-open*` para su card protagonista de oportunidad (H2, no H1 — la
+   página ya tiene su propio H1 en el Hero). */
+.project-open-copy h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.1;
+  margin: 6px 0 8px;
+}
+
+/* /invertir y /invertir/[slug] (decimocuarta pasada) — mismo lenguaje editorial que Faena
+   (`.project-*`, arriba), con bloques propios para contenido que no tiene equivalente en
+   Desarrollos: grillas de conceptos sin cards genéricas, cadena de proceso, pasos numerados,
+   sección de riesgo con jerarquía propia, y comparación de encaje del inversor. */
+.invest-editorial-text-inner--wide {
+  max-width: 960px;
+}
+
+.invest-thesis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px 40px;
+  margin-top: 8px;
+}
+
+.invest-thesis-grid--three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.invest-thesis-item {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.invest-thesis-item h3 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.2rem;
+  color: var(--navy);
+  margin: 0 0 8px;
+}
+
+.invest-thesis-item p {
+  color: var(--text-soft);
+  font-size: 0.94rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.invest-thesis-item .invest-audience-list li {
+  font-size: 0.9rem;
+}
+
+.invest-analysis-note {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--navy);
+  margin: 28px 0 0;
+}
+
+@media (max-width: 680px) {
+  .invest-thesis-grid,
+  .invest-thesis-grid--three {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+
+/* Cadena de proceso corta ("Tierra → Planificación → ... → Venta") dentro de "Qué es esta
+   inversión" — distinta de los pasos numerados de "Cómo funciona" más abajo. */
+.invest-process-chain {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 6px;
+  margin: 26px 0 0;
+  padding: 0;
+}
+
+.invest-process-chain li {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.invest-process-chain li:not(:last-child)::after {
+  content: '→';
+  margin-left: 8px;
+  color: var(--gold);
+  font-weight: 400;
+}
+
+/* Pasos numerados ("Cómo funciona") — número Cormorant grande + título, divisor fino entre pasos. */
+.invest-process-steps {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  max-width: 560px;
+}
+
+.invest-process-steps li {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.invest-process-steps li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.invest-process-steps-number {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.5rem;
+  color: var(--gold);
+  min-width: 34px;
+}
+
+.invest-process-steps-title {
+  font-size: 0.98rem;
+  color: var(--navy);
+}
+
+/* Riesgos y horizonte — jerarquía visual propia (fondo navy), deliberadamente no oculta ni
+   minimizada. */
+.invest-risks {
+  background: var(--navy);
+  padding: 56px 0;
+}
+
+.invest-risks h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.6rem;
+  color: var(--ivory);
+  margin: 0 0 20px;
+}
+
+.invest-risks-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 0 0 24px;
+  padding: 0;
+}
+
+.invest-risks-list li {
+  font-size: 0.92rem;
+  color: rgba(247, 244, 237, 0.82);
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(247, 244, 237, 0.22);
+}
+
+.invest-risks-note {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--gold);
+  margin: 0;
+}
+
+@media (max-width: 680px) {
+  .invest-risks {
+    padding: 40px 0;
+  }
+}
+
+/* Para quién puede tener sentido — dos columnas de encaje, sin veredicto tipo "ideal para". */
+.invest-audience-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px 40px;
+  margin-top: 8px;
+}
+
+.invest-audience-grid h3 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.1rem;
+  color: var(--navy);
+  margin: 0 0 12px;
+}
+
+.invest-audience-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.invest-audience-list li {
+  font-size: 0.92rem;
+  color: var(--text-soft);
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 680px) {
+  .invest-audience-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* Modificadores de densidad EXCLUSIVOS de /invertir/[slug] (decimoquinta pasada) — nunca se
+   aplican a Faena, que sigue usando `.project-open`/`.project-editorial-text` sin modificador y
+   sin cambios de tamaño. La landing de la oportunidad venía sintiéndose más larga/documento que
+   Faena; se resuelve moviendo contenido (los dos proyectos suben en la página) y recortando aire
+   vertical acá, sin tocar las reglas base compartidas. */
+.project-open--compact {
+  padding: 32px 0 28px;
+}
+
+.project-open--compact .project-open-media {
+  aspect-ratio: 4 / 3;
+  max-width: 520px;
+}
+
+@media (max-width: 680px) {
+  .project-open--compact {
+    padding: 24px 0 26px;
+  }
+}
+
+.project-editorial-text--tight {
+  padding: 34px 0;
+}
+
+@media (max-width: 680px) {
+  .project-editorial-text--tight {
+    padding: 26px 0;
+  }
+}
+
+.invest-process-steps--compact {
+  margin-top: 20px;
+  max-width: 520px;
+}
+
+.invest-process-steps--compact li {
+  padding: 10px 0;
+  gap: 14px;
+}
+
+.invest-process-steps--compact .invest-process-steps-number {
+  font-size: 1.3rem;
+  min-width: 30px;
+}
+
+/* /invertir (índice) — card protagonista de la oportunidad, escala reducida (decimoquinta
+   pasada): antes reutilizaba `.project-open` completo (misma huella que la apertura de una
+   landing propia); ahora es una pieza contenida — max-width acotado, imagen 4/3 en vez de la
+   columna alta 6/5, menos padding. Deliberadamente NO reutiliza `.project-open*` para no acoplar
+   su tamaño al de Faena. */
+.invest-opportunity-section {
+  background: var(--ivory);
+  padding: 40px 0;
+}
+
+.invest-opportunity-card {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: center;
+}
+
+.invest-opportunity-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.invest-opportunity-copy h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.5rem, 2.4vw, 1.9rem);
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.15;
+  margin: 6px 0 10px;
+}
+
+.invest-opportunity-copy p {
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin: 0 0 18px;
+}
+
+@media (max-width: 780px) {
+  .invest-opportunity-card {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .invest-opportunity-media {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* /invertir (índice) — tabla comparativa editorial ("Qué cambia entre una alternativa y otra").
+   Tabla real (semántica/accesible), no divs simulando grilla — pero despojada de todo el chrome
+   corporativo habitual: sin fondo de encabezado, sin bordes por celda, solo divisores finos entre
+   filas. Container con scroll horizontal propio en mobile para que la página nunca desborde. */
+.invest-compare-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.invest-compare-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.invest-compare-table th,
+.invest-compare-table td {
+  text-align: left;
+  padding: 14px 16px 14px 0;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.invest-compare-table thead th {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--navy);
+  border-top: none;
+  padding-bottom: 10px;
+}
+
+.invest-compare-table tbody th {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+.invest-compare-table td {
+  font-size: 0.86rem;
+  color: var(--text-soft);
+  line-height: 1.5;
 }
 
 /* CTA centrado genérico — cierre de landing (Vender y otras) */
@@ -6879,11 +7521,6 @@ body[data-page-type='thank_you'] {
 }
 
 @media (max-width: 680px) {
-  .criteria-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
   .contact--compact .contact-panel,
   .contact--compact .contact-form {
     padding: 20px;

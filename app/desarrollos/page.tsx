@@ -3,9 +3,11 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import CuratedDevelopmentCard from '@/components/properties/CuratedDevelopmentCard';
+import DesarrollosMarketTabs from '@/components/properties/DesarrollosMarketTabs';
 import ListingState from '@/components/properties/ListingState';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
 import { DEVELOPMENTS } from '@/lib/site-curation';
+import { toDevelopmentCardSource } from '@/lib/desarrollos';
 import type { CuratedEntry } from '@/lib/desarrollos';
 
 export const metadata: Metadata = {
@@ -21,41 +23,90 @@ async function loadCuratedDevelopments(): Promise<CuratedEntry[]> {
   const results = await Promise.all(
     DEVELOPMENTS.map(async (curation) => {
       const result = await getPublicPropertyById(curation.sourcePropertyId);
-      return result.property ? { curation, sourceProperty: result.property } : null;
+      return result.property
+        ? { curation, source: toDevelopmentCardSource(result.property, curation.publicName) }
+        : null;
     }),
   );
   return results.filter((entry): entry is CuratedEntry => entry !== null);
 }
 
-// WEB GARCÍA V2 (Desarrollos, décima pasada; card y grilla ajustadas en la undécima) — catálogo
-// visual de proyectos, no landing editorial. Sin Hero navy (la revisión visual no lo aprobó; la
-// sección activa del Header ya comunica "Desarrollos"), sin mapa, sin filtros todavía (no hay
-// datos de status pre-construction/under construction/etc. oficialmente confirmados para
-// construirlos), sin contador "N proyecto(s)" (undécima pasada: información innecesaria — la
-// grilla ya lo comunica). Reutiliza `.twoclics-grid`, el mismo sistema de 3 columnas/densidad que
-// ya usan Comprar/Alquilar/`/propiedades` — una sola card hoy ocupa una celda normal, sin
-// estirarse a media página. `FeaturedSpotlight` no se borró como componente — sigue en uso en
-// `/invertir`, fuera de esta pasada.
+// Grilla compacta de un mercado — extraída para no repetir el condicional grilla/empty-state entre
+// US y AR. `emptyMessage` es el único texto editorial que cambia por mercado.
+function MarketGrid({ entries, emptyMessage }: { entries: CuratedEntry[]; emptyMessage: string }) {
+  if (!entries.length) {
+    return (
+      <div className="desarrollos-empty-state">
+        <p>{emptyMessage}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="desarrollos-grid">
+      {entries.map(({ curation, source }) => (
+        <CuratedDevelopmentCard key={curation.slug} curation={curation} source={source} variant="compact" />
+      ))}
+    </div>
+  );
+}
+
+// WEB GARCÍA V2 (Desarrollos, décima pasada; card y grilla ajustadas en la undécima; apertura
+// editorial + selector de mercado + grilla compacta en la decimonovena) — catálogo visual de
+// proyectos, no landing editorial. Sin mapa, sin filtros de status todavía (no hay datos
+// pre-construction/under construction/etc. oficialmente confirmados). El selector US/Argentina
+// filtra por el campo explícito `curation.market` (lib/site-curation.ts) — nunca por texto de
+// título/ubicación cruda de la fuente. Ambos paneles se resuelven server-side (una sola carga de
+// datos) y se le pasan ya renderizados a `DesarrollosMarketTabs` (Client Component): el toggle de
+// mercado es un cambio de estado local instantáneo, sin fetch ni reload. `FeaturedSpotlight` no se
+// borró como componente — sigue en uso en `/invertir`, fuera de esta pasada.
 export default async function DesarrollosPage() {
   const entries = await loadCuratedDevelopments();
+  const usEntries = entries.filter(({ curation }) => curation.market === 'US');
+  const arEntries = entries.filter(({ curation }) => curation.market === 'AR');
 
   return (
     <>
       <Header />
       <main>
-        {/* H1 oculto visualmente — sin Hero visible, pero con semántica de encabezado de página
-            para accesibilidad/SEO (mismo criterio que Comprar/Alquilar). */}
-        <h1 className="sr-only">Desarrollos</h1>
+        <section className="desarrollos-intro">
+          <div className="container desarrollos-intro-inner">
+            <h1>Desarrollos seleccionados</h1>
+            <p>
+              Proyectos que analizamos por su ubicación, propuesta, producto y adecuación a distintos
+              objetivos de compra e inversión.
+            </p>
+          </div>
+        </section>
         <section className="twoclics-catalog-section">
           <div className="container">
             {!entries.length ? (
               <ListingState status="ready" kind="catalog" filtered={false} />
             ) : (
-              <div className="twoclics-grid">
-                {entries.map(({ curation, sourceProperty }) => (
-                  <CuratedDevelopmentCard key={curation.slug} curation={curation} sourceProperty={sourceProperty} />
-                ))}
-              </div>
+              <DesarrollosMarketTabs
+                defaultTabId="US"
+                tabs={[
+                  {
+                    id: 'US',
+                    label: 'Estados Unidos',
+                    content: (
+                      <MarketGrid
+                        entries={usEntries}
+                        emptyMessage="Estamos preparando nuestra selección de desarrollos en Estados Unidos."
+                      />
+                    ),
+                  },
+                  {
+                    id: 'AR',
+                    label: 'Argentina',
+                    content: (
+                      <MarketGrid
+                        entries={arEntries}
+                        emptyMessage="Estamos preparando nuestra selección de desarrollos en Argentina."
+                      />
+                    ),
+                  },
+                ]}
+              />
             )}
           </div>
         </section>

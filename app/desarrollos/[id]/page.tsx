@@ -8,6 +8,7 @@ import DevelopmentDetailView from '@/components/properties/DevelopmentDetailView
 import ListingState from '@/components/properties/ListingState';
 import { formatLocation } from '@/lib/2clics/format';
 import { getPublicDevelopmentById, getPublicPropertyById } from '@/lib/2clics/listings';
+import { getDevelopmentEditorialCuration, resolveSafeDescription } from '@/lib/desarrollos';
 import { getDevelopmentBySlug } from '@/lib/site-curation';
 import type { PublicProperty } from '@/lib/2clics/types';
 
@@ -34,10 +35,17 @@ export async function generateMetadata({ params }: DevelopmentDetailPageProps): 
   const curation = getDevelopmentBySlug(id);
   if (curation) {
     const source = await getPublicPropertyById(curation.sourcePropertyId);
-    // Nombre real de 2Clics (duodécima pasada) — `curation.name` queda solo como fallback
-    // defensivo si la propiedad fuente no se puede resolver.
-    const displayName = source.property?.title || curation.name;
-    const description = source.property?.description || (source.property ? formatLocation(source.property.location) : undefined);
+    // Prioridad: nombre público confirmado por curaduría → título real de 2Clics (Faena) →
+    // nombre editorial interno como último fallback defensivo (decimosexta pasada).
+    const displayName = curation.publicName || source.property?.title || curation.name;
+    // Nunca la descripción comercial cruda completa como meta description/OG (puede traer precios,
+    // cronogramas o claims no publicables) salvo que haya curaduría editorial propia que ya la usa
+    // completa y aprobada (Faena) — ver `resolveSafeDescription` en lib/desarrollos.ts.
+    const editorial = getDevelopmentEditorialCuration(curation.slug);
+    const safeDescription = source.property
+      ? resolveSafeDescription(source.property.description || '', editorial)
+      : '';
+    const description = safeDescription || (source.property ? formatLocation(source.property.location) : undefined);
     return {
       title: `${displayName} | García Inversiones Inmobiliarias`,
       description,
@@ -88,13 +96,29 @@ export default async function DevelopmentDetailPage({ params }: DevelopmentDetai
       .filter((property): property is PublicProperty => property !== null);
     const sourceProperty =
       units.find((unit) => unit.propertyId === curation.sourcePropertyId) || units[0] || null;
+    const editorial = sourceProperty ? getDevelopmentEditorialCuration(curation.slug) : null;
 
     return (
       <>
         <Header />
         <main>
           {sourceProperty ? (
-            <CuratedDevelopmentDetailView curation={curation} sourceProperty={sourceProperty} units={units} />
+            <CuratedDevelopmentDetailView
+              curation={curation}
+              source={{
+                propertyId: sourceProperty.propertyId,
+                region: sourceProperty.region,
+                title: curation.publicName || sourceProperty.title,
+                location: sourceProperty.location,
+                description: resolveSafeDescription(sourceProperty.description || '', editorial),
+                images: sourceProperty.images,
+                amenities: sourceProperty.amenities,
+                price: sourceProperty.price,
+                currency: sourceProperty.currency,
+                hidePrice: sourceProperty.hidePrice,
+              }}
+              units={units}
+            />
           ) : (
             <section className="twoclics-detail-section">
               <div className="container">

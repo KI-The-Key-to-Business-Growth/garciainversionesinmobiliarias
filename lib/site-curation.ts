@@ -33,8 +33,19 @@ export type CuratedPropertyEntry = {
 // sin importar si además aparece en DEVELOPMENTS/INVESTMENT_OPPORTUNITIES más abajo (esas listas
 // agregan metadata de presentación — slug, nombre editorial, unidades — para SU landing propia;
 // esta lista central es la única fuente de verdad de si esa propiedad sale del catálogo estándar).
+// DECIMOSEXTA PASADA — clasificación editorial "desarrollo" ampliada de 1 a 4 property_app_id,
+// confirmada como decisión de negocio (captura de CRM), auditada contra la 2Clics External API
+// real antes de clasificar (docs/ai/PROPERTY_UX_DECISIONS.md tiene el detalle completo de la
+// auditoría). Un quinto id mencionado en la captura del CRM (FAB-187694) NO se clasificó: la
+// External API devuelve "Not found" para 187694 en ambas regiones (AR/US) — confirmado en vivo,
+// no es un problema de nuestro código. Ver docs/ai/PROPERTY_UX_DECISIONS.md para el candidato
+// real encontrado (187684) que coincide con el título de CRM del quinto desarrollo — reportado,
+// NO clasificado, a la espera de confirmación explícita.
 export const CURATED_PROPERTIES: CuratedPropertyEntry[] = [
   { propertyId: 187676, humanRef: 'FAB-187676', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 187677, humanRef: 'FAB-187677', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 187681, humanRef: 'FAB-187681', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 187682, humanRef: 'FAB-187682', classification: 'desarrollo', excludeFromStandardCatalog: true },
   {
     propertyId: 206734,
     humanRef: 'FAB-206734',
@@ -66,28 +77,81 @@ export function getCurationForPropertyId(propertyId: number | null | undefined):
 // 2Clics — esto solo declara que un grupo de propertyIds pertenece al mismo proyecto editorial.
 export type DevelopmentCuration = {
   slug: string;
-  // Nombre editorial INTERNO de referencia (administrativo, tipo `humanRef`) — desde la duodécima
-  // pasada YA NO se usa para mostrar públicamente el nombre del desarrollo (H1, card, <title>/OG,
-  // CTAs). El nombre público correcto es el real de la fuente: `sourceProperty.title` (2Clics),
-  // resuelto en runtime por cada consumidor (CuratedDevelopmentCard, CuratedDevelopmentDetailView,
-  // app/desarrollos/[id]/page.tsx). Se mantiene el campo porque no aporta duplicar el inventario
-  // sacándolo, pero ningún componente debe volver a usarlo como nombre público.
+  // Nombre editorial INTERNO de referencia (administrativo, tipo `humanRef`) — nunca se muestra
+  // públicamente. Se mantiene porque no aporta duplicar el inventario sacándolo.
   name: string;
+  // Nombre público CONFIRMADO por curaduría (decimosexta pasada) — cuando existe, tiene prioridad
+  // sobre `sourceProperty.title`. Necesario porque, a diferencia de Faena (donde el `title` real
+  // de 2Clics ya era el nombre público correcto, "Faena Residences Miami"), el resto de estos
+  // registros trae títulos de aviso genéricos/deficientes ("Oportunidad Unica En Hollywood...",
+  // o peor, con una promesa de rentabilidad incrustada: "...Renta Garantizada 6 %") — mostrar eso
+  // como H1 público sería presentar un dato deficiente de 2Clics como si fuera verdad editorial,
+  // algo explícitamente prohibido. `publicName` es el nombre real del proyecto, confirmado por
+  // García (captura de CRM) y verificado contra el saludo real de la propia descripción de 2Clics
+  // (ej. "¡Bienvenido a ICON BEACH", "ONE HOLLYWOOD", "¡Bienvenido a Flow House Miami
+  // Worldcenter!") — nunca inventado. `null` = todavía sin nombre público confirmado (ver 187694
+  // más abajo) o el `title` real de 2Clics ya es válido como nombre público (Faena) — en ambos
+  // casos el consumidor decide el fallback correcto, nunca acá.
+  publicName: string | null;
   sourcePropertyId: number;
   humanRef: string;
   // Todas las unidades reales que se muestran en "Propiedades disponibles". Hoy puede ser un
   // único id (sourcePropertyId repetido) — diseñado para crecer sin cambiar la forma:
   // propertyIds: [187676, 123456, ...]
   propertyIds: number[];
+  // Mercado editorial del proyecto (decimonovena pasada) — driver del selector US/AR de
+  // `/desarrollos`. Explícito por curaduría, NUNCA inferido buscando palabras en el título/
+  // ubicación cruda de 2Clics (esos campos pueden ser deficientes o cambiar). Obligatorio: cada
+  // desarrollo nuevo declara su mercado a mano, así el selector nunca "adivina" ni deja un
+  // proyecto sin clasificar en ningún lado.
+  market: 'US' | 'AR';
 };
 
+// La ficha de Faena es el patrón visual/estructural de referencia (apertura editorial, imágenes,
+// secciones de contenido, CTA final único) — NUNCA la fuente de copy de los demás desarrollos.
+// Cada desarrollo nuevo entra hoy SIN curaduría editorial propia en `lib/desarrollos.ts`
+// (`getDevelopmentEditorialCuration` devuelve `null` para sus slugs) — `CuratedDevelopmentDetailView`
+// ya tiene un fallback que degrada con gracia a apertura + CTA usando solo campos reales y
+// verificables (imagen real, nombre público confirmado, ubicación real, primer fragmento real de
+// la descripción) sin inventar secciones ni completar contenido por inferencia. La curaduría
+// editorial completa (imágenes por bloque, "El edificio"/amenities, etc.) se hace desarrollo por
+// desarrollo en una pasada futura — no automáticamente acá.
 export const DEVELOPMENTS: DevelopmentCuration[] = [
   {
     slug: 'faena',
     name: 'Proyecto Faena',
+    publicName: null,
     sourcePropertyId: 187676,
     humanRef: 'FAB-187676',
     propertyIds: [187676],
+    market: 'US',
+  },
+  {
+    slug: 'icon-beach',
+    name: 'Icon Beach',
+    publicName: 'Icon Beach',
+    sourcePropertyId: 187677,
+    humanRef: 'FAB-187677',
+    propertyIds: [187677],
+    market: 'US',
+  },
+  {
+    slug: 'flow-house-miami-worldcenter',
+    name: 'Flow House Miami Worldcenter',
+    publicName: 'Flow House Miami Worldcenter',
+    sourcePropertyId: 187681,
+    humanRef: 'FAB-187681',
+    propertyIds: [187681],
+    market: 'US',
+  },
+  {
+    slug: 'one-hollywood',
+    name: 'One Hollywood',
+    publicName: 'One Hollywood',
+    sourcePropertyId: 187682,
+    humanRef: 'FAB-187682',
+    propertyIds: [187682],
+    market: 'US',
   },
 ];
 
@@ -99,6 +163,14 @@ export function getDevelopmentBySlug(slug: string): DevelopmentCuration | null {
 
 export function getAllDevelopmentSlugs(): string[] {
   return DEVELOPMENTS.map((entry) => entry.slug);
+}
+
+// Driver del selector US/AR de `/desarrollos` (decimonovena pasada) — filtra por el campo
+// explícito `market` de la curaduría, nunca por texto de título/ubicación. Un desarrollo AR
+// agregado a `DEVELOPMENTS` con `market: 'AR'` aparece acá automáticamente, sin tocar esta
+// función ni la página.
+export function getDevelopmentsByMarket(market: 'US' | 'AR'): DevelopmentCuration[] {
+  return DEVELOPMENTS.filter((entry) => entry.market === market);
 }
 
 // INVERTIR (/invertir, /invertir/[slug]) — alternativas/estructuras de inversión REALES que
@@ -137,7 +209,11 @@ export type InvestmentOpportunityCuration = {
 export const INVESTMENT_OPPORTUNITIES: InvestmentOpportunityCuration[] = [
   {
     slug: 'proyecto-especial-miami',
-    name: 'Proyecto especial Miami',
+    // Decimocuarta pasada: la propiedad técnica asociada (206734) es un registro placeholder de
+    // 2Clics ("Casa en venta en Miami", U$D 100.000, 1000 m2) — nunca el nombre público de esta
+    // oportunidad. El nombre público real vive acá, curado, y describe la oportunidad tal como se
+    // presenta (participación en un desarrollo residencial waterfront), no la propiedad técnica.
+    name: 'Coconut Grove · Desarrollo residencial waterfront',
     sourcePropertyId: 206734,
     humanRef: 'FAB-206734',
     propertyIds: [206734],

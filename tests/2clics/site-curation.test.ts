@@ -10,10 +10,19 @@ import Contact from '@/components/sections/Contact';
 import CatalogView from '@/components/properties/CatalogView';
 import CuratedDevelopmentCard from '@/components/properties/CuratedDevelopmentCard';
 import CuratedDevelopmentDetailView from '@/components/properties/CuratedDevelopmentDetailView';
+import DesarrollosMarketTabs from '@/components/properties/DesarrollosMarketTabs';
 import FeaturedSpotlight from '@/components/properties/FeaturedSpotlight';
 import InvestmentOpportunityDetailView from '@/components/properties/InvestmentOpportunityDetailView';
 import LocationPicker, { groupOptions } from '@/components/properties/LocationPicker';
 import { adaptPublicProperty } from '@/lib/2clics/adapters';
+import { getInvestmentEditorialCuration } from '@/lib/investments';
+import {
+  formatDevelopmentPriceRange,
+  getDevelopmentEditorialCuration,
+  resolveSafeDescription,
+  toDevelopmentCardSource,
+} from '@/lib/desarrollos';
+import type { PublicProperty } from '@/lib/2clics/types';
 import { removeFilterHref, type ListingLocationOption, type PropertyCatalogResult } from '@/lib/2clics/listings';
 import {
   CURATED_PROPERTIES,
@@ -23,6 +32,7 @@ import {
   getAllDevelopmentSlugs,
   getCurationForPropertyId,
   getDevelopmentBySlug,
+  getDevelopmentsByMarket,
   getExcludedPropertyIds,
   getInvestmentOpportunityBySlug,
   isExcludedFromStandardCatalog,
@@ -30,6 +40,25 @@ import {
 
 function render(element: React.ReactElement): string {
   return renderToStaticMarkup(element);
+}
+
+// Vínculo mínimo esperado por CuratedDevelopmentDetailView (decimosexta pasada, ver
+// components/properties/CuratedDevelopmentDetailView.tsx) — nunca `PublicProperty` completo.
+// `publicName`, cuando se pasa, reemplaza `p.title` — mismo criterio que la página real
+// (app/desarrollos/[id]/page.tsx), que resuelve el título seguro ANTES de armar este objeto.
+function toDevSource(p: PublicProperty, publicName?: string | null) {
+  return {
+    propertyId: p.propertyId,
+    region: p.region,
+    title: publicName || p.title,
+    location: p.location,
+    description: p.description,
+    images: p.images,
+    amenities: p.amenities,
+    price: p.price,
+    currency: p.currency,
+    hidePrice: p.hidePrice,
+  };
 }
 
 function property(overrides: Record<string, unknown> = {}, region: 'AR' | 'US' = 'AR') {
@@ -97,9 +126,12 @@ afterEach(() => {
 
 // ── 1. Curaduría — clasificación + exclusión por item ───────────────────────────────────────
 describe('lib/site-curation — clasificación y exclusión del catálogo estándar', () => {
-  it('Faena (187676) y el proyecto especial (206734) están marcados excludeFromStandardCatalog', () => {
+  it('los cinco property_app_id curados están marcados excludeFromStandardCatalog (decimosexta pasada: 4 desarrollos + 1 proyecto especial)', () => {
     expect(CURATED_PROPERTIES).toEqual([
       { propertyId: 187676, humanRef: 'FAB-187676', classification: 'desarrollo', excludeFromStandardCatalog: true },
+      { propertyId: 187677, humanRef: 'FAB-187677', classification: 'desarrollo', excludeFromStandardCatalog: true },
+      { propertyId: 187681, humanRef: 'FAB-187681', classification: 'desarrollo', excludeFromStandardCatalog: true },
+      { propertyId: 187682, humanRef: 'FAB-187682', classification: 'desarrollo', excludeFromStandardCatalog: true },
       {
         propertyId: 206734,
         humanRef: 'FAB-206734',
@@ -107,29 +139,80 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
         excludeFromStandardCatalog: true,
       },
     ]);
-    expect(isExcludedFromStandardCatalog(187676)).toBe(true);
-    expect(isExcludedFromStandardCatalog(206734)).toBe(true);
+    for (const id of [187676, 187677, 187681, 187682, 206734]) {
+      expect(isExcludedFromStandardCatalog(id)).toBe(true);
+    }
     expect(isExcludedFromStandardCatalog(1)).toBe(false);
     expect(isExcludedFromStandardCatalog(null)).toBe(false);
-    expect(getExcludedPropertyIds().sort()).toEqual([187676, 206734]);
+    expect(getExcludedPropertyIds().sort((a, b) => a - b)).toEqual([187676, 187677, 187681, 187682, 206734]);
+  });
+
+  it('la clasificación como "desarrollo" es explícita por property_app_id — nunca deriva de palabras en título/descripción', () => {
+    // Ninguna propiedad "normal" (sin entrada en CURATED_PROPERTIES) queda excluida, sin
+    // importar qué palabras traiga su título/descripción real (ej. "financiado", "a estrenar").
+    const normalPropertyIds = [1, 999, 187678, 187680, 187683, 187694, 187684];
+    for (const id of normalPropertyIds) {
+      expect(isExcludedFromStandardCatalog(id)).toBe(false);
+      expect(getCurationForPropertyId(id)).toBeNull();
+    }
   });
 
   it('getCurationForPropertyId expone la clasificación completa por id', () => {
     expect(getCurationForPropertyId(206734)?.classification).toBe('proyecto-especial');
+    expect(getCurationForPropertyId(187677)?.classification).toBe('desarrollo');
     expect(getCurationForPropertyId(999999)).toBeNull();
   });
 
-  it('Desarrollo "faena" apunta a la propiedad real 187676 (FAB-187676)', () => {
+  it('Desarrollo "faena" apunta a la propiedad real 187676 (FAB-187676), sin nombre público curado propio (usa el título real de 2Clics)', () => {
     const faena = getDevelopmentBySlug('faena');
     expect(faena).toEqual({
       slug: 'faena',
       name: 'Proyecto Faena',
+      publicName: null,
       sourcePropertyId: 187676,
       humanRef: 'FAB-187676',
       propertyIds: [187676],
+      market: 'US',
     });
     expect(getDevelopmentBySlug('FAENA')).toEqual(faena);
-    expect(getAllDevelopmentSlugs()).toEqual(['faena']);
+  });
+
+  it('decimosexta pasada: Icon Beach (187677), Flow House Miami Worldcenter (187681) y One Hollywood (187682) clasificados como desarrollo, cada uno con nombre público confirmado', () => {
+    const iconBeach = getDevelopmentBySlug('icon-beach');
+    expect(iconBeach?.sourcePropertyId).toBe(187677);
+    expect(iconBeach?.publicName).toBe('Icon Beach');
+
+    const flowHouse = getDevelopmentBySlug('flow-house-miami-worldcenter');
+    expect(flowHouse?.sourcePropertyId).toBe(187681);
+    expect(flowHouse?.publicName).toBe('Flow House Miami Worldcenter');
+
+    const oneHollywood = getDevelopmentBySlug('one-hollywood');
+    expect(oneHollywood?.sourcePropertyId).toBe(187682);
+    expect(oneHollywood?.publicName).toBe('One Hollywood');
+
+    expect(getAllDevelopmentSlugs().sort()).toEqual(
+      ['faena', 'icon-beach', 'flow-house-miami-worldcenter', 'one-hollywood'].sort(),
+    );
+  });
+
+  it('187694 (código de CRM FAB-187694) NO está clasificado — la External API confirma que no existe hoy', () => {
+    expect(getCurationForPropertyId(187694)).toBeNull();
+    expect(DEVELOPMENTS.some((d) => d.sourcePropertyId === 187694 || d.propertyIds.includes(187694))).toBe(false);
+    expect(CURATED_PROPERTIES.some((entry) => entry.propertyId === 187694)).toBe(false);
+  });
+
+  it('no se usa /api/development (módulo Emprendimientos) para esta clasificación — DEVELOPMENTS es curaduría por propertyId normal', () => {
+    for (const development of DEVELOPMENTS) {
+      expect(typeof development.sourcePropertyId).toBe('number');
+      expect(Array.isArray(development.propertyIds)).toBe(true);
+    }
+    // No existe ningún campo tipo developmentId/emprendimiento en el tipo — solo propertyIds
+    // reales. `lib/site-curation.ts` no importa ni llama el módulo pago de 2Clics (el comentario
+    // del archivo SÍ menciona el string "/api/development" para explicar que no se usa — se
+    // verifica la ausencia de la llamada real, no del string en un comentario).
+    const source = readFileSync('lib/site-curation.ts', 'utf8');
+    expect(source).not.toContain('getPublicDevelopmentById');
+    expect(source).not.toContain("from '@/lib/2clics/listings'");
   });
 
   it('Invertir 206734: nombre editorial neutral, sin nombres de personas ni figuras legales/comerciales no confirmadas', () => {
@@ -757,7 +840,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
   const source = property({ propertyId: 187676 });
 
   it('CuratedDevelopmentCard usa el nombre real de la fuente (2Clics), no el nombre editorial interno, y linkea al slug curado', () => {
-    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, sourceProperty: source }));
+    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, source: toDevelopmentCardSource(source) }));
     expect(html).toContain(source.title);
     expect(html).not.toContain('>Proyecto Faena<');
     expect(html).toContain('href="/desarrollos/faena"');
@@ -768,7 +851,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
     const html = render(
       React.createElement(CuratedDevelopmentDetailView, {
         curation: faena,
-        sourceProperty: source,
+        source: toDevSource(source),
         units: [source, otherUnit],
       }),
     );
@@ -779,7 +862,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
 
   it('"Consultar desarrollo" reutiliza el flujo de consulta específico de propiedad (PropertyInquiryPanel) asociado a 187676 — nunca /contacto ni WhatsApp directo, una única vez (solo al cierre)', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     expect(html).not.toContain('href="/contacto"');
     expect(html).not.toContain('wa.me');
@@ -792,7 +875,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
 
   it('sin CTA en la apertura — la sección project-open no contiene el botón de consulta', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     const openSection = html.match(/<section class="project-open">[\s\S]*?<\/section>/);
     expect(openSection).not.toBeNull();
@@ -802,7 +885,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
 
   it('landing editorial (decimotercera pasada): apertura con imagen real protagonista, sin hero full-width ni galería tradicional', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     expect(html).toContain('class="project-open"');
     // next/image reescribe el src a /_next/image?url=<encoded>... — se verifica la URL real
@@ -827,7 +910,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
       ],
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: fullDescription, units: [fullDescription] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(fullDescription), units: [fullDescription] }),
     );
     expect(html).toContain('<h2>El proyecto</h2>');
     expect(html).toContain('<h2>El edificio</h2>');
@@ -848,7 +931,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
 
   it('nunca muestra precios ni cronograma de señas/fechas de obra extraídos de la descripción libre', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     expect(html).not.toContain('desde U$D');
     expect(html).not.toContain('DEPOSITOS Y FECHAS');
@@ -867,7 +950,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
       ],
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: withAmenities, units: [withAmenities] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(withAmenities), units: [withAmenities] }),
     );
     expect(html).not.toContain('Permite mascotas');
     expect(html).not.toContain('Amenities y servicios');
@@ -880,7 +963,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
       images: Array.from({ length: 8 }, (_, i) => ({ imageId: `img${i}`, url: `https://cdn.2clics.com/${i}.jpg` })),
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: manyImages, units: [manyImages] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(manyImages), units: [manyImages] }),
     );
     const imgTags = html.match(/<img[^>]*>/g) || [];
     const usedUrls = manyImages.images
@@ -895,7 +978,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
 
   it('ninguna imagen editorial usa sizes="100vw" en solitario (causa de las imágenes borrosas — la auditoría de resolución real limita el ancho de render)', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     expect(html).not.toContain('sizes="100vw"');
   });
@@ -903,7 +986,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
   it('sin imágenes, la apertura se degrada con gracia (sin columna de imagen, sin romper)', () => {
     const noImages = property({ propertyId: 187676, images: [] });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: noImages, units: [noImages] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(noImages), units: [noImages] }),
     );
     expect(html).toContain('class="project-open"');
     expect(html).not.toContain('class="project-open-media"');
@@ -915,7 +998,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
     const html = render(
       React.createElement(CuratedDevelopmentDetailView, {
         curation: faena,
-        sourceProperty: sourceWithUnitData,
+        source: toDevSource(sourceWithUnitData),
         units: [sourceWithUnitData],
       }),
     );
@@ -929,7 +1012,7 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
 
   it('sin video real, no renderiza sección "Video" (sin placeholder)', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     expect(html).not.toContain('>Video<');
   });
@@ -948,39 +1031,336 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
     expect(html).toContain('Conocer proyecto');
   });
 
-  it('InvestmentOpportunityDetailView (206734) linkea a la ficha canónica y no menciona personas/figuras legales', () => {
+  it('InvestmentOpportunityDetailView (206734) no menciona personas/figuras legales', () => {
     const opportunity = getInvestmentOpportunityBySlug('proyecto-especial-miami')!;
     const opportunityProperty = property({ propertyId: 206734 });
     const html = render(
       React.createElement(InvestmentOpportunityDetailView, {
         opportunity,
-        sourceProperty: opportunityProperty,
-        units: [opportunityProperty],
+        source: {
+          propertyId: opportunityProperty.propertyId,
+          region: opportunityProperty.region,
+          images: opportunityProperty.images,
+        },
       }),
     );
-    expect(html).toContain('href="/propiedades/206734"');
-    expect(html).toContain('Ver ficha de la propiedad');
     expect(html.toLowerCase()).not.toContain('marcelo');
     expect(html.toLowerCase()).not.toContain('chami');
   });
 });
 
-// ── /desarrollos — catálogo visual de proyectos, sin Hero, escalable (décima pasada) ────────
-describe('/desarrollos — sin Hero navy, catálogo visual con H1 sr-only', () => {
-  const desarrollosSource = readFileSync('app/desarrollos/page.tsx', 'utf8');
+// ── /invertir y /invertir/proyecto-especial-miami — reescritura editorial (decimocuarta pasada) ──
+describe('InvestmentOpportunityDetailView — no es una ficha de propiedad, sin datos placeholder del registro técnico', () => {
+  const opportunity = getInvestmentOpportunityBySlug('proyecto-especial-miami')!;
+  // Simula el registro real 206734: título/dirección/descripción placeholder de "Casa en venta en
+  // Miami" — el componente NUNCA debe leer estos campos (su prop `source` ni siquiera los acepta),
+  // así que da igual qué contengan acá: sirven para demostrar que cambiarlos no afecta el output.
+  const placeholderProperty = property({
+    propertyId: 206734,
+    address: 'Casa en venta en Miami',
+    price: 100000,
+    currency: 'U$D',
+    totalArea: 1000,
+    propertyType: { typeId: 2, name: 'Casa', appId: '5791' },
+    meta_data: [
+      {
+        metaKey: 'description',
+        metaValue: 'Retorno estimado para el inversor: superior al 15% anual del capital invertido. 100% renta pasiva.',
+      },
+    ],
+  });
+  const source = {
+    propertyId: placeholderProperty.propertyId,
+    region: placeholderProperty.region,
+    images: placeholderProperty.images,
+  };
 
-  it('no renderiza el Hero navy ni su copy (eyebrow/H1 visible/bajada) — la revisión visual no lo aprobó', () => {
-    expect(desarrollosSource).not.toContain('twoclics-catalog-hero');
-    expect(desarrollosSource).not.toContain('<h1>Proyectos seleccionados</h1>');
-    expect(desarrollosSource).not.toContain('className="eyebrow"');
-    expect(desarrollosSource).not.toContain('activeMarketsPhrase');
-    // La metadata SEO (title/description) sí puede seguir mencionando "proyectos seleccionados"
-    // como texto — lo que se retiró es el H1/eyebrow/bajada VISIBLES del Hero, no el copy de SEO.
-    expect(desarrollosSource).not.toMatch(/<h1>[^<]/);
+  it('nunca muestra el registro técnico como producto: sin "Casa", sin 1.000 m2/1000, sin U$D 100.000, sin la descripción con promesa de retorno', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).not.toContain('Casa en venta');
+    expect(html).not.toContain('>Casa<');
+    expect(html).not.toContain('1000 m');
+    expect(html).not.toContain('100.000');
+    expect(html).not.toContain('renta pasiva');
+    expect(html).not.toContain('15% anual');
+    expect(html).not.toContain('superior al');
   });
 
-  it('mantiene un H1 semántico oculto (sr-only) para accesibilidad/SEO, no visible', () => {
-    expect(desarrollosSource).toContain('<h1 className="sr-only">Desarrollos</h1>');
+  it('no reutiliza la ficha tradicional: sin "Ver ficha de la propiedad", sin "Propiedad relacionada", sin mapa', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).not.toContain('Ver ficha de la propiedad');
+    expect(html).not.toContain('Propiedad relacionada');
+    expect(html).not.toContain('href="/propiedades/206734"');
+    expect(html).not.toContain('twoclics-map');
+  });
+
+  it('property_app_id 206734 llega a PropertyInquiryPanel, con un único CTA de conversión en toda la landing', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).toContain('data-property-app-id="206734"');
+    expect((html.match(/data-property-app-id="206734"/g) || []).length).toBe(1);
+    expect(html).toContain('>Conocer la oportunidad<');
+    expect(html).not.toContain('Invertir ahora');
+    expect(html).not.toContain('wa.me/5491167240353?text=');
+  });
+
+  it('sin CTA en la apertura (project-open no contiene el botón de consulta)', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    const openSection = html.match(/<section class="project-open project-open--compact">[\s\S]*?<\/section>/);
+    expect(openSection).not.toBeNull();
+    expect(openSection![0]).not.toContain('data-property-app-id');
+  });
+
+  it('apertura usa la variante compacta (decimoquinta pasada) — nunca la clase base sin modificador, esa sigue siendo exclusiva de Faena', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).toContain('class="project-open project-open--compact"');
+  });
+
+  it('los dos proyectos aparecen justo después de "Qué es esta oportunidad" y antes de "Coconut Grove" — el reordenamiento de la decimoquinta pasada', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    const whatIsIdx = html.indexOf('Participar en la creación de valor inmobiliario');
+    const projectsIdx = html.indexOf('Los dos proyectos de Coconut Grove');
+    const firstAddressIdx = html.indexOf('1710 S. Bayshore Drive');
+    const coconutGroveIdx = html.indexOf('Coconut Grove y el valor de una microubicación');
+    expect(whatIsIdx).toBeGreaterThan(-1);
+    expect(projectsIdx).toBeGreaterThan(whatIsIdx);
+    expect(firstAddressIdx).toBeGreaterThan(projectsIdx);
+    expect(coconutGroveIdx).toBeGreaterThan(firstAddressIdx);
+  });
+
+  it('1710 y 1716 quedan inequívocamente como dos residencias distintas — etiquetadas "Residencia 1 de 2"/"Residencia 2 de 2", cada una con su propia imagen, sin mezclar specs', () => {
+    const twoImages = property({
+      propertyId: 206734,
+      images: Array.from({ length: 8 }, (_, i) => ({ imageId: `img${i}`, url: `https://cdn.2clics.com/${i}.jpg` })),
+    });
+    const html = render(
+      React.createElement(InvestmentOpportunityDetailView, {
+        opportunity,
+        source: { propertyId: twoImages.propertyId, region: twoImages.region, images: twoImages.images },
+      }),
+    );
+    expect(html).toContain('Residencia 1 de 2');
+    expect(html).toContain('Residencia 2 de 2');
+
+    // Cada bloque de residencia (project-block) tiene exactamente una imagen, y no comparten la
+    // misma URL entre sí.
+    const blocks = html.match(/<section class="project-block[^"]*">[\s\S]*?<\/section>/g) || [];
+    expect(blocks.length).toBe(2);
+    const [block1710, block1716] = blocks as [string, string];
+    expect(block1710).toContain('1710 S. Bayshore Drive');
+    expect(block1716).toContain('1716 S. Bayshore Drive');
+    const imgSrc1710 = block1710.match(/src="([^"]*)"/)?.[1];
+    const imgSrc1716 = block1716.match(/src="([^"]*)"/)?.[1];
+    expect(imgSrc1710).toBeTruthy();
+    expect(imgSrc1716).toBeTruthy();
+    expect(imgSrc1710).not.toBe(imgSrc1716);
+
+    // Nunca mezclar specs: los dormitorios de 1710 (6) no aparecen dentro del bloque de 1716, y
+    // viceversa.
+    expect(block1710).toContain('6 dormitorios');
+    expect(block1710).not.toContain('7 dormitorios');
+    expect(block1716).toContain('7 dormitorios');
+    expect(block1716).not.toContain('6 dormitorios');
+  });
+
+  it('sin atribución arquitectónica dudosa: ninguna mención de estilo (Caribbean Colonial/contemporáneo) en ninguno de los dos proyectos', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).not.toContain('Caribbean Colonial');
+    expect(html).not.toContain('contemporáneo');
+    expect(html).not.toContain('arquitectónic');
+  });
+
+  it('no aparecen datos dinámicos/contractuales no reconfirmados esta pasada (75/25, ventanas de meses, ni cifras de retorno)', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).not.toContain('75/25');
+    expect(html).not.toContain('18/24/30');
+    expect(html).not.toContain('18–30');
+    expect(html).not.toMatch(/\d+\s*%\s*anual/);
+    expect(html).not.toMatch(/\bseptiembre\b|\bnoviembre\b/i);
+  });
+
+  it('"Para quién" usa tono de análisis, no de veredicto de aptitud financiera', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).toContain('Puede tener sentido analizarla para alguien que:');
+    expect(html).not.toContain('Probablemente no sea adecuada para alguien que:');
+  });
+
+  it('no presenta claims de rentabilidad garantizada; explicita "retorno no garantizado" como riesgo', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).not.toContain('renta garantizada');
+    expect(html).not.toContain('rentabilidad garantizada');
+    expect(html).not.toContain('retorno garantizado');
+    expect(html).toContain('Retorno no garantizado');
+    expect(html).toContain('Una proyección no equivale a un resultado.');
+  });
+
+  it('condiciones vigentes: sin montos/plazos hardcodeados, "Consultar" mientras no haya confirmación fechada', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).not.toContain('75/25');
+    expect(html).not.toContain('18–30');
+    expect(html).not.toContain('18-30');
+    expect(html).not.toContain('70–75%');
+    expect(html).not.toContain('30% anual');
+    expect(html).not.toContain('Última actualización');
+    expect(html).toContain('Consultar');
+  });
+
+  it('los dos proyectos muestran datos reales y distintos, nunca precios de salida inventados', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).toContain('1710 S. Bayshore Drive');
+    expect(html).toContain('1716 S. Bayshore Drive');
+    expect(html).toContain('7 dormitorios');
+    expect(html).toContain('6 dormitorios');
+    expect(html).toContain('Dock privado');
+    expect(html).not.toMatch(/U\$D\s*[\d.,]+/);
+    expect(html).not.toMatch(/USD\s*[\d.,]+/);
+  });
+
+  it('developer: nombre/descripción/fundadores presentes, sin agregados no confirmados ("1.000 viviendas"/"USD 200 millones")', () => {
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity, source }));
+    expect(html).toContain('Olivia Harper Homes');
+    expect(html).toContain('John Schamy');
+    expect(html).toContain('Jack Echterling');
+    expect(html).not.toContain('1.000 viviendas');
+    expect(html).not.toContain('200 millones');
+  });
+
+  it('imágenes: sin sizes="100vw" (nunca escala por encima de la resolución fuente auditada)', () => {
+    const manyImages = property({
+      propertyId: 206734,
+      images: Array.from({ length: 20 }, (_, i) => ({ imageId: `img${i}`, url: `https://cdn.2clics.com/${i}.jpg` })),
+    });
+    const html = render(
+      React.createElement(InvestmentOpportunityDetailView, {
+        opportunity,
+        source: { propertyId: manyImages.propertyId, region: manyImages.region, images: manyImages.images },
+      }),
+    );
+    expect(html).not.toContain('sizes="100vw"');
+  });
+
+  it('sin curaduría editorial para un slug (defensivo): degrada a bloque mínimo con CTA, nunca inventa una landing', () => {
+    const unknownOpportunity = { ...opportunity, slug: 'sin-curaduria', name: 'Oportunidad sin curar' };
+    const html = render(React.createElement(InvestmentOpportunityDetailView, { opportunity: unknownOpportunity, source }));
+    expect(html).toContain('Oportunidad sin curar');
+    expect(html).toContain('data-property-app-id="206734"');
+    expect(html).not.toContain('1710 S. Bayshore');
+  });
+});
+
+describe('/invertir (índice) — refuerzo educativo (decimoquinta pasada)', () => {
+  const invertirSource = readFileSync('app/invertir/page.tsx', 'utf8');
+
+  it('diferencia explícitamente las tres formas de participar — nunca las presenta como equivalentes', () => {
+    expect(invertirSource).toContain('Propiedad terminada');
+    expect(invertirSource).toContain('Unidad dentro de un desarrollo');
+    expect(invertirSource).toContain('Participación en un proyecto');
+    // Cada alternativa tiene sus propios puntos concretos, no una frase genérica compartida.
+    expect(invertirSource).toContain('El inversor tiene control directo sobre ese activo.');
+    expect(invertirSource).toContain('Sigue existiendo una adquisición inmobiliaria directa.');
+    expect(invertirSource).toContain('No necesariamente se compra la propiedad terminada.');
+  });
+
+  it('incluye la tabla comparativa "Qué cambia entre una alternativa y otra" con los 6 factores pedidos', () => {
+    expect(invertirSource).toContain('Qué cambia entre una alternativa y otra');
+    expect(invertirSource).toContain('invest-compare-table');
+    const factors = [
+      'Qué se adquiere / dónde participa el capital',
+      'Cómo puede generarse valor',
+      'Horizonte',
+      'Liquidez',
+      'Riesgos principales',
+      'Nivel de participación / control',
+    ];
+    for (const factor of factors) {
+      expect(invertirSource).toContain(factor);
+    }
+  });
+
+  it('"Cómo analiza García" tiene los 6 factores + mensaje de cierre, sin "Real estate con criterio" como slogan', () => {
+    expect(invertirSource).toContain('Cómo analiza García una inversión');
+    expect(invertirSource).toContain('Objetivo');
+    expect(invertirSource).toContain('Capital y exposición');
+    expect(invertirSource).toContain('Horizonte y necesidad de liquidez');
+    expect(invertirSource).toContain('Mercado, microubicación y producto');
+    expect(invertirSource).toContain('Riesgo y variables de ejecución');
+    expect(invertirSource).toContain('Estrategia de salida');
+    expect(invertirSource).toContain('No buscamos encajar a todos los clientes en una misma inversión');
+    expect(invertirSource).not.toContain('Real estate con criterio');
+  });
+
+  it('la card de la oportunidad es compacta (invest-opportunity-*), ya no reutiliza la huella completa de .project-open', () => {
+    expect(invertirSource).toContain('invest-opportunity-card');
+    expect(invertirSource).toContain('invest-opportunity-media');
+    expect(invertirSource).not.toContain('className="project-open"');
+    expect(invertirSource).not.toContain('project-open-grid');
+  });
+
+  it('sin ticket mínimo ni cifras de inversión en la card de la oportunidad', () => {
+    expect(invertirSource).not.toContain('100.000');
+    expect(invertirSource).not.toMatch(/U\$D\s*[\d.,]+/);
+  });
+
+  it('mantiene el Hero actual (eyebrow Invertir, H1 sin cambios) y el CTA final "Hablar sobre tu objetivo"', () => {
+    expect(invertirSource).toContain('Invertir empieza por entender qué estás buscando.');
+    expect(invertirSource).toContain('Antes de mirar una oportunidad, miramos a la persona.');
+    expect(invertirSource).toContain('Hablar sobre tu objetivo');
+  });
+});
+
+describe('lib/investments.ts — curaduría no deriva automáticamente de toda propiedad en VENTA', () => {
+  it('la oportunidad sigue siendo curada por slug — no existe generación automática desde operationType', () => {
+    expect(getInvestmentEditorialCuration('proyecto-especial-miami')).not.toBeNull();
+    expect(getInvestmentEditorialCuration('cualquier-otro-slug-no-curado')).toBeNull();
+  });
+
+  it('la lista de oportunidades activas sigue viniendo de INVESTMENT_OPPORTUNITIES (curaduría explícita), no de un scan de propiedades', () => {
+    const active = getActiveInvestmentOpportunities();
+    expect(active.map((o) => o.slug)).toEqual(['proyecto-especial-miami']);
+  });
+
+  it('el copy curado no usa términos legales/comerciales no confirmados ni promete rendimiento', () => {
+    const curation = getInvestmentEditorialCuration('proyecto-especial-miami')!;
+    const haystack = JSON.stringify(curation).toLowerCase();
+    const forbidden = [
+      'fondo',
+      'coinversión',
+      'coinversion',
+      'fraccionada',
+      'franquicia',
+      'crowdfunding',
+      'renta garantizada',
+      'rentabilidad garantizada',
+      'marcelo',
+      'chami',
+    ];
+    for (const term of forbidden) {
+      expect(haystack).not.toContain(term);
+    }
+  });
+});
+
+// ── /desarrollos — catálogo visual de proyectos, sin Hero navy, escalable (décima pasada;
+// apertura editorial + H1 visible + selector de mercado en la decimonovena) ─────────────────────
+describe('/desarrollos — sin Hero navy, apertura editorial con H1 visible (decimonovena pasada)', () => {
+  const desarrollosSource = readFileSync('app/desarrollos/page.tsx', 'utf8');
+
+  it('no renderiza el Hero navy tipo Comprar/Alquilar (eyebrow/banda navy) — la apertura es editorial, sobria, sin banda de color propia', () => {
+    expect(desarrollosSource).not.toContain('twoclics-catalog-hero');
+    expect(desarrollosSource).not.toContain('className="eyebrow"');
+    expect(desarrollosSource).not.toContain('activeMarketsPhrase');
+  });
+
+  it('H1 visible con la apertura editorial exacta pedida (decimonovena pasada) — nunca placeholder ni claim comercial', () => {
+    expect(desarrollosSource).toContain('<h1>Desarrollos seleccionados</h1>');
+    expect(desarrollosSource).toContain(
+      'Proyectos que analizamos por su ubicación, propuesta, producto y adecuación a distintos',
+    );
+    expect(desarrollosSource).not.toContain('<h1 className="sr-only">Desarrollos</h1>');
+    // Sin claims comerciales/precio/retorno en la apertura.
+    const forbiddenClaims = ['%', 'garantizad', 'retorno', 'rentabilidad', 'desde U$D', 'desde $'];
+    for (const claim of forbiddenClaims) {
+      expect(desarrollosSource.toLowerCase()).not.toContain(claim.toLowerCase());
+    }
   });
 
   it('metadata SEO (title/description/canonical) se mantiene sin el Hero visual', () => {
@@ -1027,9 +1407,9 @@ describe('/desarrollos — sin Hero navy, catálogo visual con H1 sr-only', () =
     expect(desarrollosSource).not.toContain('development-count');
   });
 
-  it('la grilla reutiliza .twoclics-grid (mismo sistema de Comprar/Alquilar/propiedades) — una card no se estira aunque sea la única', () => {
-    expect(desarrollosSource).toContain('className="twoclics-grid"');
-    expect(desarrollosSource).not.toContain('development-grid');
+  it('la grilla del índice usa su propia clase (.desarrollos-grid, 4/3/2/1 columnas) — decimonovena pasada, ya no .twoclics-grid — sin tocar el sistema de 3 columnas de Comprar/Alquilar/propiedades', () => {
+    expect(desarrollosSource).toContain('desarrollos-grid');
+    expect(desarrollosSource).not.toContain('className="twoclics-grid"');
   });
 });
 
@@ -1038,7 +1418,7 @@ describe('CuratedDevelopmentCard — grilla escalable, solo datos respaldados (d
   const source = property({ propertyId: 187676 });
 
   it('eyebrow "Desarrollo" (no "Proyecto"), nombre real de la fuente (no concatenado con "Proyecto"), ubicación pública y link al slug — sin CTA textual redundante', () => {
-    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, sourceProperty: source }));
+    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, source: toDevelopmentCardSource(source) }));
     expect(html).toContain('>Desarrollo<');
     expect(html).not.toContain('>Proyecto<');
     expect(html).toContain(source.title);
@@ -1057,12 +1437,12 @@ describe('CuratedDevelopmentCard — grilla escalable, solo datos respaldados (d
       propertyId: 187676,
       meta_data: [{ metaKey: 'description', metaValue: 'Tras haber transformado Miami Beach en un centro global de arte y cultura, este proyecto marca un antes y un después.' }],
     });
-    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, sourceProperty: withDescription }));
+    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, source: toDevelopmentCardSource(withDescription) }));
     expect(html).not.toContain('Tras haber transformado Miami Beach');
   });
 
   it('nunca muestra precio, unidades, año, estado, developer ni fecha de entrega — no está oficialmente respaldado', () => {
-    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, sourceProperty: source }));
+    const html = render(React.createElement(CuratedDevelopmentCard, { curation: faena, source: toDevelopmentCardSource(source) }));
     const forbidden = [
       'U$D',
       'AR$',
@@ -1086,7 +1466,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
 
   it('sin PropertyMap ni Google Maps embed — solo la ubicación textual, únicamente en esta landing', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     expect(html).not.toContain('twoclics-map');
     expect(html).not.toContain('google.com/maps');
@@ -1105,7 +1485,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
       ],
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: manyImages, units: [manyImages] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(manyImages), units: [manyImages] }),
     );
     expect(html).not.toContain('twoclics-gallery');
     expect(html).not.toContain('twoclics-gallery-thumb');
@@ -1123,7 +1503,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
       ],
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: manyImages, units: [manyImages] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(manyImages), units: [manyImages] }),
     );
     // next/image reescribe cada <img> a /_next/image?url=<encoded>&w=...&q=75 con varios anchos
     // en el srcSet — un solo <img> real genera múltiples apariciones del string crudo. Se cuentan
@@ -1152,7 +1532,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
       ],
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: withPricing, units: [withPricing] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(withPricing), units: [withPricing] }),
     );
     expect(html).toContain('Tras haber transformado Miami Beach');
     expect(html).toContain('Parque privado');
@@ -1164,7 +1544,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
 
   it('"Propiedades disponibles" no se muestra cuando el desarrollo hoy es un único registro real (evita redundancia con su propio registro maestro)', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     expect(html).not.toContain('Propiedades disponibles');
     expect(html).not.toContain('href="/propiedades/187676"');
@@ -1175,7 +1555,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
     const html = render(
       React.createElement(CuratedDevelopmentDetailView, {
         curation: faena,
-        sourceProperty: source,
+        source: toDevSource(source),
         units: [source, otherUnit],
       }),
     );
@@ -1184,7 +1564,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
 
   it('no muestra el CTA "Ver propiedades disponibles" (eliminado — duodécima pasada, se mantiene retirado)', () => {
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: source, units: [source] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
     expect(html).not.toContain('Ver propiedades disponibles');
   });
@@ -1201,7 +1581,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
       ],
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: richDescription, units: [richDescription] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(richDescription), units: [richDescription] }),
     );
     expect(html).not.toContain('Amenities y servicios');
     expect(html).not.toContain('twoclics-chip-list');
@@ -1215,7 +1595,7 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin m
       ],
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: faena, sourceProperty: taggedSource, units: [taggedSource] }),
+      React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(taggedSource), units: [taggedSource] }),
     );
     const forbidden = ['FABIANAGA', 'meta_data', 'metaKey', 'info_contact', 'private_note', 'agent', 'realEstate'];
     for (const phrase of forbidden) {
@@ -1236,5 +1616,843 @@ describe('/desarrollos/faena — canonical independiente, legacy /api/developmen
   it('el flujo legacy numérico (/api/development) sigue presente, sin usarse desde /desarrollos', () => {
     expect(detailSource).toContain('getPublicDevelopmentById');
     expect(detailSource).toContain('DevelopmentDetailView');
+  });
+});
+
+// ── Decimosexta pasada — clasificación editorial ampliada (Icon Beach, Flow House, One Hollywood) ──
+describe('/desarrollos — clasificación editorial ampliada a 4 desarrollos (decimosexta pasada)', () => {
+  it('Icon Beach (187677), Flow House Miami Worldcenter (187681) y One Hollywood (187682) se listan como desarrollo, cada uno con su propia card', () => {
+    for (const [slug, publicName, propertyId] of [
+      ['icon-beach', 'Icon Beach', 187677],
+      ['flow-house-miami-worldcenter', 'Flow House Miami Worldcenter', 187681],
+      ['one-hollywood', 'One Hollywood', 187682],
+    ] as const) {
+      const curation = getDevelopmentBySlug(slug)!;
+      expect(curation.sourcePropertyId).toBe(propertyId);
+      const fixture = property({ propertyId, address: `${publicName} Financiado A Estrenar 600` });
+      const html = render(
+        React.createElement(CuratedDevelopmentCard, {
+          curation,
+          source: toDevelopmentCardSource(fixture, curation.publicName),
+        }),
+      );
+      expect(html).toContain(`>${publicName}<`);
+      expect(html).toContain(`href="/desarrollos/${slug}"`);
+    }
+  });
+
+  it('el nombre público confirmado gana aunque el título real de 2Clics sea genérico o traiga un claim de rentabilidad no publicable', () => {
+    const flowHouse = getDevelopmentBySlug('flow-house-miami-worldcenter')!;
+    // Título real observado en la auditoría — incluye una promesa de rentabilidad en el propio título.
+    const badTitleFixture = property({
+      propertyId: 187681,
+      address: 'Oportunidad Unica En Downtown Miami. Renta Garantizada 6 %',
+    });
+    const cardHtml = render(
+      React.createElement(CuratedDevelopmentCard, {
+        curation: flowHouse,
+        source: toDevelopmentCardSource(badTitleFixture, flowHouse.publicName),
+      }),
+    );
+    expect(cardHtml).not.toContain('Renta Garantizada');
+    expect(cardHtml).toContain('Flow House Miami Worldcenter');
+
+    const detailHtml = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: flowHouse,
+        source: toDevSource(badTitleFixture, flowHouse.publicName),
+        units: [badTitleFixture],
+      }),
+    );
+    expect(detailHtml).not.toContain('Renta Garantizada');
+    expect(detailHtml).toContain('<h1>Flow House Miami Worldcenter</h1>');
+  });
+
+  it('los cuatro desarrollos curados tienen su propia curaduría editorial completa (decimoctava pasada — sistema editorial definitivo)', () => {
+    expect(getDevelopmentEditorialCuration('faena')).not.toBeNull();
+    expect(getDevelopmentEditorialCuration('icon-beach')).not.toBeNull();
+    expect(getDevelopmentEditorialCuration('flow-house-miami-worldcenter')).not.toBeNull();
+    expect(getDevelopmentEditorialCuration('one-hollywood')).not.toBeNull();
+    // Un desarrollo SIN curaduría (ninguno de los 4 hoy) seguiría degradando con gracia — el
+    // fallback (apertura + CTA, sin secciones inventadas) sigue existiendo en el componente para
+    // cualquier desarrollo futuro sin auditar todavía.
+  });
+
+  it('One Hollywood: ficha editorial propia con contenido real (no genérico, no reutilizado de Icon Beach)', () => {
+    const oneHollywood = getDevelopmentBySlug('one-hollywood')!;
+    const fixture = property({
+      propertyId: 187682,
+      address: 'One Hollywood Financiado A Estrenar 600',
+      amenities: [
+        { amenitieId: '22', name: 'Permite mascotas', type: 'amenitie' },
+        { amenitieId: '37', name: 'Sauna', type: 'amenitie' },
+        { amenitieId: '23', name: 'Piscina', type: 'amenitie' },
+      ],
+      images: Array.from({ length: 13 }, (_, i) => ({ imageId: `oh${i}`, url: `https://cdn.2clics.com/oh${i}.jpg` })),
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: oneHollywood,
+        source: toDevSource(fixture, oneHollywood.publicName),
+        units: [fixture],
+      }),
+    );
+    expect(html).toContain('<h1>One Hollywood</h1>');
+    expect(html).toContain('data-property-app-id="187682"');
+    expect(html).toContain('<h2>El edificio</h2>');
+    expect(html).toContain('<h2>Residencias</h2>');
+    // "Developer" (Star Developers Group) ya no se muestra públicamente desde la vigésima pasada
+    // (ver describe dedicado más abajo) — la arquitectura confirmada sí se mantiene.
+    expect(html).toContain('BC Architects');
+    expect(html).not.toContain('Star Developers Group');
+    // Nunca datos de Icon Beach ni de otro desarrollo mezclados por error.
+    expect(html).not.toContain('Related Group');
+    expect(html).not.toContain('Hollywood Beach, Florida');
+  });
+
+  it('la clasificación es por property_app_id, no por título — cambiar el título de la fuente no afecta si un id está excluido de Comprar', () => {
+    // 187677 sigue excluido sin importar qué título traiga hoy (o mañana) su registro en 2Clics.
+    expect(isExcludedFromStandardCatalog(187677)).toBe(true);
+    // Ninguna propiedad con palabras como "desarrollo"/"financiado"/"a estrenar" en el título se
+    // excluye automáticamente si su id no está en CURATED_PROPERTIES.
+    const lookAlike = property({ propertyId: 555555, address: 'Desarrollo Financiado A Estrenar' });
+    expect(isExcludedFromStandardCatalog(lookAlike.propertyId)).toBe(false);
+  });
+
+  it('187694 (FAB-187694 de la captura del CRM) no está clasificado y no aparece como desarrollo — la External API no lo resuelve hoy', () => {
+    expect(getDevelopmentBySlug('187694')).toBeNull();
+    expect(getAllDevelopmentSlugs()).not.toContain('187694');
+    expect(getCurationForPropertyId(187694)).toBeNull();
+  });
+});
+
+// ── Ficha editorial de Icon Beach (decimoséptima pasada) ────────────────────────────────────────
+describe('/desarrollos/icon-beach — ficha editorial completa (decimoséptima pasada)', () => {
+  const iconBeach = getDevelopmentBySlug('icon-beach')!;
+  // Título/descripción real de 187677 auditados en esta pasada — placeholder de aviso genérico
+  // con precios/cronograma/agente mezclados. El fixture reproduce exactamente ese contenido real
+  // para probar que nada de eso llega al HTML.
+  const realFixture = property({
+    propertyId: 187677,
+    address: 'Oportunidad Unica En Hollywood. Muy Cerca De Las Playas.',
+    price: 900000,
+    currency: 'U$D',
+    amenities: [
+      { amenitieId: '22', name: 'Permite mascotas', type: 'amenitie' },
+      { amenitieId: '37', name: 'Sauna', type: 'amenitie' },
+      { amenitieId: '23', name: 'Piscina', type: 'amenitie' },
+    ],
+    meta_data: [
+      {
+        metaKey: 'description',
+        metaValue:
+          '¡Bienvenido a ICON BEACH\n Ubicado sobre la Collins al otro lado de la playa, sobre el canal. \n 350 Unidades de 1 a 3 dormitorios\n Precios desde $900,000 de 1 dormitorio.\n Ventas empezaron en el verano de 2024\n\n DEPOSITOS Y FECHAS:\n 20% firma del contrato de inmediato.\n 20% at groundbreaking julio 2025.\n\nRealtor \nMonica L Villate \nL#3313811',
+      },
+    ],
+  }, 'US');
+  const source = toDevSource(realFixture, iconBeach.publicName);
+
+  it('nombre público "Icon Beach", nunca el título bruto de 2Clics ("Oportunidad Unica...")', () => {
+    const html = render(React.createElement(CuratedDevelopmentDetailView, { curation: iconBeach, source, units: [realFixture] }));
+    expect(html).toContain('<h1>Icon Beach</h1>');
+    expect(html).not.toContain('Oportunidad Unica');
+  });
+
+  it('no muestra precios del CRM, cronograma de depósitos ni datos de agente/matrícula', () => {
+    const html = render(React.createElement(CuratedDevelopmentDetailView, { curation: iconBeach, source, units: [realFixture] }));
+    expect(html).not.toContain('900,000');
+    expect(html).not.toContain('DEPOSITOS Y FECHAS');
+    expect(html).not.toContain('groundbreaking');
+    expect(html).not.toContain('Monica L Villate');
+    expect(html).not.toContain('L#3313811');
+    expect(html).not.toContain('Ventas empezaron');
+  });
+
+  it('no promete rentabilidad ni usa lenguaje comercial agresivo ("oportunidad única", "renta garantizada")', () => {
+    const html = render(React.createElement(CuratedDevelopmentDetailView, { curation: iconBeach, source, units: [realFixture] }));
+    expect(html.toLowerCase()).not.toContain('oportunidad única');
+    expect(html.toLowerCase()).not.toContain('renta garantizada');
+  });
+
+  it('CTA aparece una única vez, usa property_app_id 187677, PropertyInquiryPanel sin modificar', () => {
+    const html = render(React.createElement(CuratedDevelopmentDetailView, { curation: iconBeach, source, units: [realFixture] }));
+    expect((html.match(/data-property-app-id="187677"/g) || []).length).toBe(1);
+    expect(html).toContain('>Consultar desarrollo<');
+    const openSection = html.match(/<section class="project-open">[\s\S]*?<\/section>/);
+    expect(openSection).not.toBeNull();
+    expect(openSection![0]).not.toContain('data-property-app-id');
+  });
+
+  it('sección de amenities: solo reales estructurados de 2Clics que aportan al relato, nunca inferidos del texto libre ("canal", "playa" no aparecen como chips) ni "Permite mascotas" (decimoctava pasada: idéntico en toda la cartera, se filtra)', () => {
+    const html = render(React.createElement(CuratedDevelopmentDetailView, { curation: iconBeach, source, units: [realFixture] }));
+    expect(html).toContain('<h2>Amenities</h2>');
+    expect(html).not.toContain('Permite mascotas');
+    expect(html).toContain('Sauna');
+    expect(html).toContain('Piscina');
+  });
+
+  it('sin amenities estructurados (o menos de 2), la sección de amenities no se muestra', () => {
+    const noAmenities = property({ propertyId: 187677, amenities: [] });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: iconBeach,
+        source: toDevSource(noAmenities, iconBeach.publicName),
+        units: [noAmenities],
+      }),
+    );
+    expect(html).not.toContain('<h2>Amenities</h2>');
+  });
+
+  it('imágenes seleccionadas no se repiten entre bloques', () => {
+    const manyImages = property({
+      propertyId: 187677,
+      images: Array.from({ length: 17 }, (_, i) => ({ imageId: `img${i}`, url: `https://cdn.2clics.com/${i}.jpg` })),
+      amenities: [
+        { amenitieId: '37', name: 'Sauna', type: 'amenitie' },
+        { amenitieId: '23', name: 'Piscina', type: 'amenitie' },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: iconBeach,
+        source: toDevSource(manyImages, iconBeach.publicName),
+        units: [manyImages],
+      }),
+    );
+    const imgTags = html.match(/<img[^>]*>/g) || [];
+    const usedUrls = manyImages.images
+      .map((img) => encodeURIComponent(img.displayUrl))
+      .filter((enc) => imgTags.some((tag) => tag.includes(enc)));
+    for (const enc of usedUrls) {
+      expect(imgTags.filter((tag) => tag.includes(enc)).length).toBe(1);
+    }
+    // Exactamente 7 imágenes reales curadas: apertura, momento visual, ubicación, edificio,
+    // residencias, amenities, interiores (agregado en la vigésima pasada).
+    expect(usedUrls.length).toBe(7);
+  });
+
+  it('sizes nunca fuerza 100vw en solitario (resolución nativa auditada: 937-1520px, nunca se renderiza como bloque de 1900px)', () => {
+    const html = render(React.createElement(CuratedDevelopmentDetailView, { curation: iconBeach, source, units: [realFixture] }));
+    expect(html).not.toContain('sizes="100vw"');
+  });
+
+  it('ninguna promesa/reclamo comercial del texto real ("Renta Garantizada", eslogan incrustado) llega al copy curado', () => {
+    const curation = getDevelopmentEditorialCuration('icon-beach')!;
+    const haystack = JSON.stringify(curation).toLowerCase();
+    expect(haystack).not.toContain('renta garantizada');
+    expect(haystack).not.toContain('understated luxury');
+    expect(haystack).not.toContain('desde $');
+    expect(haystack).not.toContain('monica');
+  });
+
+  it('resolveSafeDescription nunca pasa la descripción cruda de Icon Beach como prop (curaduría 100% propia, sin extracción de la descripción real)', () => {
+    const rawDescription = realFixture.description;
+    const editorial = getDevelopmentEditorialCuration('icon-beach');
+    const safe = resolveSafeDescription(rawDescription, editorial);
+    expect(safe).not.toContain('900,000');
+    expect(safe).not.toContain('Monica');
+    expect(safe).not.toContain('DEPOSITOS');
+  });
+
+  it('sin curaduría editorial (slug no curado), degrada con gracia — no rompe, no inventa secciones', () => {
+    const uncatedSlug = { ...iconBeach, slug: 'sin-curar-temporal' };
+    const html = render(React.createElement(CuratedDevelopmentDetailView, { curation: uncatedSlug, source, units: [realFixture] }));
+    expect(html).toContain('class="project-open"');
+    expect(html).not.toContain('<h2>El edificio</h2>');
+  });
+});
+
+describe('Regresión — Faena y Comprar no se ven afectados por la ficha de Icon Beach (decimoséptima pasada)', () => {
+  it('Faena sigue sin sección de amenities (decisión ya aprobada, sin cambios de comportamiento)', () => {
+    const faena = getDevelopmentBySlug('faena')!;
+    const withAmenities = property({
+      propertyId: 187676,
+      amenities: [
+        { amenitieId: '1', name: 'Pileta', type: 'general' },
+        { amenitieId: '2', name: 'Gimnasio', type: 'general' },
+      ],
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: faena,
+        source: toDevSource(withAmenities),
+        units: [withAmenities],
+      }),
+    );
+    expect(html).not.toContain('<h2>Amenities</h2>');
+  });
+
+  it('Faena conserva su curaduría ("El edificio"/"Residencias") intacta, con el snapshot nuevo agregado adelante', () => {
+    const faenaEditorial = getDevelopmentEditorialCuration('faena');
+    expect(faenaEditorial?.sections.map((s) => s.key)).toEqual([
+      'snapshot',
+      'momento-visual',
+      'proyecto',
+      'edificio',
+      'residencias',
+    ]);
+    expect(faenaEditorial?.amenities).toBeUndefined();
+  });
+
+  it('Icon Beach (187677) sigue excluido de Comprar', () => {
+    expect(isExcludedFromStandardCatalog(187677)).toBe(true);
+  });
+});
+
+// ── Sistema editorial definitivo de Desarrollos (decimoctava pasada) ────────────────────────────
+describe('/desarrollos — sistema editorial definitivo: snapshot, Flow House, One Hollywood, fixes de Faena/Icon Beach (decimoctava pasada)', () => {
+  const flowFixtureRaw = {
+    propertyId: 187681,
+    address: 'Flow House Miami Worldcenter!, Renta 6 % Anual.... 600',
+    price: 450000,
+    currency: 'U$D',
+    amenities: [
+      { amenitieId: '22', name: 'Permite mascotas', type: 'amenitie' },
+      { amenitieId: '37', name: 'Sauna', type: 'amenitie' },
+      { amenitieId: '23', name: 'Piscina', type: 'amenitie' },
+    ],
+    images: Array.from({ length: 21 }, (_, i) => ({ imageId: `fh${i}`, url: `https://cdn.2clics.com/fh${i}.jpg` })),
+    meta_data: [
+      {
+        metaKey: 'description',
+        metaValue:
+          '¡Bienvenido a Flow House Miami Worldcenter!\n\nPrograma de renta garantizada por dos años con un 6% de retorno neto anual, por estos dos años el desarrollador cubrirá los gastos de impuestos y la asociación\nUnidades desde los $450s\n\nForma de Pago:\nCalendario de depósitos:\n-10% en el contrato\n-70% al cierre del segundo trimestre de 2025',
+      },
+    ],
+  };
+  const oneHollywoodFixtureRaw = {
+    propertyId: 187682,
+    address: 'One Hollywood Financiado A Estrenar 600',
+    price: 420000,
+    currency: 'U$D',
+    amenities: [
+      { amenitieId: '22', name: 'Permite mascotas', type: 'amenitie' },
+      { amenitieId: '37', name: 'Sauna', type: 'amenitie' },
+      { amenitieId: '23', name: 'Piscina', type: 'amenitie' },
+    ],
+    images: Array.from({ length: 13 }, (_, i) => ({ imageId: `oh${i}`, url: `https://cdn.2clics.com/oh${i}.jpg` })),
+    meta_data: [
+      {
+        metaKey: 'description',
+        metaValue:
+          'ONE HOLLYWOOD\n\nPrecios desde $420,000 de 1 dormitorio.\n\nDeposit Structure:\n30k o 50k Reservation (now)\n10% Groundbreaking - julio 2025\n\nRealtor \nMonica L Villate \nL#3313811',
+      },
+    ],
+  };
+
+  const flowHouse = getDevelopmentBySlug('flow-house-miami-worldcenter')!;
+  const flowFixture = property(flowFixtureRaw, 'US');
+  const flowSource = toDevSource(flowFixture, flowHouse.publicName);
+
+  const oneHollywood = getDevelopmentBySlug('one-hollywood')!;
+  const oneHollywoodFixture = property(oneHollywoodFixtureRaw, 'US');
+  const oneHollywoodSource = toDevSource(oneHollywoodFixture, oneHollywood.publicName);
+
+  it('Flow House: property_app_id 187681, nombre público correcto, nunca el título crudo con la promesa de renta', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: flowHouse, source: flowSource, units: [flowFixture] }),
+    );
+    expect(html).toContain('<h1>Flow House Miami Worldcenter</h1>');
+    expect(html).toContain('data-property-app-id="187681"');
+    expect(html).not.toContain('Renta 6');
+    expect(html).not.toContain('Renta Garantizada');
+  });
+
+  it('Flow House: "renta garantizada" no aparece en NINGUNA capa pública — HTML visible, atributos alt/title, ni el propio objeto de curaduría', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: flowHouse, source: flowSource, units: [flowFixture] }),
+    );
+    expect(html.toLowerCase()).not.toContain('renta garantizada');
+    expect(html.toLowerCase()).not.toContain('6% de retorno');
+    expect(html).not.toContain('$450s');
+    expect(html).not.toContain('Calendario de depósitos');
+    const curationJson = JSON.stringify(getDevelopmentEditorialCuration('flow-house-miami-worldcenter')).toLowerCase();
+    expect(curationJson).not.toContain('renta garantizada');
+    expect(curationJson).not.toContain('6%');
+  });
+
+  it('Flow House: sin material fotográfico real de edificio/residencias, no se fuerzan esas secciones con imagen — pero Residencias sí existe como texto/lista', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: flowHouse, source: flowSource, units: [flowFixture] }),
+    );
+    expect(html).not.toContain('<h2>El edificio</h2>');
+    expect(html).toContain('<h2>Residencias</h2>');
+    expect(html).toContain('<h2>Vida en Flow House</h2>');
+  });
+
+  it('Flow House: resolveSafeDescription nunca pasa la descripción cruda (precio/renta garantizada/depósitos) como prop', () => {
+    const editorial = getDevelopmentEditorialCuration('flow-house-miami-worldcenter');
+    const safe = resolveSafeDescription(flowFixture.description, editorial);
+    expect(safe.toLowerCase()).not.toContain('renta garantizada');
+    expect(safe).not.toContain('$450s');
+    expect(safe).not.toContain('Calendario de depósitos');
+  });
+
+  it('One Hollywood: property_app_id 187682, nombre público, sin datos de agente ni cronograma de depósitos', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: oneHollywood,
+        source: oneHollywoodSource,
+        units: [oneHollywoodFixture],
+      }),
+    );
+    expect(html).toContain('<h1>One Hollywood</h1>');
+    expect(html).toContain('data-property-app-id="187682"');
+    expect(html).not.toContain('Monica L Villate');
+    expect(html).not.toContain('L#3313811');
+    expect(html).not.toContain('420,000');
+    expect(html).not.toContain('Groundbreaking');
+    expect(html).not.toContain('Reservation');
+  });
+
+  it('One Hollywood: CTA aparece una única vez y usa 187682, PropertyInquiryPanel sin modificar', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: oneHollywood,
+        source: oneHollywoodSource,
+        units: [oneHollywoodFixture],
+      }),
+    );
+    expect((html.match(/data-property-app-id="187682"/g) || []).length).toBe(1);
+    expect(html).toContain('>Consultar desarrollo<');
+  });
+
+  it('Faena y Icon Beach: nombre público de cada uno nunca se mezcla con el otro (regresión de aislamiento entre desarrollos)', () => {
+    const faena = getDevelopmentBySlug('faena')!;
+    const iconBeach = getDevelopmentBySlug('icon-beach')!;
+    const faenaJson = JSON.stringify(getDevelopmentEditorialCuration('faena'));
+    const iconJson = JSON.stringify(getDevelopmentEditorialCuration('icon-beach'));
+    expect(faenaJson).not.toContain('Related Group');
+    expect(iconJson).not.toContain('Rafael Viñoly');
+    expect(faena.publicName).toBeNull();
+    expect(iconBeach.publicName).toBe('Icon Beach');
+  });
+
+  it('Project Snapshot: se muestra en los 4 desarrollos curados, con solo campos confirmados — nunca "Consultar" ni placeholders vacíos', () => {
+    for (const slug of ['faena', 'icon-beach', 'flow-house-miami-worldcenter', 'one-hollywood']) {
+      const editorial = getDevelopmentEditorialCuration(slug);
+      const snapshotSection = editorial?.sections.find((s) => s.layout === 'snapshot');
+      expect(snapshotSection, `snapshot ausente en ${slug}`).toBeDefined();
+      expect(snapshotSection?.snapshotFields?.length).toBeGreaterThan(0);
+      for (const field of snapshotSection?.snapshotFields || []) {
+        expect(field.value.toLowerCase()).not.toContain('consultar');
+        expect(field.value.trim()).not.toBe('');
+      }
+    }
+  });
+
+  it('Project Snapshot: renderiza label+value de cada campo declarado, sin inventar campos adicionales', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: flowHouse, source: flowSource, units: [flowFixture] }),
+    );
+    // "Developer" ya no es un campo del snapshot desde la vigésima pasada (ver describe dedicado
+    // más abajo) — Interiorismo (un crédito de diseño, no institucional) sí se mantiene.
+    expect(html).not.toContain('project-snapshot-label">Developer<');
+    expect(html).toContain('project-snapshot-label">Interiorismo<');
+    expect(html).toContain('project-snapshot-value">Cola Blanca · Flow Furnishings<');
+    expect(html).toContain('project-snapshot-label">Unidades<');
+    expect(html).toContain('project-snapshot-value">466<');
+  });
+
+  it('Bug de heading huérfano corregido: un bloque image-left/image-right con párrafo curado (curatedText) renderiza el párrafo, no solo el heading', () => {
+    const iconBeach = getDevelopmentBySlug('icon-beach')!;
+    const iconFixture = property({
+      propertyId: 187677,
+      amenities: [{ amenitieId: '23', name: 'Piscina', type: 'amenitie' }, { amenitieId: '37', name: 'Sauna', type: 'amenitie' }],
+      images: Array.from({ length: 17 }, (_, i) => ({ imageId: `ib${i}`, url: `https://cdn.2clics.com/ib${i}.jpg` })),
+    }, 'US');
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: iconBeach,
+        source: toDevSource(iconFixture, iconBeach.publicName),
+        units: [iconFixture],
+      }),
+    );
+    const idx = html.indexOf('<h2>Hollywood Beach y la ubicación</h2>');
+    expect(idx).toBeGreaterThan(-1);
+    const after = html.slice(idx, idx + 400);
+    expect(after).toContain('project-block-text');
+    expect(after).toContain('boardwalk');
+  });
+
+  it('Listas cortas (≤3 ítems) usan la clase compacta, evitando el hueco de una grilla de 2 columnas con celda huérfana', () => {
+    const iconBeach = getDevelopmentBySlug('icon-beach')!;
+    const iconFixture = property({
+      propertyId: 187677,
+      amenities: [{ amenitieId: '23', name: 'Piscina', type: 'amenitie' }, { amenitieId: '37', name: 'Sauna', type: 'amenitie' }],
+      images: Array.from({ length: 17 }, (_, i) => ({ imageId: `ib${i}`, url: `https://cdn.2clics.com/ib${i}.jpg` })),
+    }, 'US');
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: iconBeach,
+        source: toDevSource(iconFixture, iconBeach.publicName),
+        units: [iconFixture],
+      }),
+    );
+    const idx = html.indexOf('<h2>Amenities</h2>');
+    expect(html.slice(idx, idx + 120)).toContain('project-block-list--compact');
+  });
+
+  it('Faena: la fuga de descripción cruda al payload (tabla de precios + cronograma de depósitos) está corregida — resolveSafeDescription solo incluye los párrafos que la curaduría realmente necesita', () => {
+    const faenaEditorial = getDevelopmentEditorialCuration('faena');
+    const rawDescription =
+      'Frase inicial del proyecto. Resto de la primera oración real.\n\nEl edificio\nParque privado\nResidencias\nElevadores privados\n\n1 Habitación desde U$D 1.300.000\n2 Habitación desde U$D 1.900.000\n\n DEPOSITOS Y FECHAS:\n 20% firma del contrato de inmediato.\n 20% at groundbreaking julio 2025.';
+    const safe = resolveSafeDescription(rawDescription, faenaEditorial);
+    // Los párrafos necesarios (intro + bloque con los markers) SÍ están.
+    expect(safe).toContain('Frase inicial del proyecto');
+    expect(safe).toContain('El edificio');
+    expect(safe).toContain('Elevadores privados');
+    // La tabla de precios y el cronograma de depósitos — que nunca se renderizan — NO viajan.
+    expect(safe).not.toContain('1.300.000');
+    expect(safe).not.toContain('DEPOSITOS Y FECHAS');
+    expect(safe).not.toContain('groundbreaking');
+  });
+
+  it('Flow House: imágenes seleccionadas no se repiten entre bloques', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: flowHouse, source: flowSource, units: [flowFixture] }),
+    );
+    const imgTags = html.match(/<img[^>]*>/g) || [];
+    const usedUrls = flowFixture.images
+      .map((img) => encodeURIComponent(img.displayUrl))
+      .filter((enc) => imgTags.some((tag) => tag.includes(enc)));
+    for (const enc of usedUrls) {
+      expect(imgTags.filter((tag) => tag.includes(enc)).length).toBe(1);
+    }
+  });
+
+  it('One Hollywood: imágenes seleccionadas no se repiten entre bloques', () => {
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: oneHollywood,
+        source: oneHollywoodSource,
+        units: [oneHollywoodFixture],
+      }),
+    );
+    const imgTags = html.match(/<img[^>]*>/g) || [];
+    const usedUrls = oneHollywoodFixture.images
+      .map((img) => encodeURIComponent(img.displayUrl))
+      .filter((enc) => imgTags.some((tag) => tag.includes(enc)));
+    for (const enc of usedUrls) {
+      expect(imgTags.filter((tag) => tag.includes(enc)).length).toBe(1);
+    }
+  });
+
+  it('Regresión: los 4 desarrollos siguen excluidos de Comprar, Invertir no se modificó', () => {
+    expect(isExcludedFromStandardCatalog(187676)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187677)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187681)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187682)).toBe(true);
+    expect(INVESTMENT_OPPORTUNITIES).toHaveLength(1);
+    expect(INVESTMENT_OPPORTUNITIES[0].sourcePropertyId).toBe(206734);
+  });
+
+  it('187694/187684 siguen sin incorporarse — el sistema editorial nuevo no los agregó silenciosamente', () => {
+    expect(getDevelopmentBySlug('187694')).toBeNull();
+    expect(getDevelopmentBySlug('187684')).toBeNull();
+    expect(getAllDevelopmentSlugs()).toEqual(['faena', 'icon-beach', 'flow-house-miami-worldcenter', 'one-hollywood']);
+  });
+});
+
+// ── /desarrollos (índice) — apertura editorial + selector de mercado (decimonovena pasada) ──────
+describe('/desarrollos (índice) — apertura editorial, selector de mercado y grilla compacta (decimonovena pasada)', () => {
+  const source = property({ propertyId: 187676 });
+
+  it('los 4 desarrollos confirmados están clasificados explícitamente como mercado US en la curaduría (nunca inferido del título)', () => {
+    for (const entry of DEVELOPMENTS) {
+      expect(entry.market).toBe('US');
+    }
+  });
+
+  it('getDevelopmentsByMarket("US") devuelve exactamente los 4 desarrollos actuales; getDevelopmentsByMarket("AR") devuelve vacío hoy', () => {
+    expect(getDevelopmentsByMarket('US').map((d) => d.slug)).toEqual([
+      'faena',
+      'icon-beach',
+      'flow-house-miami-worldcenter',
+      'one-hollywood',
+    ]);
+    expect(getDevelopmentsByMarket('AR')).toEqual([]);
+  });
+
+  it('el filtro es por el campo explícito `market`, no por texto de ubicación/título — cambiar el título de la fuente no reclasifica el mercado', () => {
+    // Regresión conceptual: `market` vive en `lib/site-curation.ts` (curaduría), completamente
+    // desacoplado de `source.title`/`source.location` (2Clics real) — no hay ningún parser que
+    // busque "Miami"/"Argentina" en texto libre para decidir esto.
+    const icon = getDevelopmentBySlug('icon-beach')!;
+    expect(icon.market).toBe('US');
+    expect(getDevelopmentsByMarket('US')).toContain(icon);
+  });
+
+  it('CuratedDevelopmentCard variant="compact" agrega la clase compacta sin cambiar contenido; variant por defecto no la agrega', () => {
+    const faena = getDevelopmentBySlug('faena')!;
+    const compactHtml = render(
+      React.createElement(CuratedDevelopmentCard, { curation: faena, source: toDevelopmentCardSource(source), variant: 'compact' }),
+    );
+    const defaultHtml = render(React.createElement(CuratedDevelopmentCard, { curation: faena, source: toDevelopmentCardSource(source) }));
+    expect(compactHtml).toContain('twoclics-card--development-compact');
+    expect(defaultHtml).not.toContain('twoclics-card--development-compact');
+    // Mismo contenido en ambas variantes — la compactación es solo visual.
+    expect(compactHtml).toContain('>Desarrollo<');
+    expect(defaultHtml).toContain('>Desarrollo<');
+  });
+
+  it('DesarrollosMarketTabs: 2 tabs (Estados Unidos/Argentina), atributos ARIA correctos, tab por defecto activo y su panel visible, el otro oculto', () => {
+    const html = render(
+      React.createElement(DesarrollosMarketTabs, {
+        defaultTabId: 'US',
+        tabs: [
+          { id: 'US', label: 'Estados Unidos', content: React.createElement('p', null, 'contenido US') },
+          { id: 'AR', label: 'Argentina', content: React.createElement('p', null, 'contenido AR') },
+        ],
+      }),
+    );
+    expect(html).toContain('role="tablist"');
+    expect((html.match(/role="tab"/g) || []).length).toBe(2);
+    expect(html).toContain('id="desarrollos-market-tab-US"');
+    expect(html).toContain('id="desarrollos-market-tab-AR"');
+    expect(html).toContain('aria-controls="desarrollos-market-panel-US"');
+    expect(html).toContain('aria-controls="desarrollos-market-panel-AR"');
+    // Tab por defecto (US): seleccionado, tabbable (tabindex 0); el otro no.
+    const usTabIdx = html.indexOf('id="desarrollos-market-tab-US"');
+    expect(html.slice(usTabIdx, usTabIdx + 120)).toContain('aria-selected="true"');
+    expect(html.slice(usTabIdx, usTabIdx + 120)).toContain('tabindex="0"');
+    const arTabIdx = html.indexOf('id="desarrollos-market-tab-AR"');
+    expect(html.slice(arTabIdx, arTabIdx + 120)).toContain('aria-selected="false"');
+    expect(html.slice(arTabIdx, arTabIdx + 120)).toContain('tabindex="-1"');
+    // Panel US visible (sin `hidden`), panel AR oculto.
+    const usPanelIdx = html.indexOf('id="desarrollos-market-panel-US"');
+    const arPanelIdx = html.indexOf('id="desarrollos-market-panel-AR"');
+    expect(html.slice(usPanelIdx, usPanelIdx + 150)).not.toContain('hidden');
+    expect(html.slice(arPanelIdx, arPanelIdx + 150)).toContain('hidden');
+    expect(html).toContain('contenido US');
+    expect(html).toContain('contenido AR');
+  });
+
+  it('DesarrollosMarketTabs: el contenido de cada tab es el que se le pasa (ya resuelto por el padre) — el componente no conoce curation/source', () => {
+    const html = render(
+      React.createElement(DesarrollosMarketTabs, {
+        defaultTabId: 'AR',
+        tabs: [
+          { id: 'US', label: 'Estados Unidos', content: React.createElement('span', { className: 'marker-us' }, 'US') },
+          { id: 'AR', label: 'Argentina', content: React.createElement('span', { className: 'marker-ar' }, 'AR') },
+        ],
+      }),
+    );
+    const arPanelIdx = html.indexOf('id="desarrollos-market-panel-AR"');
+    expect(html.slice(arPanelIdx, arPanelIdx + 150)).not.toContain('hidden');
+    const arTabIdx = html.indexOf('id="desarrollos-market-tab-AR"');
+    expect(html.slice(arTabIdx, arTabIdx + 120)).toContain('aria-selected="true"');
+  });
+
+  it('Regresión: /comprar sigue excluyendo los 4 desarrollos, Invertir sin cambios, fichas individuales sin la clase compacta ni los tabs', () => {
+    expect(isExcludedFromStandardCatalog(187676)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187677)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187681)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187682)).toBe(true);
+    expect(INVESTMENT_OPPORTUNITIES).toHaveLength(1);
+    // CuratedDevelopmentDetailView (la ficha individual) no importa ni usa DesarrollosMarketTabs
+    // ni la variante compacta de la card — son exclusivos del índice.
+    const faena = getDevelopmentBySlug('faena')!;
+    const editorial = getDevelopmentEditorialCuration('faena');
+    const detailHtml = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: faena,
+        source: toDevSource(source),
+        units: [source],
+      }),
+    );
+    expect(detailHtml).not.toContain('twoclics-card--development-compact');
+    expect(detailHtml).not.toContain('desarrollos-market-tab');
+    expect(editorial).not.toBeNull();
+  });
+});
+
+// ── Vigésima pasada — Developer fuera de lo público, rango de precio real, "Interiores" ─────────
+describe('/desarrollos — Developer retirado, rango de precio real, "Interiores"/"Interiores y residencias" (vigésima pasada)', () => {
+  const fixtures: Record<string, { propertyId: number; slug: string; price: number; imageCount: number }> = {
+    faena: { propertyId: 187676, slug: 'faena', price: 1300000, imageCount: 14 },
+    'icon-beach': { propertyId: 187677, slug: 'icon-beach', price: 900000, imageCount: 17 },
+    'flow-house-miami-worldcenter': { propertyId: 187681, slug: 'flow-house-miami-worldcenter', price: 450000, imageCount: 21 },
+    'one-hollywood': { propertyId: 187682, slug: 'one-hollywood', price: 420000, imageCount: 13 },
+  };
+
+  function buildFixture(slug: keyof typeof fixtures) {
+    const f = fixtures[slug];
+    const curation = getDevelopmentBySlug(f.slug)!;
+    const raw = property(
+      {
+        propertyId: f.propertyId,
+        price: f.price,
+        currency: 'U$D',
+        hidePrice: false,
+        images: Array.from({ length: f.imageCount }, (_, i) => ({ imageId: `${slug}-${i}`, url: `https://cdn.2clics.com/${slug}-${i}.jpg` })),
+        amenities: [
+          { amenitieId: '22', name: 'Permite mascotas', type: 'amenitie' },
+          { amenitieId: '37', name: 'Sauna', type: 'amenitie' },
+          { amenitieId: '23', name: 'Piscina', type: 'amenitie' },
+        ],
+      },
+      'US',
+    );
+    return { curation, raw, source: toDevSource(raw, curation.publicName) };
+  }
+
+  it('"Developer"/"Desarrollador" no aparece como dato visible en NINGUNA de las 4 fichas', () => {
+    for (const slug of Object.keys(fixtures) as (keyof typeof fixtures)[]) {
+      const { curation, source, raw } = buildFixture(slug);
+      const html = render(React.createElement(CuratedDevelopmentDetailView, { curation, source, units: [raw] }));
+      expect(html, `Developer visible en ${slug}`).not.toContain('>Developer<');
+      expect(html, `Desarrollador visible en ${slug}`).not.toContain('>Desarrollador<');
+    }
+  });
+
+  it('arquitectura/interiorismo se mantienen en el snapshot cuando están confirmados (no se borraron por error junto con Developer)', () => {
+    const faenaEditorial = getDevelopmentEditorialCuration('faena');
+    const snapshot = faenaEditorial?.sections.find((s) => s.layout === 'snapshot');
+    const labels = snapshot?.snapshotFields?.map((f) => f.label) || [];
+    expect(labels).toContain('Arquitectura');
+    expect(labels).toContain('Interiorismo');
+    expect(labels).not.toContain('Developer');
+  });
+
+  it('Rango de precio: "Desde {currency} {price}" formateado con separador de miles, tomado del precio estructurado real — nunca hardcodeado', () => {
+    for (const slug of Object.keys(fixtures) as (keyof typeof fixtures)[]) {
+      const f = fixtures[slug];
+      const { curation, source, raw } = buildFixture(slug);
+      const html = render(React.createElement(CuratedDevelopmentDetailView, { curation, source, units: [raw] }));
+      const expected = formatDevelopmentPriceRange(f.price, 'U$D', false);
+      expect(expected).not.toBeNull();
+      expect(html).toContain('project-snapshot-value">' + expected);
+    }
+  });
+
+  it('formatDevelopmentPriceRange: nunca arma un rango con máximo inventado — solo "Desde X" con el mínimo real estructurado', () => {
+    expect(formatDevelopmentPriceRange(900000, 'U$D', false)).toBe('Desde U$D 900.000');
+    expect(formatDevelopmentPriceRange(900000, 'U$D', false)).not.toMatch(/–|-.*\d/);
+  });
+
+  it('formatDevelopmentPriceRange: omite el campo (null) cuando hidePrice es true, cuando no hay precio, o cuando no hay moneda — nunca "Consultar precio" ni un placeholder', () => {
+    expect(formatDevelopmentPriceRange(900000, 'U$D', true)).toBeNull();
+    expect(formatDevelopmentPriceRange(null, 'U$D', false)).toBeNull();
+    expect(formatDevelopmentPriceRange(0, 'U$D', false)).toBeNull();
+    expect(formatDevelopmentPriceRange(900000, '', false)).toBeNull();
+  });
+
+  it('con hidePrice=true, "Rango de precio" no aparece en el snapshot renderizado (regresión de integración, no solo del helper)', () => {
+    const { curation, raw, source } = buildFixture('icon-beach');
+    const hiddenSource = { ...source, hidePrice: true };
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation, source: hiddenSource, units: [raw] }),
+    );
+    expect(html).not.toContain('Rango de precio');
+  });
+
+  it('Nueva sección de interiores: título y cantidad de imágenes correctos por desarrollo — "Interiores y residencias" solo cuando todas las imágenes son de una unidad real', () => {
+    const expectations: Record<string, { title: string; count: number }> = {
+      faena: { title: 'Interiores y residencias', count: 2 },
+      'icon-beach': { title: 'Interiores', count: 1 },
+      'flow-house-miami-worldcenter': { title: 'Interiores', count: 3 },
+      'one-hollywood': { title: 'Interiores', count: 1 },
+    };
+    for (const slug of Object.keys(fixtures) as (keyof typeof fixtures)[]) {
+      const { curation, source, raw } = buildFixture(slug);
+      const html = render(React.createElement(CuratedDevelopmentDetailView, { curation, source, units: [raw] }));
+      const exp = expectations[slug];
+      expect(html, `heading en ${slug}`).toContain(`<h2>${exp.title}</h2>`);
+      expect(html, `grid count en ${slug}`).toContain(`project-interiors-grid--${exp.count}`);
+    }
+  });
+
+  it('la sección de interiores nunca reutiliza una imagen ya usada en otro bloque de la misma ficha, cuando existe alternativa', () => {
+    // Faena: "Residencias" usa el índice 2; "Interiores y residencias" usa 4 y 3 — sin solapar.
+    const faenaEditorial = getDevelopmentEditorialCuration('faena')!;
+    const usedElsewhere = new Set(faenaEditorial.sections.flatMap((s) => s.imageIndexes));
+    for (const idx of faenaEditorial.interiors!.imageIndexes) {
+      expect(usedElsewhere.has(idx), `índice ${idx} de interiors ya usado en otra sección de Faena`).toBe(false);
+    }
+    // Icon Beach: "Residencias" usa 7, "El edificio" usa 2 — "Interiores" usa 8, sin solapar.
+    const iconEditorial = getDevelopmentEditorialCuration('icon-beach')!;
+    const iconUsedElsewhere = new Set([
+      ...iconEditorial.sections.flatMap((s) => s.imageIndexes),
+      ...(iconEditorial.amenities?.imageIndex !== undefined ? [iconEditorial.amenities.imageIndex] : []),
+    ]);
+    for (const idx of iconEditorial.interiors!.imageIndexes) {
+      expect(iconUsedElsewhere.has(idx), `índice ${idx} de interiors ya usado en otra sección de Icon Beach`).toBe(false);
+    }
+  });
+
+  it('ninguna imagen descartada por brochure/eslogan reaparece en "Interiores" (Icon Beach idx 15/16, Flow House idx 1 y 16-20)', () => {
+    const iconEditorial = getDevelopmentEditorialCuration('icon-beach')!;
+    expect(iconEditorial.interiors!.imageIndexes).not.toEqual(expect.arrayContaining([15, 16]));
+    const flowEditorial = getDevelopmentEditorialCuration('flow-house-miami-worldcenter')!;
+    expect(flowEditorial.interiors!.imageIndexes).not.toEqual(expect.arrayContaining([1, 16, 17, 18, 19, 20]));
+  });
+
+  it('CTA único en las 4 fichas, cada una con su propio property_app_id — sin cambios respecto de pasadas anteriores', () => {
+    const expectedIds: Record<string, number> = {
+      faena: 187676,
+      'icon-beach': 187677,
+      'flow-house-miami-worldcenter': 187681,
+      'one-hollywood': 187682,
+    };
+    for (const slug of Object.keys(fixtures) as (keyof typeof fixtures)[]) {
+      const { curation, source, raw } = buildFixture(slug);
+      const html = render(React.createElement(CuratedDevelopmentDetailView, { curation, source, units: [raw] }));
+      const id = expectedIds[slug];
+      expect((html.match(new RegExp(`data-property-app-id="${id}"`, 'g')) || []).length).toBe(1);
+      expect(html).toContain('>Consultar desarrollo<');
+    }
+  });
+
+  it('sin fuga de RSC: título comercial crudo, agente, cronogramas y precios no seleccionados no viajan como prop, ni siquiera con el nuevo precio agregado', () => {
+    const oneHollywoodFixture = property(
+      {
+        propertyId: 187682,
+        address: 'One Hollywood Financiado A Estrenar 600',
+        price: 420000,
+        currency: 'U$D',
+        hidePrice: false,
+        images: Array.from({ length: 13 }, (_, i) => ({ imageId: `oh${i}`, url: `https://cdn.2clics.com/oh${i}.jpg` })),
+        meta_data: [
+          {
+            metaKey: 'description',
+            metaValue:
+              'ONE HOLLYWOOD\n\nPrecios desde $420,000 de 1 dormitorio.\n\nDeposit Structure:\n30k o 50k Reservation (now)\n\nRealtor \nMonica L Villate \nL#3313811',
+          },
+        ],
+      },
+      'US',
+    );
+    const curation = getDevelopmentBySlug('one-hollywood')!;
+    const editorial = getDevelopmentEditorialCuration('one-hollywood');
+    const safeDescription = resolveSafeDescription(oneHollywoodFixture.description, editorial);
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation,
+        source: toDevSource(oneHollywoodFixture, curation.publicName),
+        units: [oneHollywoodFixture],
+      }),
+    );
+    expect(safeDescription).not.toContain('Monica L Villate');
+    expect(safeDescription).not.toContain('Reservation');
+    expect(html).not.toContain('Monica L Villate');
+    expect(html).not.toContain('L#3313811');
+    expect(html).not.toContain('Reservation');
+    // El precio SÍ debe aparecer — es el dato que esta pasada agrega intencionalmente.
+    expect(html).toContain('Desde U$D 420.000');
+  });
+
+  it('los 4 slugs siguen resolviendo a sus property_app_id correctos (regresión, sin cambios de esta pasada)', () => {
+    expect(getDevelopmentBySlug('faena')?.sourcePropertyId).toBe(187676);
+    expect(getDevelopmentBySlug('icon-beach')?.sourcePropertyId).toBe(187677);
+    expect(getDevelopmentBySlug('flow-house-miami-worldcenter')?.sourcePropertyId).toBe(187681);
+    expect(getDevelopmentBySlug('one-hollywood')?.sourcePropertyId).toBe(187682);
+  });
+
+  it('Comprar sigue excluyendo los 4 desarrollos; Invertir/Home fuera de esta pasada', () => {
+    expect(isExcludedFromStandardCatalog(187676)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187677)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187681)).toBe(true);
+    expect(isExcludedFromStandardCatalog(187682)).toBe(true);
   });
 });
