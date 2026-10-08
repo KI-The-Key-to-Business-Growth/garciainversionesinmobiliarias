@@ -11,9 +11,16 @@ type PropertyInquiryPanelProps = {
   propertyTitle: string;
   propertyRegion: TwoclicsRegion;
   label: string;
+  // Copy contextual OPCIONAL del modal (vigesimocuarta pasada, Domus Brickell Center) — sin
+  // pasarlos, el modal conserva exactamente el título/mensaje genéricos de siempre (todos los
+  // demás consumidores: PropertyDetailView, InvestmentOpportunityDetailView, el resto de
+  // Desarrollos). Nunca cambia el mecanismo de envío/endpoint/validación.
+  modalTitle?: string;
+  initialMessage?: string;
 };
 
-const INITIAL_MESSAGE = 'Hola, quiero recibir más información sobre esta propiedad.';
+const DEFAULT_MODAL_TITLE = 'Consultar esta propiedad';
+const DEFAULT_INITIAL_MESSAGE = 'Hola, quiero recibir más información sobre esta propiedad.';
 const INITIAL_STATE: PropertyInquiryState = { ok: false };
 
 export default function PropertyInquiryPanel({
@@ -21,6 +28,8 @@ export default function PropertyInquiryPanel({
   propertyTitle,
   propertyRegion,
   label,
+  modalTitle = DEFAULT_MODAL_TITLE,
+  initialMessage = DEFAULT_INITIAL_MESSAGE,
 }: PropertyInquiryPanelProps) {
   const [open, setOpen] = useState(false);
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
@@ -110,7 +119,7 @@ export default function PropertyInquiryPanel({
             </button>
 
             <p className="eyebrow">Consulta de propiedad</p>
-            <h3 id="property-inquiry-title">Consultar esta propiedad</h3>
+            <h3 id="property-inquiry-title">{modalTitle}</h3>
             <p className="twoclics-inquiry-property">{propertyTitle}</p>
 
             <form className="twoclics-inquiry-form" onSubmit={handleSubmit}>
@@ -150,7 +159,7 @@ export default function PropertyInquiryPanel({
                   name="message"
                   required
                   maxLength={2000}
-                  defaultValue={INITIAL_MESSAGE}
+                  defaultValue={initialMessage}
                 />
               </div>
 

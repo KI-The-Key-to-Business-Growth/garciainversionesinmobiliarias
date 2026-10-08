@@ -1102,3 +1102,71 @@ agrega como primer campo del snapshot, calculado 100% en runtime contra el preci
 real de 2Clics (`formatDevelopmentPriceRange()` en `lib/desarrollos.ts`) — nunca guardado en la
 curaduría estática, nunca un rango con máximo inventado. Detalle completo, auditoría de imágenes y
 fuentes de precio en `docs/ai/PROJECT_STATE.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`.
+
+### Vigesimosegunda pasada — Pacheco Central, primer desarrollo de Argentina
+
+`DEVELOPMENTS` gana su primer entry con `market: 'AR'` (property_app_id 233719, slug
+`pacheco-central`) — aparece automáticamente en `/desarrollos` → Argentina, sin tocar el selector
+US/AR. Primer caso real donde el precio estructurado de 2Clics es el de una unidad puntual, no del
+desarrollo — nuevo campo obligatorio `priceRepresentsProjectRange` en
+`DevelopmentEditorialCuration` (`true` para los 4 de Miami, `false` acá) gatea si
+`formatDevelopmentPriceRange()` llega a calcularse. Detalle completo — identificación, fuentes,
+auditoría de imágenes — en `docs/ai/PROJECT_STATE.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`.
+
+### Vigesimotercera pasada — mapa de ubicación, "reasons"/"para-quien", groups y cardImageIndex
+
+Pasada integral sobre las 5 fichas vigentes de Desarrollos, convirtiéndolas en presentaciones más
+completas y comerciales sin salirse del lenguaje editorial de García. `DevelopmentSection` gana dos
+campos opcionales nuevos: `map` (`{ queryLabel, lat?, long? }`) y `groups`
+(`{ title, items }[]`, agrupación editorial de una lista cuando el material real la sostiene — hoy
+solo Flow House la usa, para sus 3 ejes reales de amenities). `DevelopmentEditorialCuration` gana
+un campo obligatorio nuevo, `cardImageIndex`, para que cada desarrollo declare su propia imagen de
+portada en `/desarrollos` en vez de asumir `images[0]` (corrigió la portada rota de Pacheco Central
+y mejoró las de Icon Beach y One Hollywood). Nuevo `layout: 'reasons'` reutilizable ("Por qué
+considerar {nombre}") y un bloque `text-only` "Puede ser una alternativa para", presentes en las 5.
+
+El mapa reutiliza `googleMapsEmbedUrl`/`googleMapsSearchUrl`, ya aprobadas y en producción en
+`PropertyMap.tsx` (el mismo componente que usa `PropertyDetailView.tsx`) — sin duplicar lógica y
+sin tocar ese archivo. Auditoría en vivo de `lat`/`long` para los 5 property_app_id: los 4 de Miami
+devuelven `(0, 0)` — "Null Island", un placeholder del CRM — nunca coordenadas reales; se agregó
+`hasSaneCoordinates()` para descartarlas explícitamente, con fallback al texto de ubicación ya
+curado y la nota "Ubicación aproximada". Pacheco Central es el único con coordenadas reales
+verificadas. CTA único sin cambios de mecanismo, con copy nueva ("Consultar disponibilidad").
+Detalle completo — auditoría de mapa, banco de razones por desarrollo, groups de Flow House — en
+`docs/ai/PROJECT_STATE.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`.
+
+### Vigesimocuarta pasada — Domus Brickell Center, sexto desarrollo (Estados Unidos)
+
+`DEVELOPMENTS` gana una sexta entry, `sourcePropertyId` **236682** (CONFIRMADO explícitamente por
+García — nunca 236646, un segundo registro real del mismo proyecto cargado el mismo día). Ficha
+más profunda que las 5 anteriores (el producto de Domus combina real estate + hospitality y
+necesita más explicación) pero construida con el mismo sistema declarativo, sin plantilla
+distinta. `DevelopmentEditorialCuration` gana cinco campos opcionales nuevos para CTA/modal
+contextual (`ctaTitle`/`ctaSubtitle`/`ctaLabel`/`ctaModalTitle`/`ctaInitialMessage`, con default
+idéntico al copy genérico para los desarrollos que no los declaran) y `DevelopmentLocationMap`
+gana `addressIsExact` (nota "Dirección confirmada" para una calle y número reales sin lat/long,
+en vez de "Ubicación aproximada"). Primera ficha con sección "Información comercial"
+(texto fijo "Precio: consultar."/"Disponibilidad: consultar información vigente.", sin montos).
+
+**Hallazgo de seguridad real, corregido para las 6 fichas**: el precio estructurado crudo del
+registro fuente viajaba en el payload RSC incluso con `hidePrice: true` — el JSX nunca lo pintaba,
+pero el número seguía en "ver código fuente". Corregido en `app/desarrollos/[id]/page.tsx`
+(`price: sourceProperty.hidePrice ? null : sourceProperty.price`), sin impacto en las 5 fichas
+anteriores (ninguna tiene `hidePrice` real). Detalle completo — auditoría de los dos registros de
+Domus, auditoría de imágenes, el resto de las secciones nuevas — en `docs/ai/PROJECT_STATE.md` y
+`docs/ai/PROPERTY_UX_DECISIONS.md`.
+
+### Vigesimosexta pasada — "Estructura de ingreso" comercial (supera la vigesimocuarta pasada)
+
+El registro 236682 cambió en 2Clics: `hidePrice` pasó a `false` y la descripción vigente trae,
+aprobada junto con Fabiana, una comunicación comercial completa (monto de ingreso, unidad de
+referencia, calendario de depósitos). Nuevo layout reusable `'commercial-entry'` en
+`DevelopmentSection` (`lib/desarrollos.ts`) — el monto se resuelve en runtime contra
+`source.price`/`hidePrice` (vía el nuevo `formatCurrencyAmount()`, sin el prefijo "Desde" de
+`formatDevelopmentPriceRange()`, para no leerse como precio total), el resto (unidad de referencia,
+calendario `DevelopmentDepositStep[]`) es curado y verificado contra la descripción actual. Se
+confirmó además, auditando en vivo, que 236646 (el registro duplicado) sigue devolviendo HTTP 404
+en el endpoint de detalle pero todavía aparecía como card en el endpoint de listado que alimenta
+`/comprar` — agregado a `CURATED_PROPERTIES` con exclusión explícita y una clasificación propia
+(nunca `'desarrollo'`) para que no vuelva a filtrarse. Detalle completo en
+`docs/ai/PROJECT_STATE.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`.

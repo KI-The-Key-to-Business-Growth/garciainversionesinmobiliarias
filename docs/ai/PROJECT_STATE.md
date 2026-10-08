@@ -476,6 +476,240 @@ transversal sobre las 4 fichas curadas (Faena, Icon Beach, Flow House, One Holly
 - Sin cambios: `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
   no modificado), `/invertir`, `/comprar`, `/alquilar`, Home.
 
+### Vigesimosegunda pasada (2026-09) — Pacheco Central, primer desarrollo de Argentina
+
+Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Primer
+desarrollo con `market: 'AR'` — aparece automáticamente en `/desarrollos` → Argentina, el selector
+US/AR no se tocó (ya soportaba esto desde la decimonovena pasada).
+
+- **Identificación**: property_app_id **233719**, único registro entre los 22 property_app_id
+  completos de la cartera cuyo address/título/descripción mencionan "Pacheco Central" — sin
+  ambigüedad, sin candidatos alternativos. El registro es el aviso de UNA unidad puntual (2
+  ambientes) dentro del desarrollo, no un placeholder de proyecto como los 4 de Miami.
+- **Nuevo caso real de precio no publicable**: el precio estructurado (112.000 U$D) es el de esa
+  unidad puntual, no una cifra "desde" del desarrollo de 260 unidades (a diferencia de los 4 de
+  Miami, ninguna frase de la descripción ata ese número al desarrollo completo). Se agregó un
+  campo obligatorio nuevo, `priceRepresentsProjectRange`, a `DevelopmentEditorialCuration` —
+  auditado y en `true` para los 4 de Miami (sin cambio de comportamiento), en `false` para Pacheco
+  Central (el snapshot omite "Rango de precio" por completo).
+- **Developer identificado (Soldati, dominio propio soldati.com) pero NUNCA público** — mismo
+  criterio vigente desde la vigésima pasada. Soldati.com corrobora "260 unidades, 8 módulos"
+  exacto y aportó la lista de amenities usada (más específica que los tags genéricos de 2Clics).
+  Fecha de entrega (Dic/2027) y estado de obra ("En Pozo"), también confirmados en soldati.com, se
+  documentan acá pero NO se publican — mismo tratamiento D que en los 4 de Miami.
+- **"El edificio" se llamó "Residencias"/no se usó ese nombre** — Pacheco Central son 8 módulos
+  alrededor de un parque central, no un único edificio; no hay ninguna sección "El edificio".
+- **Datos de agente incrustados en la descripción real** ("Fabiana Garcia" + teléfono + sitio
+  propio) — confirmados ausentes del HTML y del build de producción real.
+- **Hallazgo de transparencia (no una fuga real)**: en `next dev` (no en producción) aparecía el
+  objeto `agent` crudo de 2Clics en el payload de esta ficha — mismo artefacto exclusivo de modo
+  desarrollo ya documentado en la decimoséptima pasada para `/desarrollos`, confirmado ausente en
+  un build+start de producción real.
+- Sin cambios: Faena, Icon Beach, Flow House, One Hollywood (contenido intacto, solo se les agregó
+  el campo `priceRepresentsProjectRange: true`), `/invertir`, `/comprar` (mecanismo de exclusión
+  sin cambios), `PropertyCard`, `PropertyDetailView.tsx`.
+
+### Vigesimotercera pasada (2026-09) — estándar editorial nuevo para las 5 fichas de Desarrollos
+
+Pasada integral y profunda sobre las 5 fichas vigentes (`pacheco-central`, `faena`, `icon-beach`,
+`flow-house-miami-worldcenter`, `one-hollywood`) — mismo objetivo en las 5, sin forzar la misma
+cantidad de secciones en cada una (calidad pareja, no longitud idéntica). Detalle completo en
+`docs/ai/PROPERTY_UX_DECISIONS.md` y `docs/ai/WEB_GARCIA_V2.md`.
+
+- **Sistema de mapa nuevo (`map` en `DevelopmentSection`)** — reutiliza las funciones puras ya
+  aprobadas de `PropertyMap.tsx` (`googleMapsEmbedUrl`/`googleMapsSearchUrl`), sin tocar ese
+  componente ni `PropertyDetailView.tsx`. **Hallazgo de auditoría de datos**: los 4 desarrollos de
+  Miami traen `lat: 0, long: 0` en el registro real de 2Clics — "Null Island", un placeholder del
+  CRM, nunca una coordenada real. Se agregó `hasSaneCoordinates()` (en
+  `CuratedDevelopmentDetailView.tsx`, no en `PropertyMap.tsx`) que descarta explícitamente (0,0)
+  además de rangos inválidos — esos 4 mapas usan como query el texto de ubicación ya curado y
+  muestran la nota "Ubicación aproximada". Pacheco Central es el único de los 5 con coordenadas
+  reales verificadas (`-34.4536035, -58.6276873`, consistentes con General Pacheco, Tigre) — su
+  mapa usa esas coordenadas directamente, sin la nota de aproximación.
+- **Nuevas secciones reutilizables**: `reasons` ("Por qué considerar {nombre}", 3-4 razones reales
+  y concretas por desarrollo, nunca "oportunidad única"/"imperdible"/"rentabilidad asegurada") y
+  un bloque `text-only` "Puede ser una alternativa para" (perfil de comprador genuino, sin prometer
+  rentabilidad). Presentes en las 5 fichas.
+- **`groups` en `DevelopmentSection`**: Flow House agrupa "Vida en Flow House" en 3 ejes reales
+  (Bienestar / Flujo de trabajo / Experiencia) — estructura tomada tal cual de la propia
+  descripción de 2Clics, no una categorización inventada. Las otras 4 fichas no usan `groups`.
+- **`cardImageIndex` (nuevo campo obligatorio en `DevelopmentEditorialCuration`)**: cada desarrollo
+  decide qué imagen real cumple la función de portada en `/desarrollos`, en vez de usar siempre
+  `images[0]`. Fix puntual: Pacheco Central pasó de un recorte vertical roto (`images[0]`, 719×1600)
+  a su misma imagen de hero (`images[4]`, 1600×900). Icon Beach y One Hollywood también pasaron de
+  un porte-cochère poco atractivo (`images[0]`) a su hero real (idx 5 y 2 respectivamente). Faena y
+  Flow House mantuvieron `images[0]` (ya era la mejor opción real disponible).
+- **Nueva copy del CTA único** (sigue siendo uno solo por ficha, mismo `PropertyInquiryPanel`,
+  mismo `property_app_id`): bajada "Consultanos para conocer unidades disponibles, precios y
+  condiciones vigentes de {nombre}." y botón "Consultar disponibilidad" (antes "Consultar
+  desarrollo"), aplicado igual en las 5.
+- **Faena y Flow House ganaron una sección "Ubicación" nueva** (antes no tenían ninguna). Icon
+  Beach, One Hollywood y Pacheco Central ya tenían una sección de ubicación — se les agregó
+  únicamente el campo `map`, sin tocar su texto/imagen existentes.
+- **No se agregó** una sección de "Información comercial" con fecha de vigencia en ninguna de las
+  5 fichas — no hay una fuente con dato de precio/disponibilidad lo bastante actual y verificable
+  como para publicarla sin riesgo de quedar desactualizada.
+- **RSC/producción**: re-verificado con `next build && next start` (no solo `next dev`) que
+  ninguna de las 5 fichas expone `meta_data`/`agent`/notas privadas/coordenadas en texto plano
+  fuera de las URLs de Google Maps generadas, y que el CTA sigue apareciendo exactamente una vez
+  por ficha con el `property_app_id` correcto.
+- Sin cambios: `/invertir`, `/comprar` (las 5 siguen excluidas), `lib/site-curation.ts`
+  (clasificación AR/US intacta), `PropertyCard`, `PropertyDetailView.tsx`, `PropertyMap.tsx`.
+
+### Vigesimocuarta pasada (2026-10) — Domus Brickell Center, sexto desarrollo (Estados Unidos)
+
+Integración completa como ficha editorial dentro del sistema de Desarrollos ya existente — sin
+landing propia, sin segunda URL, sin micrositio. Canonical única: `/desarrollos/domus-brickell-center`.
+
+- **Identificación**: `sourcePropertyId` **236682** — CONFIRMADO explícitamente por García (no
+  inferido). Existe un segundo registro real del mismo proyecto, **236646** ("Domus Flats Brickell
+  Center"), cargado el mismo día en 2Clics — nunca usado como fuente, nunca modificado. Los dos
+  registros tienen datos cruzados entre sí (el tipado "Edificio" trae texto de una unidad puntual;
+  el tipado "Departamento" trae texto de nivel proyecto) — señal de carga todavía en curso del
+  lado de 2Clics, documentado para quien continúe este trabajo.
+- **`hidePrice: true` respetado de punta a punta** — hallazgo real de esta pasada: aunque el JSX
+  nunca pintaba el precio (ya era así antes), el número estructurado crudo (157.500 U$D) seguía
+  viajando en el payload RSC/"ver código fuente" porque `app/desarrollos/[id]/page.tsx` pasaba
+  `sourceProperty.price` sin condicionar a `hidePrice`. Corregido en el único punto donde se arma
+  el `source` para CUALQUIER desarrollo (`price: sourceProperty.hidePrice ? null : sourceProperty.price`)
+  — sin cambio de comportamiento para los 5 desarrollos anteriores (ninguno tiene `hidePrice` real
+  hoy). Nueva sección "Información comercial" (texto fijo "Precio: consultar." / "Disponibilidad:
+  consultar información vigente.") — nunca un monto, nunca hardcodeado.
+- **Mapa con dirección exacta confirmada, sin lat/long** (el registro 236682 los trae `null`):
+  `1034 SW 2nd Avenue, Miami, FL 33130`. Se agregó `addressIsExact` a `DevelopmentLocationMap` —
+  la nota del mapa pasa de "Ubicación aproximada" (correcta para los 4 de Miami, que solo tienen
+  texto de barrio) a "Dirección confirmada" (correcta para una calle y número reales), sin tocar
+  el comportamiento de las 5 fichas anteriores.
+- **CTA y modal contextuales, opt-in por desarrollo** — nuevos campos opcionales en
+  `DevelopmentEditorialCuration` (`ctaTitle`/`ctaSubtitle`/`ctaLabel`/`ctaModalTitle`/
+  `ctaInitialMessage`) y en `PropertyInquiryPanel` (`modalTitle`/`initialMessage`, con defaults
+  idénticos al texto genérico de siempre). Domus usa "¿Querés evaluar Domus Brickell Center?" /
+  "Evaluar este desarrollo" — las 5 fichas anteriores no declaran estos campos y conservan el CTA
+  genérico exacto ("Consultar disponibilidad") sin cambios, verificado en vivo.
+- **Auditoría de imágenes**: las 17 imágenes reales de 236682 son renders conceptuales oficiales
+  de marca "domus" (marcadas "ARTIST CONCEPTUAL RENDERING" — el edificio está en construcción).
+  Ninguna es una toma exterior limpia del edificio; dos (idx6, idx11) muestran el skyline real de
+  Miami (torres Chase, SLS, JPMorgan) a través de la ventana, confirmando que el material
+  corresponde genuinamente a Brickell. Hero/card usan la imagen más representativa disponible
+  (rooftop pool con skyline) — no hay fachada real para usar todavía.
+- **Nuevas secciones editoriales** (reutilizan layouts ya existentes — `text-only`/`reasons`/
+  `groups`, cero secciones nuevas a nivel sistema): "Qué es DOMUS", "Cómo funciona el modelo",
+  "Amenities y hospitality" (agrupado en Rooftop/Wellness/Trabajo/Hospitality y servicios — mismo
+  mecanismo `groups` ya usado en Flow House), "Domus Brickell Park, un antecedente construido"
+  (con la aclaración explícita de que no implica los mismos resultados económicos para Center),
+  "Puede no tener sentido si" y "Antes de avanzar, hay preguntas que conviene responder" —  estas
+  dos últimas son un patrón nuevo (lista de límites/checklist de due diligence), implementado sin
+  tocar el sistema (mismo layout `text-only` + `curatedList` que ya existía).
+- **Developer no se muestra** (mismo criterio que las 5 fichas anteriores) — Management (North
+  Management) se menciona solo en copy editorial contextual ("Cómo funciona el modelo"), nunca
+  como atributo destacado de snapshot.
+- Tests nuevos en `tests/2clics/site-curation.test.ts` (14 casos) + 6 tests preexistentes
+  actualizados (listas exactas de "4 desarrollos US" → 5, ahora con Domus). Suite completa
+  434/434, typecheck y lint limpios, build de producción sin errores, re-verificado en un
+  `next build && next start` real que ningún monto/dato privado/el segundo registro (236646)
+  aparecen en el HTML servido.
+- Sin cambios: Faena, Icon Beach, Flow House, One Hollywood, Pacheco Central (contenido y CTA
+  intactos), `/invertir`, `/comprar` (mecanismo de exclusión sin cambios), `PropertyCard`,
+  `PropertyDetailView.tsx`, `PropertyMap.tsx`.
+
+### Vigesimosexta pasada (2026-10) — Domus Brickell Center, estructura de ingreso comercial
+
+**SUPERA explícitamente la decisión de la vigesimocuarta pasada** sobre esta misma ficha. Antes:
+`hidePrice` real en 2Clics (true) → "Precio: consultar." como única información comercial,
+calendario de depósitos omitido por completo. Ahora: re-auditado en vivo (no el snapshot viejo)
+el registro 236682 cambió — `hidePrice` pasó a **false**, y la descripción vigente trae,
+aprobada junto con Fabiana, la comunicación comercial completa: "Ingresá a Brickell Center con
+USD 157.500 / Este importe representa el 30% de una unidad de USD 525.000, distribuido según el
+calendario de depósitos del proyecto... / 10% al firmar el contrato / 5% a los 90 días / 5% a los
+120 días / 10% al año / Total durante esta etapa: 30%". Verificado textual contra la descripción
+actual — no inferido por cálculo.
+
+- **Nuevo bloque "Estructura de ingreso"**, entre Snapshot y Ubicación — eyebrow, headline con el
+  monto dinámico (resuelto en runtime contra `source.price`/`hidePrice` reales, nunca guardado en
+  la curaduría) + contexto ("30% de una unidad de U$D 525.000") inmediatamente debajo, calendario
+  10/5/5/10 visual (4 columnas desktop, 2×2 mobile), total calculado del propio calendario (nunca
+  un número separado que pueda desincronizarse), nota de saldo restante, y un link discreto
+  (`#project-cta-final`) al CTA ya existente — **sin segundo formulario, sin segundo lead, mismo
+  `property_app_id` 236682**.
+- **Semántica explícita, nunca "precio total"**: `priceRepresentsProjectRange` sigue en `false` —
+  el gate que ya existía para el snapshot genérico de precio no cambió; el monto de 157.500 nunca
+  pasa por `formatDevelopmentPriceRange()` (que agregaría "Desde", implicando un piso de proyecto).
+  Se usa un helper nuevo, `formatCurrencyAmount()` (sin prefijo), exclusivamente dentro del nuevo
+  bloque con su contexto explícito del 30%.
+- **Si `hidePrice` volviera a ser `true`**: el bloque completo desaparece solo (verificado con
+  test) — nunca muestra un monto stale. La unidad de referencia (525.000) y el calendario SÍ son
+  curados (no hay campo estructurado separado en 2Clics para ellos) — confirmados textuales contra
+  la descripción vigente, nunca inferidos.
+- **Hallazgo real durante la auditoría**: el segundo registro duplicado, 236646, confirmado fuera
+  de mercado (`GET /api/property/236646` → HTTP 404 "Not found" en vivo) — pero el endpoint de
+  LISTADO de 2Clics (el que alimenta `/comprar`) todavía lo devolvía como card completa, una
+  inconsistencia real entre los dos endpoints del proveedor. Corregido agregándolo a
+  `CURATED_PROPERTIES` con `excludeFromStandardCatalog: true` y una clasificación propia
+  (`'duplicado-fuera-de-mercado'`, nunca `'desarrollo'`) — nunca tiene slug, nunca ficha propia,
+  nunca aparece en `/desarrollos` ni en `/invertir`.
+- **"Información comercial" actualizada**: ya no dice "Precio: consultar" (contradiría el nuevo
+  bloque) — queda "Disponibilidad: consultar información vigente." / "Condiciones comerciales:
+  consultar condiciones vigentes y saldo restante.", sin repetir el monto.
+- **Snapshot sin cambios**: sigue sin mostrar el monto bajo una etiqueta genérica de precio — el
+  dato comercial vive únicamente en "Estructura de ingreso", con su contexto completo.
+- **SEO sin cambios**: `resolveSafeDescription` (fuente de meta description/OG) sigue devolviendo
+  solo el intro curado de Domus — nunca el monto, nunca "30%", nunca financiación.
+- **Clasificación D/C de lo nuevo**: `price`/`hidePrice` = **D** (dinámico, se resuelve en runtime
+  contra el campo real de 2Clics). Unidad de referencia (525.000) y calendario (10/5/5/10) = **C**
+  (crítico/contractual — comercial aprobado, curado, no re-verificable por cálculo; requiere
+  re-confirmación explícita de García si 2Clics cambia la descripción). No se convierte nada de
+  esto en un dato "permanente" de documentación — este registro documenta la decisión y su fecha,
+  no garantiza que siga vigente sin re-auditar.
+- Tests actualizados/agregados en `tests/2clics/site-curation.test.ts` (9 nuevos + 2 reescritos
+  para reflejar `hidePrice: false` como estado real actual). Suite completa 443/443, typecheck y
+  lint limpios, build de producción sin errores, re-verificado en `next build && next start` que
+  no hay fugas (236646, datos de agente, financiación no autorizada) en ninguna de las superficies
+  tocadas (`/desarrollos/domus-brickell-center`, `/desarrollos`, `/comprar`, `/invertir`).
+- Sin cambios: hero, ubicación/mapa, Qué es DOMUS, Cómo funciona, El proyecto, Amenities y
+  hospitality, Residencias, Brickell Park, Por qué considerar, Para quién, Puede no tener sentido,
+  Qué conviene evaluar, Interiores, García Inversiones, CTA final, formulario, imágenes,
+  responsive, las 5 fichas anteriores.
+
+### Vigesimoséptima pasada (2026-10) — Domus como referencia de calidad, mejoras en las 5 fichas anteriores
+
+Pasada de calidad transversal sobre Pacheco Central/Faena/Icon Beach/Flow House/One Hollywood,
+usando Domus Brickell Center como referencia de nivel editorial (no como plantilla a copiar —
+cada ficha solo ganó lo que tenía sentido con información ya verificable). Domus no se tocó salvo
+el fix sistémico de `image-right` de la vigesimoquinta pasada (sin regresión, verificado).
+
+- **Re-auditoría en vivo de los 5 `sourceProperty`**: sin cambios de precio/hidePrice/ubicación/
+  imágenes respecto de lo ya curado — confirmado que ninguna ficha se había quedado vieja. Hallazgo
+  real nuevo: `building_date: "ESTRENAR"` en los 4 registros de Miami (campo real de 2Clics, nunca
+  mostrado hasta ahora) — se agregó `Estado: "A estrenar"` al snapshot de Faena/Icon Beach/Flow
+  House/One Hollywood. Pacheco Central no lo tiene — su `building_date` no está poblado en 2Clics
+  (el "En Pozo" de soldati.com sigue sin publicarse, decisión ya documentada en la vigesimosegunda
+  pasada).
+- **"Puede no tener sentido si" agregado a las 5** — límites reales y específicos de cada proyecto
+  (piso de precio real, ubicación suburbana/no-costera según corresponda, perfil del edificio),
+  nunca un disclaimer genérico. Flow House verificado explícitamente sin mencionar "renta
+  garantizada"/retorno/rentabilidad (el claim del título crudo histórico que nunca se publicó).
+- **"El rol de García Inversiones" agregado a las 5** — mismo patrón institucional de Domus
+  (entender objetivo, explicar, contrastar información, evaluar fit, acompañar; nunca administra/
+  garantiza/reemplaza asesoramiento), adaptado al nombre de cada desarrollo. Nunca "García" solo
+  como heading institucional.
+- **"Qué conviene evaluar" NO se agregó** a ninguna de las 5 — a diferencia de Domus (un modelo de
+  hospitality que genuinamente necesita un checklist de due diligence propio), estos 5 son compras
+  de unidad estándar en un edificio nuevo; "reasons"+"para quién"+"puede no tener sentido" ya
+  cubren razonablemente el apoyo a la decisión sin necesitar una sección adicional.
+- **Revisión visual sistémica**: confirmado que el fix de `image-right` de la vigesimoquinta pasada
+  sigue vigente y sin regresión en las 5 — todas las imágenes `image-left`/`image-right` renderizan
+  con dimensiones reales, Faena conserva su `imageNarrow` (retrato 420px) intacto.
+- **Imágenes**: no se re-auditó el material completo de cada desarrollo (no hubo cambios en el
+  inventario real de 2Clics desde la última auditoría) — se mantiene la selección curada actual de
+  hero/card/image-left/image-right/interiores en las 5, ya documentada en rondas anteriores.
+- Tests nuevos en `tests/2clics/site-curation.test.ts` (4 casos) + 1 test preexistente actualizado
+  (lista exacta de section keys de Faena). Suite completa 447/447, typecheck y lint limpios, build
+  de producción sin errores, re-verificado en `next build && next start` sin fugas en ninguna de
+  las 6 fichas.
+- Sin cambios: Domus Brickell Center (contenido/estructura comercial/imágenes/CTA intactos),
+  `/invertir`, `/comprar`, mapas (cada uno sigue usando su propia fuente vigente, sin trasladar
+  automáticamente el comportamiento de Domus), `priceRepresentsProjectRange` de cada desarrollo.
+
 ## Pendiente de decisión (no confundir con "roto")
 
 - **Formulario de contacto general** (`lib/crm/leads.ts`, host `api.2clics.com.ar` legacy):

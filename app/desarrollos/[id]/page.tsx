@@ -113,7 +113,14 @@ export default async function DevelopmentDetailPage({ params }: DevelopmentDetai
                 description: resolveSafeDescription(sourceProperty.description || '', editorial),
                 images: sourceProperty.images,
                 amenities: sourceProperty.amenities,
-                price: sourceProperty.price,
+                // Con `hidePrice` true, 2Clics marca el precio como no publicable — no alcanza con
+                // que el JSX nunca lo renderice (ya era así antes de esta pasada): el número crudo
+                // seguía viajando en el payload RSC/"ver código fuente" igual, visible aunque la UI
+                // nunca lo pintara. Encontrado auditando Domus Brickell Center (vigesimocuarta
+                // pasada, hidePrice real true) — se corrige acá, en el único punto donde `source` se
+                // arma para CUALQUIER desarrollo, no solo para Domus. Sin cambio de comportamiento
+                // para los 5 desarrollos anteriores (ninguno tiene hidePrice true hoy).
+                price: sourceProperty.hidePrice ? null : sourceProperty.price,
                 currency: sourceProperty.currency,
                 hidePrice: sourceProperty.hidePrice,
               }}

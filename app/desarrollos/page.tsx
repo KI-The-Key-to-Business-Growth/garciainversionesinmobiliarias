@@ -7,7 +7,7 @@ import DesarrollosMarketTabs from '@/components/properties/DesarrollosMarketTabs
 import ListingState from '@/components/properties/ListingState';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
 import { DEVELOPMENTS } from '@/lib/site-curation';
-import { toDevelopmentCardSource } from '@/lib/desarrollos';
+import { getDevelopmentEditorialCuration, toDevelopmentCardSource } from '@/lib/desarrollos';
 import type { CuratedEntry } from '@/lib/desarrollos';
 
 export const metadata: Metadata = {
@@ -23,9 +23,13 @@ async function loadCuratedDevelopments(): Promise<CuratedEntry[]> {
   const results = await Promise.all(
     DEVELOPMENTS.map(async (curation) => {
       const result = await getPublicPropertyById(curation.sourcePropertyId);
-      return result.property
-        ? { curation, source: toDevelopmentCardSource(result.property, curation.publicName) }
-        : null;
+      if (!result.property) return null;
+      // `cardImageIndex` (vigesimotercera pasada, FASE 3): cada desarrollo con curaduría editorial
+      // propia decide qué imagen real cumple la función de portada del índice — nunca
+      // `images[0]` a ciegas. Sin curaduría editorial, degrada al mismo fallback de siempre.
+      const editorial = getDevelopmentEditorialCuration(curation.slug);
+      const source = toDevelopmentCardSource(result.property, curation.publicName, editorial?.cardImageIndex);
+      return { curation, source };
     }),
   );
   return results.filter((entry): entry is CuratedEntry => entry !== null);

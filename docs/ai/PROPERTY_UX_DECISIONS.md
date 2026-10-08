@@ -930,7 +930,11 @@ de tamaño/huella — ya quedó al tamaño de una card de catálogo en la undéc
   mención discreta sin caja (evita una caja "Amenities y servicios" para un solo chip); 0 → nada.
   Nunca inferidos de la descripción libre.
 - **Mapa**: sigue eliminado, solo en esta landing (ya definido en la undécima pasada, sin cambios).
-- **"Consultar desarrollo" reutiliza el mecanismo ya aprobado, sin nueva integración**:
+  **Superado en la vigesimotercera pasada**: Faena ganó una sección "Ubicación" con mapa —
+  ver "Mapa de ubicación, reasons, para-quien y groups" más abajo.
+- **"Consultar desarrollo" reutiliza el mecanismo ya aprobado, sin nueva integración**
+  (texto del botón renombrado a "Consultar disponibilidad" en la vigesimotercera pasada, mismo
+  mecanismo):
   `PropertyInquiryPanel` (`components/properties/PropertyInquiryPanel.tsx`) se usa sin
   modificación, con `propertyId={sourceProperty.propertyId}` — el mismo componente que
   `PropertyDetailView.tsx` ya usa para "Solicitar asesoramiento". La consulta se envía por
@@ -1237,6 +1241,120 @@ sección "Vigésima pasada". Resumen de reglas nuevas:
   último antes del CTA. "...y residencias" solo cuando TODAS las imágenes son de una unidad real
   verificable; "Interiores" cuando alguna es un espacio compartido o no hay material de unidad.
   Nunca se rellena con imágenes de relleno — con menos material real, menos imágenes.
+
+## Pacheco Central — primer desarrollo de Argentina (vigesimosegunda pasada)
+
+Detalle completo en `docs/ai/PROJECT_STATE.md`, sección "Vigesimosegunda pasada". Primer caso real
+donde el precio estructurado de 2Clics NO representa el "desde" del proyecto (es el precio de una
+unidad puntual de 2 ambientes dentro de un desarrollo de 260 unidades) — se agregó el campo
+obligatorio `priceRepresentsProjectRange` a `DevelopmentEditorialCuration` para que cada desarrollo
+audite explícitamente esta distinción; Pacheco Central es el primero en `false`. Sin sección "El
+edificio": el proyecto son 8 módulos alrededor de un parque central, no una única torre. Developer
+(Soldati) identificado y documentado, nunca público — mismo criterio que los 4 de Miami.
+
+## Estándar editorial nuevo — mapa, reasons, para-quien y groups (vigesimotercera pasada)
+
+Pasada integral sobre las 5 fichas vigentes (Pacheco Central, Faena, Icon Beach, Flow House Miami
+Worldcenter, One Hollywood). Objetivo: pasar de fichas "informativas" a presentaciones de
+desarrollo más completas y atractivas, sin salirse del lenguaje/estética de García (sin badges, sin
+urgencia comercial, sin frases vacías). Detalle completo en `docs/ai/PROJECT_STATE.md`, sección
+"Vigesimotercera pasada". Reglas nuevas, aplicadas por igual a las 5:
+
+- **Mapa de ubicación real, reutilizando `PropertyMap.tsx` sin tocarlo**: nuevo campo `map` en
+  `DevelopmentSection` (`lib/desarrollos.ts`), renderizado en `CuratedDevelopmentDetailView.tsx`
+  con las funciones puras ya aprobadas `googleMapsEmbedUrl`/`googleMapsSearchUrl` de
+  `PropertyMap.tsx` — mismo componente que ya usa `PropertyDetailView.tsx`, sin duplicar lógica ni
+  tocar ese archivo. **Nunca confiar a ciegas en `lat`/`long` del CRM**: se auditaron en vivo los 5
+  registros y los 4 de Miami traen `lat: 0, long: 0` ("Null Island", un placeholder del CRM, no una
+  coordenada real). Se agregó `hasSaneCoordinates()` (en `CuratedDevelopmentDetailView.tsx`) que
+  rechaza (0,0) además de rangos fuera de [-90,90]/[-180,180] — cuando las coordenadas no son
+  sanas, el mapa usa como query el texto de ubicación ya curado y muestra la nota "Ubicación
+  aproximada" junto al iframe. Pacheco Central es el único de los 5 con coordenadas reales
+  verificadas — su mapa las usa directamente, sin esa nota.
+- **"Por qué considerar {nombre}"** (`layout: 'reasons'`, nuevo, reutilizable): 3-4 razones reales
+  y concretas por desarrollo (ubicación/conectividad, tipologías, relación interior-exterior,
+  amenities, escala, concepto arquitectónico, espacios verdes) — nunca inventadas, nunca frases
+  vacías tipo "oportunidad única"/"imperdible"/"rentabilidad asegurada"/"la mejor inversión".
+  Presente en las 5 fichas.
+- **"Puede ser una alternativa para"** (bloque `text-only` nuevo, opcional): describe un perfil de
+  comprador genuino cuando el material del proyecto lo sostiene — nunca genérico, nunca promete
+  rentabilidad. Presente en las 5 fichas.
+- **`groups` en `DevelopmentSection`** (nuevo, opcional): agrupación editorial de una lista cuando
+  el material real la sostiene. Único caso hoy: Flow House agrupa "Vida en Flow House" en los 3
+  ejes que la propia descripción de 2Clics ya trae con encabezado propio (Bienestar / Flujo de
+  trabajo / Experiencia) — estructura real, no inventada. Las otras 4 fichas no usan `groups`.
+- **`cardImageIndex`** (nuevo campo obligatorio en `DevelopmentEditorialCuration`): cada desarrollo
+  elige qué imagen real es su portada en `/desarrollos`, en vez de asumir siempre `images[0]`.
+  Corrigió un caso roto (Pacheco Central usaba un recorte vertical de 719×1600 como portada; ahora
+  usa su misma imagen de hero, 1600×900) y mejoró dos portadas poco atractivas (Icon Beach y One
+  Hollywood pasaron de un porte-cochère genérico a su hero real).
+- **Copy del CTA renovada, sigue siendo uno solo por ficha**: bajada "Consultanos para conocer
+  unidades disponibles, precios y condiciones vigentes de {nombre}." y botón "Consultar
+  disponibilidad" — mismo `PropertyInquiryPanel`, mismo mecanismo, mismo `property_app_id` que ya
+  estaba aprobado; solo cambió el texto.
+- **No se agregó** una sección de "Información comercial" con fecha de vigencia — ninguna de las 5
+  fichas tiene hoy una fuente de precio/disponibilidad lo bastante actual y verificable como para
+  publicarla sin que quede desactualizada en poco tiempo. Queda documentado como pendiente, no como
+  implementado.
+- Sin cambios de UX ya aprobados en pasadas anteriores: snapshot, "Interiores"/"Interiores y
+  residencias", retiro de "Developer", CTA único, exclusión de `/comprar`.
+
+## Domus Brickell Center — sexto desarrollo, ficha más profunda sin plantilla distinta (vigesimocuarta pasada)
+
+Pedido explícito: Domus necesita más profundidad editorial que los 5 desarrollos anteriores (su
+producto combina real estate + hospitality y requiere explicación adicional), pero **sin una
+plantilla visual distinta** — mismo sistema `DevelopmentSection`/`CuratedDevelopmentDetailView`,
+mismo lenguaje Cream/Navy/Gold + Cormorant/Jost. Detalle completo (identificación, auditoría de
+imágenes, hallazgo del precio oculto) en `docs/ai/PROJECT_STATE.md`, sección "Vigesimocuarta
+pasada". Decisiones de UX nuevas, reutilizables para futuros desarrollos:
+
+- **CTA/modal contextual opt-in**: un desarrollo puede declarar `ctaTitle`/`ctaSubtitle`/
+  `ctaLabel`/`ctaModalTitle`/`ctaInitialMessage` cuando su producto necesita un encuadre distinto
+  ("evaluar" en vez de "consultar disponibilidad") — sin declararlos, el CTA genérico ya aprobado
+  queda exactamente igual. Sigue siendo UN solo CTA por ficha, mismo `PropertyInquiryPanel`, mismo
+  mecanismo de envío.
+- **"Información comercial"**: primera vez que se implementa esta sección (las 5 fichas anteriores
+  la evaluaron y la descartaron por falta de fuente vigente) — para Domus es viable porque no
+  necesita ningún monto real: solo "Precio: consultar." / "Disponibilidad: consultar información
+  vigente.", preparada para datos reales futuros sin inventar nada hoy.
+- **Mapa con dirección exacta sin lat/long**: nuevo campo `addressIsExact` — cuando la dirección
+  curada es una calle y número confirmados (no solo barrio/ciudad), la nota pasa de "Ubicación
+  aproximada" a "Dirección confirmada". Las 5 fichas anteriores no lo declaran y conservan "Ubicación
+  aproximada" sin cambios.
+- **Secciones nuevas de límites/transparencia**: "Puede no tener sentido si" y "Antes de avanzar,
+  hay preguntas que conviene responder" — mismo tono sobrio que "Puede ser una alternativa para",
+  mostrando los límites del producto en vez de solo sus argumentos a favor. Reutilizan el layout
+  `text-only` existente, sin componente nuevo.
+- **"Domus Brickell Park, un antecedente construido"**: sección que usa un proyecto hermano ya
+  construido como evidencia de que el concepto funciona, con una aclaración explícita y breve de
+  que eso no implica los mismos resultados económicos para Brickell Center — sin bloque legal
+  sobredimensionado.
+- **Hallazgo de seguridad real, corregido para todas las fichas**: el precio estructurado crudo
+  viajaba en el payload RSC incluso con `hidePrice: true` (el JSX nunca lo pintaba, pero el número
+  seguía en "ver código fuente"). Corregido en `app/desarrollos/[id]/page.tsx` — el precio se
+  anula a `null` antes de convertirse en prop cuando `hidePrice` es true. Sin impacto visual en
+  ninguna de las 5 fichas anteriores (ninguna tiene `hidePrice` real hoy).
+- **Developer sigue sin mostrarse** (mismo criterio ya aprobado) — Management (North Management)
+  se menciona solo en copy editorial contextual, nunca en el snapshot.
+
+## Domus Brickell Center — "Estructura de ingreso" (vigesimosexta pasada, supera la vigesimocuarta)
+
+El `hidePrice` real de 236682 cambió a `false` y García aprobó, junto con Fabiana, comunicar
+públicamente un monto de ingreso (157.500 U$D = 30% de una unidad de referencia de 525.000 U$D,
+calendario 10/5/5/10) — **esto reemplaza** la decisión anterior de "Precio: consultar" como única
+información comercial. Detalle completo, semántica D/C y auditoría en `docs/ai/PROJECT_STATE.md`,
+sección "Vigesimosexta pasada".
+
+- **Un solo bloque de información, nunca separada**: el monto y su aclaración ("30% de una unidad
+  de...") están en el mismo párrafo/unidad visual — nunca un número grande suelto sin contexto a
+  la vista, nunca el contexto escondido en un disclaimer al final o en un tooltip.
+- **Posición**: Hero → Snapshot → "Estructura de ingreso" → resto de la experiencia editorial. El
+  hero sigue sin precio — sigue siendo editorial, no una placa de oferta.
+- **Diseño deliberadamente no-promocional**: mismo cream/navy/gold de siempre, sin card ni sombra,
+  un filete dorado fino como único acento — el calendario de depósitos se lee como una grilla
+  editorial de 4 pasos (2×2 en mobile), no como un banner de performance marketing.
+- **El snapshot sigue sin mostrar el monto** bajo una etiqueta genérica de precio — eso llevaría a
+  leerlo como precio total del proyecto, que no es lo que representa.
 
 ## Mapa futuro del catálogo (NO implementado)
 

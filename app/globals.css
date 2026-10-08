@@ -6804,19 +6804,33 @@ body[data-page-type='thank_you'] {
   align-items: center;
 }
 
+/* Bug real encontrado y corregido (vigesimoquinta pasada): `.project-block--right` fijaba
+   `margin-left: auto` sin un `width` explícito. Un margen automático en un ítem de CSS Grid lo
+   saca del stretch por defecto y lo deja en "shrink-to-fit" — y como el `<img fill>` de
+   next/image es `position: absolute` (no aporta tamaño intrínseco a su contenedor), el
+   shrink-to-fit resolvía a 0. Resultado: TODAS las imágenes `image-right` del sitio (Faena,
+   Icon Beach ×2, One Hollywood ×2, Pacheco Central, Domus ×2) renderizaban a 0×0 — invisibles,
+   confirmado con `getBoundingClientRect()` real contra las 6 fichas — no un problema de
+   proporciones, la imagen directamente no existía en pantalla. `width: 100%` restaura el
+   stretch; `align-self: stretch` additional (ambas variantes) hace que la imagen iguale la
+   altura de su columna hermana cuando el texto es más alto que la imagen a su aspect-ratio
+   natural (ej. "Amenities y hospitality" de Domus, con grupos largos) — sin cambiar nada en los
+   bloques donde la imagen ya era el elemento más alto (sigue siéndolo, stretch a su propia
+   altura no mueve nada). */
 .project-block-media {
   position: relative;
+  width: 100%;
   background: #dfe5ea;
   overflow: hidden;
   border-radius: 10px;
+  align-self: stretch;
 }
 
-/* Aspect-ratio por defecto del sistema (decimoctava pasada) — antes 5/3 (izquierda) y 3/4
-   (derecha): demasiado extremos para bloques con poco contenido (una lista corta al lado de una
-   imagen muy alta dejaba una franja vacía notoria, ej. Icon Beach "Residencias"/"Amenities"). Se
-   suavizan a 3/2 y 4/5 — menos descompensados por defecto — y se puede pisar puntualmente con
-   `imageAspect` en la curaduría (`lib/desarrollos.ts`) cuando conviene preservar el recorte real
-   de una foto ya aprobada (Faena mantiene sus 5/3 y 3/4 originales por esa vía). */
+/* Aspect-ratio por defecto del sistema (decimoctava pasada; unificado en la vigesimoquinta tras
+   el fix de arriba) — izquierda y derecha comparten el mismo default 3/2 (ya no 4/5 a la
+   derecha): esa asimetría venía de una foto específica de Faena, no de una razón de layout —
+   cada desarrollo pisa el default con `imageAspect` cuando su foto real lo necesita (Faena
+   mantiene sus 5/3 y 3/4 originales por esa vía, igual que antes). */
 .project-block--left .project-block-media {
   aspect-ratio: 3 / 2;
   order: 1;
@@ -6827,14 +6841,23 @@ body[data-page-type='thank_you'] {
 }
 
 .project-block--right .project-block-media {
-  aspect-ratio: 4 / 5;
-  max-width: 420px;
-  margin-left: auto;
+  aspect-ratio: 3 / 2;
   order: 2;
 }
 
 .project-block--right .project-block-content {
   order: 1;
+}
+
+/* Recorte angosto opt-in (`imageMaxWidth` en la curaduría, lib/desarrollos.ts) — SOLO para una
+   foto real que ya estaba aprobada con este tratamiento (Faena "Residencias", retrato 3/4,
+   420px, pegada a la derecha). No es el default del sistema: un desarrollo nuevo sin motivo
+   editorial para angostar su imagen no debe heredarlo. Se resetea en mobile junto con el resto
+   de `project-block-media` (ver media query más abajo) — mismo comportamiento mobile que ya
+   tenía Faena antes de este fix. */
+.project-block-media--narrow {
+  max-width: 420px;
+  margin-left: auto;
 }
 
 .project-block-content h2 {
@@ -6880,6 +6903,232 @@ body[data-page-type='thank_you'] {
   border-bottom: 1px solid var(--line);
 }
 
+/* Listas agrupadas con subtítulo (FASE 10, vigesimotercera pasada) — ej. "Vida en Flow House":
+   Bienestar/Flujo de trabajo/Experiencia. Mismo `.project-block-list` de siempre por grupo, con
+   un subtítulo chico en dorado arriba de cada uno — sin cards, sin íconos. */
+.project-block-groups {
+  display: grid;
+  gap: 22px;
+}
+
+.project-block-group h3 {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+/* Mapa de ubicación (FASE 8, vigesimotercera pasada) — vive DENTRO de la sección de ubicación
+   (texto + mapa como una sola unidad), nunca como bloque separado. Mismo embed público de Google
+   Maps ya aprobado en PropertyMap.tsx (host ya habilitado en el CSP del sitio), reutilizado vía
+   sus helpers — acá solo cambia la presentación visual para el lenguaje de Desarrollos. */
+.project-location-map {
+  margin-top: 24px;
+}
+
+.project-location-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.project-location-note {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+.project-location-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.86rem;
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* "Por qué considerar" (FASE 6, vigesimotercera pasada) — grilla editorial de 2 columnas, sin
+   viñetas ni íconos: cada razón es una oración completa, separada por una línea fina arriba, para
+   que se lea como argumentación curada, no como checklist de feature-list. */
+.project-reasons {
+  padding: 56px 0;
+}
+
+.project-reasons h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.5rem;
+  color: var(--navy);
+  text-align: center;
+  margin: 0 0 32px;
+}
+
+.project-reasons-list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 40px;
+}
+
+.project-reasons-list li {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--text-soft);
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 680px) {
+  .project-reasons {
+    padding: 40px 0;
+  }
+
+  .project-reasons-list {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* "Estructura de ingreso" (vigesimosexta pasada, Domus Brickell Center) — bloque comercial
+   temprano, editorial, no una placa promocional: mismo cream de la página (sin card/sombra),
+   un filete dorado fino arriba como único acento de color, mucho aire. El monto titular y su
+   aclaración ("30% de una unidad de...") comparten el mismo bloque tipográfico para que se lean
+   como una sola unidad de información, nunca separados por secciones. */
+.project-commercial-entry {
+  padding: 56px 0;
+  border-top: 2px solid var(--gold);
+  border-bottom: 1px solid var(--line);
+}
+
+.project-commercial-entry-inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.project-commercial-entry-inner h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.9rem;
+  color: var(--navy);
+  margin: 0 0 10px;
+  line-height: 1.25;
+}
+
+.project-commercial-entry-context {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 1.05rem;
+  color: var(--navy);
+  margin: 0 0 18px;
+}
+
+.project-commercial-entry-note {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.92rem;
+  color: var(--text-soft);
+  margin: 0 0 32px;
+}
+
+.project-commercial-schedule {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin-bottom: 24px;
+}
+
+.project-commercial-schedule-step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 16px 16px 0;
+  border-top: 1px solid var(--line);
+}
+
+.project-commercial-schedule-step + .project-commercial-schedule-step {
+  border-left: 1px solid var(--line);
+  padding-left: 16px;
+}
+
+.project-commercial-schedule-percent {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.6rem;
+  color: var(--gold);
+}
+
+.project-commercial-schedule-label {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+}
+
+.project-commercial-entry-total {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--navy);
+  margin: 0 0 20px;
+}
+
+.project-commercial-entry-balance {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: var(--text-soft);
+  margin: 0 0 20px;
+}
+
+.project-commercial-entry-link {
+  display: inline-block;
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.86rem;
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 680px) {
+  .project-commercial-entry {
+    padding: 40px 0;
+  }
+
+  .project-commercial-entry-inner h2 {
+    font-size: 1.55rem;
+  }
+
+  .project-commercial-schedule {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 0;
+  }
+
+  .project-commercial-schedule-step {
+    padding: 14px 14px 0 0;
+  }
+
+  .project-commercial-schedule-step:nth-child(odd) {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .project-commercial-schedule-step:nth-child(even) {
+    border-left: 1px solid var(--line);
+    padding-left: 14px;
+  }
+
+  .project-commercial-schedule-step:nth-child(1),
+  .project-commercial-schedule-step:nth-child(2) {
+    border-top: none;
+  }
+}
+
 @media (max-width: 900px) {
   .project-block-grid {
     grid-template-columns: 1fr;
@@ -6889,6 +7138,9 @@ body[data-page-type='thank_you'] {
   .project-block--left .project-block-media,
   .project-block--right .project-block-media {
     order: 1;
+  }
+
+  .project-block-media--narrow {
     max-width: none;
     margin-left: 0;
   }

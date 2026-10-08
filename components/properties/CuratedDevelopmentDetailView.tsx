@@ -2,17 +2,32 @@ import React from 'react';
 import Image from 'next/image';
 import PropertyInquiryPanel from '@/components/properties/PropertyInquiryPanel';
 import PropertyCard from '@/components/properties/PropertyCard';
+import { googleMapsEmbedUrl, googleMapsSearchUrl } from '@/components/properties/PropertyMap';
 import { formatPublicLocation } from '@/lib/2clics/format';
 import {
   filterEditorialAmenities,
+  formatCurrencyAmount,
   formatDevelopmentPriceRange,
   getDevelopmentEditorialCuration,
   resolveSectionImages,
   resolveSourceTextSegment,
+  sumDepositSchedule,
 } from '@/lib/desarrollos';
-import type { DevelopmentSection, DevelopmentSnapshotField } from '@/lib/desarrollos';
+import type { DevelopmentLocationMap, DevelopmentSection, DevelopmentSnapshotField } from '@/lib/desarrollos';
 import type { DevelopmentCuration } from '@/lib/site-curation';
 import type { PublicImage, PublicLocation, PublicProperty, TwoclicsAmenity, TwoclicsRegion } from '@/lib/2clics/types';
+
+// "Null Island" (0,0) — el placeholder que 2Clics devuelve para los 4 desarrollos de Miami cuando
+// nunca se cargó una coordenada real (ver auditoría en lib/desarrollos.ts, "AUDITORÍA DE MAPA",
+// vigesimotercera pasada). Nunca se confía ciegamente en `lat`/`long` — solo se usan cuando son
+// finitos, están en rango geográfico válido, y no son exactamente (0,0).
+function hasSaneCoordinates(lat: number | undefined, long: number | undefined): lat is number {
+  if (lat === undefined || long === undefined) return false;
+  if (!Number.isFinite(lat) || !Number.isFinite(long)) return false;
+  if (lat < -90 || lat > 90 || long < -180 || long > 180) return false;
+  if (lat === 0 && long === 0) return false;
+  return true;
+}
 
 // Vínculo técnico MÍNIMO con el registro real de 2Clics — deliberadamente NO es `PublicProperty`
 // completo (decimosexta pasada). Cualquier página que incluya un Client Component en su árbol
@@ -102,11 +117,17 @@ export default function CuratedDevelopmentDetailView({
     editorial?.amenities?.imageIndex !== undefined ? source.images[editorial.amenities.imageIndex] : undefined;
   const amenitiesModifier = editorial?.amenities?.layout === 'image-right' ? 'right' : 'left';
 
-  // "Rango de precio" (vigésima pasada) — calculado en runtime contra el precio estructurado real
-  // de 2Clics, nunca contra un valor guardado en la curaduría. Se agrega como PRIMER campo del
-  // snapshot cuando existe; si `hidePrice` o no hay precio válido, no se agrega nada (nunca un
-  // placeholder). Ver `formatDevelopmentPriceRange()` en lib/desarrollos.ts.
-  const priceRangeValue = formatDevelopmentPriceRange(source.price, source.currency, source.hidePrice);
+  // "Rango de precio" (vigésima pasada; gate `priceRepresentsProjectRange` agregado en la
+  // vigesimosegunda) — calculado en runtime contra el precio estructurado real de 2Clics, nunca
+  // contra un valor guardado en la curaduría. Se agrega como PRIMER campo del snapshot cuando
+  // existe Y la curaduría confirma que ese precio representa el "desde" del PROYECTO (no el de una
+  // unidad puntual — ver auditoría de Pacheco Central en lib/desarrollos.ts, primer caso real
+  // donde el precio estructurado es de una sola unidad dentro de un desarrollo de 260). Si
+  // `hidePrice`, no hay precio válido, o `priceRepresentsProjectRange` es false, no se agrega nada
+  // (nunca un placeholder). Ver `formatDevelopmentPriceRange()` en lib/desarrollos.ts.
+  const priceRangeValue = editorial?.priceRepresentsProjectRange
+    ? formatDevelopmentPriceRange(source.price, source.currency, source.hidePrice)
+    : null;
   const priceRangeField: DevelopmentSnapshotField | null = priceRangeValue
     ? { label: 'Rango de precio', value: priceRangeValue }
     : null;
@@ -145,7 +166,9 @@ export default function CuratedDevelopmentDetailView({
       </section>
 
       {editorial
-        ? editorial.sections.map((section) => renderSection(section, source.images, description, priceRangeField))
+        ? editorial.sections.map((section) =>
+            renderSection(section, source.images, description, priceRangeField, displayName, source.price, source.currency, source.hidePrice),
+          )
         : null}
 
       {/* Amenities — opt-in por desarrollo, solo amenities reales estructurados (nunca inferidos
@@ -218,25 +241,99 @@ export default function CuratedDevelopmentDetailView({
         </section>
       ) : null}
 
-      {/* Cierre — única instancia de CTA en toda la landing. Reutiliza el mismo mecanismo de
-          consulta específica que PropertyDetailView.tsx (PropertyInquiryPanel → /api/lead/message
-          con property_app_id), nunca /contacto. */}
-      <section className="section-sm project-cta-final">
+      {/* Cierre — única instancia de CTA en toda la landing. Copy revisado en la vigesimotercera
+          pasada (FASE 13): la bajada ahora dice explícitamente qué recibe quien consulta
+          (unidades disponibles, precios y condiciones vigentes) y el botón usa "Consultar
+          disponibilidad" en vez de "Consultar desarrollo" — más específico, sin sonar a CTA
+          genérico de portal. Reutiliza el mismo mecanismo de consulta específica que
+          PropertyDetailView.tsx (PropertyInquiryPanel → /api/lead/message con property_app_id),
+          nunca /contacto. Copy contextual opcional (vigesimocuarta pasada, Domus Brickell
+          Center): un desarrollo puede declarar `ctaTitle`/`ctaSubtitle`/`ctaLabel` propios cuando
+          su producto necesita un encuadre distinto ("evaluar" en vez de "consultar
+          disponibilidad") — sin declararlos, el copy genérico de siempre queda intacto. */}
+      <section id="project-cta-final" className="section-sm project-cta-final">
         <div className="container">
           <div className="cta-band">
             <div>
-              <h2>¿Querés conocer más sobre {displayName}?</h2>
-              <p>Coordiná una conversación con García para recibir información actualizada del desarrollo.</p>
+              <h2>{editorial?.ctaTitle || `¿Querés conocer más sobre ${displayName}?`}</h2>
+              <p>
+                {editorial?.ctaSubtitle ||
+                  `Consultanos para conocer unidades disponibles, precios y condiciones vigentes de ${displayName}.`}
+              </p>
             </div>
             <PropertyInquiryPanel
               propertyId={source.propertyId}
               propertyTitle={displayName}
               propertyRegion={source.region}
-              label="Consultar desarrollo"
+              label={editorial?.ctaLabel || 'Consultar disponibilidad'}
+              modalTitle={editorial?.ctaModalTitle}
+              initialMessage={editorial?.ctaInitialMessage}
             />
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+// Lista plana o agrupada (FASE 10, vigesimotercera pasada) — `section.groups`, cuando existe,
+// reemplaza la lista plana de `items` por sub-listas con subtítulo (ej. "Vida en Flow House":
+// Bienestar/Flujo de trabajo/Experiencia, estructura real de la propia descripción de 2Clics).
+function renderListContent(section: DevelopmentSection, items: string[]) {
+  if (section.groups?.length) {
+    return (
+      <div className="project-block-groups">
+        {section.groups.map((group) => (
+          <div className="project-block-group" key={group.title}>
+            <h3>{group.title}</h3>
+            <ul className={`project-block-list${group.items.length <= 3 ? ' project-block-list--compact' : ''}`}>
+              {group.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (!items.length) return null;
+  return (
+    <ul className={`project-block-list${items.length <= 3 ? ' project-block-list--compact' : ''}`}>
+      {items.map((item, index) => (
+        <li key={`${section.key}-${index}`}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+// Mapa de ubicación (FASE 8, vigesimotercera pasada) — reutiliza los helpers ya aprobados y en
+// producción de PropertyMap.tsx (mismo host de Google Maps ya habilitado en el CSP), sin duplicar
+// esa lógica ni tocar PropertyMap.tsx/PropertyDetailView.tsx. Coordenadas reales SOLO cuando son
+// sanas (ver `hasSaneCoordinates`) — si no, usa el texto de ubicación ya curado como búsqueda.
+function renderLocationMap(map: DevelopmentLocationMap | undefined, displayName: string) {
+  if (!map?.queryLabel) return null;
+  const useCoordinates = hasSaneCoordinates(map.lat, map.long);
+  const query = useCoordinates ? `${map.lat},${map.long}` : map.queryLabel;
+  const embedUrl = googleMapsEmbedUrl(query);
+  const searchUrl = googleMapsSearchUrl(query);
+  // Nota del mapa (vigesimocuarta pasada): "Ubicación aproximada" sigue siendo correcta para un
+  // texto de barrio/ciudad sin lat/long (los 4 desarrollos de Miami); una dirección exacta
+  // confirmada (calle y número) sin lat/long usable no es "aproximada" — usa `addressIsExact`.
+  const note = useCoordinates ? null : map.addressIsExact ? 'Dirección confirmada' : 'Ubicación aproximada';
+  return (
+    <div className="project-location-map">
+      <iframe
+        className="project-location-frame"
+        title={`Mapa de ${displayName}`}
+        src={embedUrl}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        allowFullScreen
+      />
+      {note ? <p className="project-location-note">{note}</p> : null}
+      <a className="project-location-link" href={searchUrl} target="_blank" rel="noopener">
+        Ver en Google Maps ↗
+      </a>
     </div>
   );
 }
@@ -246,6 +343,10 @@ function renderSection(
   images: PublicImage[],
   description: string,
   priceRangeField: DevelopmentSnapshotField | null,
+  displayName: string,
+  sourcePrice: number | null,
+  sourceCurrency: string,
+  sourceHidePrice: boolean,
 ) {
   const sectionImages: PublicImage[] = resolveSectionImages(images, section.imageIndexes);
   const segment = resolveSourceTextSegment(description, section.sourceTextSegment);
@@ -293,23 +394,87 @@ function renderSection(
     );
   }
 
+  if (section.layout === 'commercial-entry') {
+    // "Estructura de ingreso" (vigesimosexta pasada) — el monto titular se resuelve SIEMPRE contra
+    // el precio estructurado real de 2Clics en runtime, nunca un número guardado en la curaduría.
+    // Si `hidePrice` vuelve a activarse o el precio deja de ser válido, el bloque entero desaparece
+    // — nunca muestra un monto viejo/stale. El resto (unidad de referencia, calendario) son hechos
+    // comerciales aprobados, ya curados — ver comentario en lib/desarrollos.ts.
+    const entryAmount = formatCurrencyAmount(sourcePrice, sourceCurrency, sourceHidePrice);
+    if (!entryAmount) return null;
+    if (!section.commercialSchedule?.length || section.commercialReferenceAmount === undefined) return null;
+    const referenceAmount = formatCurrencyAmount(section.commercialReferenceAmount, section.commercialReferenceCurrency, false);
+    const totalPercent = sumDepositSchedule(section.commercialSchedule);
+    return (
+      <section key={section.key} className="project-commercial-entry">
+        <div className="container project-commercial-entry-inner">
+          <p className="eyebrow">Estructura de ingreso</p>
+          <h2>
+            {section.commercialHeadlineLead} {entryAmount}
+          </h2>
+          {referenceAmount ? (
+            <p className="project-commercial-entry-context">
+              {totalPercent}% de una unidad de {referenceAmount}
+            </p>
+          ) : null}
+          <p className="project-commercial-entry-note">
+            Este importe se distribuye según el calendario de depósitos del proyecto.
+          </p>
+          <div className="project-commercial-schedule">
+            {section.commercialSchedule.map((step, index) => (
+              <div className="project-commercial-schedule-step" key={`${section.key}-${index}`}>
+                <span className="project-commercial-schedule-percent">{step.percent}%</span>
+                <span className="project-commercial-schedule-label">{step.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="project-commercial-entry-total">Total durante esta etapa: {totalPercent}%</p>
+          {section.commercialBalanceNote ? (
+            <p className="project-commercial-entry-balance">{section.commercialBalanceNote}</p>
+          ) : null}
+          <a className="project-commercial-entry-link" href="#project-cta-final">
+            Consultar disponibilidad ↓
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  if (section.layout === 'reasons') {
+    // "Por qué considerar" (FASE 6, vigesimotercera pasada) — 3-4 razones reales, cada una una
+    // oración completa (no fragmentos de feature-list) — grilla de 2 columnas con separador fino,
+    // sin viñetas ni íconos, para que se lea como argumentación editorial, no como checklist.
+    if (!items.length) return null;
+    return (
+      <section key={section.key} className="project-reasons">
+        <div className="container">
+          {section.title ? <h2>{section.title}</h2> : null}
+          <ul className="project-reasons-list">
+            {items.map((item, index) => (
+              <li key={`${section.key}-${index}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    );
+  }
+
   if (section.layout === 'text-only') {
-    // Bloque sin imagen — puede ser un párrafo curado (`curatedText`/`firstParagraphRest`) o una
+    // Bloque sin imagen — puede ser un párrafo curado (`curatedText`/`firstParagraphRest`), una
     // lista curada sin foto disponible (ej. "Residencias" de Flow House, sin material fotográfico
-    // real de unidades) — nunca se fuerza una imagen que no existe.
-    if (!text && !items.length) return null;
+    // real de unidades), o una lista agrupada (ej. amenities por eje) — nunca se fuerza una
+    // imagen que no existe. El mapa de ubicación (`section.map`), cuando existe, se agrega dentro
+    // de esta misma sección para que texto + mapa se perciban como una unidad (FASE 8).
+    const listContent = renderListContent(section, items);
+    const mapContent = renderLocationMap(section.map, displayName);
+    if (!text && !listContent && !mapContent) return null;
     return (
       <section key={section.key} className="project-editorial-text">
         <div className="container project-editorial-text-inner">
           {section.title ? <h2>{section.title}</h2> : null}
           {text ? <p>{text}</p> : null}
-          {items.length ? (
-            <ul className={`project-block-list${items.length <= 3 ? ' project-block-list--compact' : ''}`}>
-              {items.map((item, index) => (
-                <li key={`${section.key}-${index}`}>{item}</li>
-              ))}
-            </ul>
-          ) : null}
+          {listContent}
+          {mapContent}
         </div>
       </section>
     );
@@ -320,15 +485,19 @@ function renderSection(
   // bloque solo pintaba `items` (listas) e ignoraba `text` (párrafos) — un bloque con
   // `curatedText`/`firstParagraphRest` y layout image-left/right quedaba con el heading sin
   // ningún contenido debajo (bug real, encontrado en "Hollywood Beach y la ubicación" de Icon
-  // Beach). Corregido acá: se pinta lo que corresponda según el tipo de segmento resuelto.
-  if (!text && !items.length && !hasImage) return null;
+  // Beach). Corregido acá: se pinta lo que corresponda según el tipo de segmento resuelto. El
+  // mapa (`section.map`), cuando existe, se agrega dentro de la columna de contenido.
+  const listContent = renderListContent(section, items);
+  const mapContent = renderLocationMap(section.map, displayName);
+  if (!text && !listContent && !mapContent && !hasImage) return null;
   const modifier = section.layout === 'image-left' ? 'left' : 'right';
   const mediaStyle = section.imageAspect ? { aspectRatio: section.imageAspect } : undefined;
+  const mediaClassName = `project-block-media${section.imageNarrow ? ' project-block-media--narrow' : ''}`;
   return (
     <section key={section.key} className={`project-block project-block--${modifier}`}>
       <div className="container project-block-grid">
         {hasImage ? (
-          <div className="project-block-media" style={mediaStyle}>
+          <div className={mediaClassName} style={mediaStyle}>
             <Image
               src={sectionImages[0].displayUrl}
               alt=""
@@ -341,13 +510,8 @@ function renderSection(
         <div className="project-block-content">
           {section.title ? <h2>{section.title}</h2> : null}
           {text ? <p className="project-block-text">{text}</p> : null}
-          {items.length ? (
-            <ul className={`project-block-list${items.length <= 3 ? ' project-block-list--compact' : ''}`}>
-              {items.map((item, index) => (
-                <li key={`${section.key}-${index}`}>{item}</li>
-              ))}
-            </ul>
-          ) : null}
+          {listContent}
+          {mapContent}
         </div>
       </div>
     </section>

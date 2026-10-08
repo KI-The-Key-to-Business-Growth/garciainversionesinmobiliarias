@@ -46,6 +46,31 @@ export const CURATED_PROPERTIES: CuratedPropertyEntry[] = [
   { propertyId: 187677, humanRef: 'FAB-187677', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 187681, humanRef: 'FAB-187681', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 187682, humanRef: 'FAB-187682', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // Primer desarrollo de Argentina (vigesimosegunda pasada) — auditado en vivo contra la 2Clics
+  // External API antes de clasificar: 233719 es el ÚNICO registro, entre los 22 property_app_id
+  // completos de la cartera (AR y US devuelven el mismo inventario con esta cuenta — ver
+  // lib/desarrollos.ts), cuyo address/título/descripción mencionan "Pacheco Central" — identificación
+  // inequívoca, sin candidatos alternativos.
+  { propertyId: 233719, humanRef: 'FAB-233719', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // Domus Brickell Center — sourcePropertyId CONFIRMADO explícitamente por García como 236682
+  // (nunca 236646, un segundo registro real del mismo proyecto, cargado el mismo día, que NO se
+  // usa ni se modifica). Auditoría completa en docs/ai/PROJECT_STATE.md.
+  { propertyId: 236682, humanRef: 'FAB-236682', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // 236646 ("Domus Flat Brickell Center") — registro DUPLICADO del mismo proyecto, confirmado
+  // fuera de mercado (vigesimosexta pasada): `GET /api/property/236646` devuelve HTTP 404 "Not
+  // found" en una consulta en vivo, pero el endpoint de LISTADO (`POST /api/property`, el que
+  // alimenta /comprar) todavía lo devolvía como card completa — una inconsistencia real entre los
+  // dos endpoints de 2Clics, no un error de este código. Se excluye explícitamente acá (nunca
+  // como `'desarrollo'` — no tiene ficha propia, no aparece en /desarrollos ni en /invertir) para
+  // que no vuelva a filtrarse a /comprar mientras 2Clics no termine de darlo de baja del todo.
+  // NUNCA usar este id como `sourcePropertyId`/fallback/imágenes/precio/descripción de ningún
+  // desarrollo — ver `docs/ai/PROJECT_STATE.md`.
+  {
+    propertyId: 236646,
+    humanRef: 'FAB-236646',
+    classification: 'duplicado-fuera-de-mercado',
+    excludeFromStandardCatalog: true,
+  },
   {
     propertyId: 206734,
     humanRef: 'FAB-206734',
@@ -151,6 +176,35 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     sourcePropertyId: 187682,
     humanRef: 'FAB-187682',
     propertyIds: [187682],
+    market: 'US',
+  },
+  {
+    slug: 'pacheco-central',
+    name: 'Pacheco Central',
+    // El título real de 2Clics es un aviso de unidad puntual ("Pacheco Central, Unidad de Dos
+    // Ambientes a Estrenar…") — nunca publicable como nombre del desarrollo. Nombre público
+    // confirmado contra el propio texto de la descripción real ("Pacheco Central es una propuesta
+    // urbanística residencial...") y corroborado en el sitio del developer (soldati.com).
+    publicName: 'Pacheco Central',
+    sourcePropertyId: 233719,
+    humanRef: 'FAB-233719',
+    propertyIds: [233719],
+    market: 'AR',
+  },
+  {
+    slug: 'domus-brickell-center',
+    name: 'Domus Brickell Center',
+    // Nombre público confirmado explícitamente por García — no se infiere del título crudo de
+    // 2Clics (el registro 236682 tiene su propio título, pero el nombre público confirmado es
+    // este, verbatim).
+    publicName: 'Domus Brickell Center',
+    // CONFIRMADO explícitamente por García (no asumido ni inferido). Existe un segundo registro
+    // real del mismo proyecto, 236646 ("Domus Flats Brickell Center"), cargado el mismo día en
+    // 2Clics — NUNCA se usa como sourcePropertyId ni se modifica. Ver auditoría completa en
+    // docs/ai/PROJECT_STATE.md ("Domus Brickell Center").
+    sourcePropertyId: 236682,
+    humanRef: 'FAB-236682',
+    propertyIds: [236682],
     market: 'US',
   },
 ];
