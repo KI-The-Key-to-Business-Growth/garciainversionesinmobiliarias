@@ -6,7 +6,12 @@ import {
   getTwoclicsRegionConfig,
   MissingTwoclicsCredentialsError,
 } from '@/lib/2clics/config';
-import { formatOperation, formatPublicLocation, operationFilterToApi } from '@/lib/2clics/format';
+import {
+  formatOperation,
+  formatPublicLocation,
+  isPublicPropertyStatus,
+  operationFilterToApi,
+} from '@/lib/2clics/format';
 import {
   twoclicsClient,
   isAmbiguousFailResponse,
@@ -1060,6 +1065,7 @@ export async function getPropertyCatalog(
       .flatMap((response, index) =>
         (response.properties || []).map((property) => adaptPublicProperty(property, regions[index])),
       )
+      .filter((property) => isPublicPropertyStatus(property.status))
       .filter((property) => !(property.propertyId && excludeIds.has(property.propertyId)));
     const propertyTypes = buildAvailablePropertyTypes(locationFacetProperties);
     const propertyTypeAppId = resolvePropertyTypeAppId(filters.propertyTypeId, propertyTypes);
@@ -1129,7 +1135,9 @@ export async function getPropertyCatalog(
         ),
       )
       .filter((property) => propertyMatchesLocation(property, filters.location)),
-    ).filter((property) => !(property.propertyId && excludeIds.has(property.propertyId)));
+    )
+      .filter((property) => isPublicPropertyStatus(property.status))
+      .filter((property) => !(property.propertyId && excludeIds.has(property.propertyId)));
     const developments = developmentResponses
       .flatMap((response, index) =>
         (response.developments || []).map((development) =>
@@ -1181,8 +1189,10 @@ export async function getPropertyCatalog(
 export async function getRelatedPublicProperties(
   current: PublicProperty,
   limit = 3,
+  options: PropertyCatalogOptions = {},
 ): Promise<PublicProperty[]> {
   if (!hasConfiguredCredentials()) return [];
+  const excludeIds = new Set(options.excludePropertyIds || []);
 
   try {
     const cacheOptions = getTwoclicsReadCacheOptions();
@@ -1192,9 +1202,12 @@ export async function getRelatedPublicProperties(
         twoclicsClient.getProperties(region, { offset: 0, limit: MAX_LIMIT }, cacheOptions),
       ),
     );
-    const candidates = responses.flatMap((response, index) =>
-      (response.properties || []).map((property) => adaptPublicProperty(property, regions[index])),
-    );
+    const candidates = responses
+      .flatMap((response, index) =>
+        (response.properties || []).map((property) => adaptPublicProperty(property, regions[index])),
+      )
+      .filter((property) => isPublicPropertyStatus(property.status))
+      .filter((property) => !(property.propertyId && excludeIds.has(property.propertyId)));
     return rankRelatedProperties(current, candidates, limit);
   } catch (error) {
     logTwoclicsFailure('Related properties', error);
@@ -1202,7 +1215,14 @@ export async function getRelatedPublicProperties(
   }
 }
 
-export async function getFeaturedPublicProperties(limit = 4): Promise<PropertyCatalogResult> {
+// Home ("Oportunidades seleccionadas") — sigue siendo `webListing = DESTACADO` de 2Clics, pero un
+// registro curado como desarrollo u oportunidad de inversión no entra acá aunque esté destacado:
+// tiene su propia landing (/desarrollos, /invertir) y la Home no es un catálogo de oportunidades.
+export async function getFeaturedPublicProperties(
+  limit = 4,
+  options: PropertyCatalogOptions = {},
+): Promise<PropertyCatalogResult> {
+  const excludeIds = new Set(options.excludePropertyIds || []);
   const filters: PropertyListingFilters = {
     location: 'all',
     operation: 'all',
@@ -1221,12 +1241,16 @@ export async function getFeaturedPublicProperties(limit = 4): Promise<PropertyCa
     const cacheOptions = getTwoclicsReadCacheOptions();
     const regions = regionsForCatalog();
     const responses = await Promise.all(
-      regions.map((region) => twoclicsClient.getFeaturedProperties(region, limit, cacheOptions)),
+      regions.map((region) =>
+        twoclicsClient.getFeaturedProperties(region, limit + excludeIds.size, cacheOptions),
+      ),
     );
     const properties = responses
       .flatMap((response, index) =>
         (response.properties || []).map((property) => adaptPublicProperty(property, regions[index])),
       )
+      .filter((property) => isPublicPropertyStatus(property.status))
+      .filter((property) => !(property.propertyId && excludeIds.has(property.propertyId)))
       .slice(0, limit);
 
     return {
@@ -1248,15 +1272,56 @@ export async function getFeaturedPublicProperties(limit = 4): Promise<PropertyCa
   }
 }
 
+const ACTIVE_ID_PAGE_SIZE = 50;
+
+// IDs que 2Clics lista hoy como activos. Necesario porque la caché de fetch de Next nunca
+// reemplaza una respuesta 200 cacheada cuando la revalidación devuelve 404: el detalle de un
+// registro que salió de mercado (ej. 187676) seguía sirviéndose desde caché indefinidamente. El
+// listado siempre revalida con 200, así que es la referencia confiable de "sigue activo". `null` =
+// no se pudo determinar (error o listado vacío) — en ese caso no se bloquea ninguna ficha.
+const getActivePublicPropertyIds = cache(async (): Promise<Set<number> | null> => {
+  try {
+    const cacheOptions = getTwoclicsReadCacheOptions();
+    const ids = new Set<number>();
+    for (const region of regionsForDetail()) {
+      for (let offset = 0; offset < 2000; offset += ACTIVE_ID_PAGE_SIZE) {
+        const response = await twoclicsClient.getProperties(region, { offset, limit: ACTIVE_ID_PAGE_SIZE }, cacheOptions);
+        const page = response.properties || [];
+        for (const item of page) {
+          const id = Number(item.propertyId);
+          if (Number.isInteger(id) && id > 0 && isPublicPropertyStatus(item.status)) ids.add(id);
+        }
+        if (page.length < ACTIVE_ID_PAGE_SIZE) break;
+      }
+    }
+    return ids.size ? ids : null;
+  } catch (error) {
+    logTwoclicsFailure('Active property ids', error);
+    return null;
+  }
+});
+
 async function getPublicPropertyByIdImpl(propertyId: number): Promise<SinglePropertyResult> {
   if (!hasConfiguredCredentials()) return { status: 'unconfigured', property: null };
 
   try {
     const cacheOptions = getTwoclicsReadCacheOptions();
     for (const region of regionsForDetail()) {
-      const response = await twoclicsClient.getPropertyById(region, propertyId, cacheOptions);
+      // 2Clics responde HTTP 404 para un registro fuera de mercado/borrador/dado de baja: es un
+      // "no existe" público, no una falla del proveedor.
+      const response = await twoclicsClient.getPropertyById(region, propertyId, cacheOptions).catch((error: unknown) => {
+        if (error instanceof TwoclicsApiError && error.statusCode === 404) return null;
+        throw error;
+      });
+      if (!response) continue;
       if (response.property) {
-        return { status: 'ready', property: adaptPublicProperty(response.property, region) };
+        const property = adaptPublicProperty(response.property, region);
+        if (!isPublicPropertyStatus(property.status)) return { status: 'not-found', property: null };
+        const activeIds = await getActivePublicPropertyIds();
+        if (activeIds && property.propertyId && !activeIds.has(property.propertyId)) {
+          return { status: 'not-found', property: null };
+        }
+        return { status: 'ready', property };
       }
     }
     return { status: 'not-found', property: null };

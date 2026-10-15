@@ -710,7 +710,46 @@ el fix sistémico de `image-right` de la vigesimoquinta pasada (sin regresión, 
   `/invertir`, `/comprar`, mapas (cada uno sigue usando su propia fuente vigente, sin trasladar
   automáticamente el comportamiento de Domus), `priceRepresentsProjectRange` de cada desarrollo.
 
+### Handoff final V2 (2026-10-15) — sincronización con el estado real de 2Clics
+
+2Clics fue auditado y corregido por García: 23 registros activos (verificado en vivo contra la
+External API). La V2 se sincronizó con ese inventario — cualquier dato posterior manda la API.
+
+- **Desarrollos activos**: Faena (fuente **236986**; el 187676 quedó fuera de mercado y no tiene
+  ninguna referencia en V2), **Benavídez Village** (nuevo, un solo desarrollo con 5 unidades: 233708
+  UF 11, 237474 UF 12, 237472 UF 15, 233702 UF 16, 233707 UF 20; tabla de unidades con precio/
+  superficie/orientación en vivo y conteo dinámico), Pacheco Central (233719) y Domus (236682).
+  Icon Beach, Flow House y One Hollywood salieron de mercado: se retiraron de `DEVELOPMENTS` y de la
+  curaduría editorial (recuperables desde el commit `9ed3d6b`).
+- **Pacheco Central**: copy sincronizado con la descripción vigente (tipologías 1 a 4 ambientes,
+  coworking/laundry, etapas dic. 2026 / dic. 2029). La "Unidad de referencia" muestra en vivo las
+  medidas y el precio de 233719 (nunca como "desde"); ya no hay medidas hardcodeadas.
+- **/invertir**: la oportunidad vigente de 206734 es **445 N Shore Drive, Normandy Shores** (la de
+  Coconut Grove fue reemplazada en el CRM). Landing re-curada solo con hechos de la descripción
+  vigente; slug `445-n-shore-drive`; precio "Consultar precio"; sin nombre de developer;
+  `/propiedades/206734` redirige a la landing; 206734 fuera de `/propiedades`, `/comprar` y Home.
+- **Estado de 2Clics**: solo `ACTIVE` es público (catálogos, Home, relacionadas, fichas). Una ficha
+  cuyo id ya no está en el listado activo da 404 aunque exista un detalle viejo en la caché de
+  fetch (Next no reemplaza un 200 cacheado cuando la revalidación devuelve 404).
+- **Frontend**: la moneda de expensas nunca se hereda del precio ni se infiere por país. Remeros
+  (237445/237447) usa un override explícito AR$ (`EXPENSES_CURRENCY_OVERRIDES`, lib/2clics/
+  format.ts) porque 2Clics no expone `expenses_currency`; si la fuente la expone, gana la fuente.
+  Sin moneda confirmada, las expensas no se publican. "Apto crédito" solo si es "Sí" y en
+  Argentina; superficies con hasta 2 decimales (`44,18 m²`); el mapa nunca usa la dirección
+  interna del CRM ni (0,0), y su texto visible es la ubicación pública.
+- **Faena**: ubicación editorial "Miami River · Miami · Florida · Estados Unidos" y sin mapa hasta
+  tener una ubicación del desarrollo verificada para ese uso.
+- **Home**: un registro curado como desarrollo/inversión no entra a "Oportunidades seleccionadas"
+  aunque esté DESTACADO en 2Clics; sin destacadas tradicionales la sección no se renderiza (vuelve
+  sola cuando haya al menos una).
+
 ## Pendiente de decisión (no confundir con "roto")
+
+- **Home sin destacadas**: hoy el único registro DESTACADO de 2Clics es 206734 (inversión), así que
+  "Oportunidades seleccionadas" no aparece hasta que García marque propiedades tradicionales como
+  Destacado en el CRM.
+- **Material editorial oficial de Benavídez Village / Pacheco Central**: no está en el repo; las
+  fichas usan las fotos reales de 2Clics.
 
 - **Formulario de contacto general** (`lib/crm/leads.ts`, host `api.2clics.com.ar` legacy):
   ACTUAL Y EN USO, pendiente de revisión arquitectónica. Ver `LEGACY.md`. No tocar sin pedido.

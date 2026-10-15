@@ -4,6 +4,7 @@ import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import CatalogView from '@/components/properties/CatalogView';
 import { getPropertyCatalog } from '@/lib/2clics/listings';
+import { getMasterCatalogExcludedPropertyIds } from '@/lib/site-curation';
 
 export const metadata: Metadata = {
   title: 'Propiedades | García Inversiones Inmobiliarias',
@@ -17,7 +18,9 @@ type PropiedadesPageProps = {
 
 export default async function PropiedadesPage({ searchParams }: PropiedadesPageProps) {
   const resolvedSearchParams = (await searchParams) || {};
-  const catalog = await getPropertyCatalog(resolvedSearchParams);
+  const catalog = await getPropertyCatalog(resolvedSearchParams, {
+    excludePropertyIds: getMasterCatalogExcludedPropertyIds(),
+  });
   const showDevelopments =
     catalog.filters.operation === 'all' && catalog.filters.propertyTypeId === null;
 

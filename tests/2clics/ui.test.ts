@@ -10,10 +10,18 @@ import PropertyDetailView from '@/components/properties/PropertyDetailView';
 import { DescriptionToggleButton } from '@/components/properties/PropertyDescription';
 import PropertyFilters from '@/components/properties/PropertyFilters';
 import PropertyGallery from '@/components/properties/PropertyGallery';
-import PropertyMap, { googleMapsEmbedUrl, resolvePropertyMapTarget } from '@/components/properties/PropertyMap';
+import PropertyMap, { googleMapsEmbedUrl, hasUsableCoordinates, resolvePropertyMapTarget } from '@/components/properties/PropertyMap';
 import PropertyShareButton from '@/components/properties/PropertyShareButton';
 import { adaptPublicDevelopment, adaptPublicProperty } from '@/lib/2clics/adapters';
-import { formatExpenses, formatOperation, formatPublicLocation, isZeroExpensesValue } from '@/lib/2clics/format';
+import {
+  formatArea,
+  formatExpenses,
+  formatOperation,
+  formatPropertyExpenses,
+  formatPublicLocation,
+  isPublicPropertyStatus,
+  isZeroExpensesValue,
+} from '@/lib/2clics/format';
 import {
   buildAvailablePropertyTypes,
   buildLocationOptions,
@@ -108,7 +116,7 @@ describe('2Clics property UI', () => {
     // (property.metadata.bathrooms/garages), mismo pluralizado.
     expect(html).toContain('2 baños');
     expect(html).toContain('1 cochera');
-    expect(html).toContain('92 m2');
+    expect(html).toContain('92 m²');
     expect(html).toContain('Destacada');
     expect(html).toContain('Ver propiedad');
     expect(html).toContain('/desarrollos/50');
@@ -131,7 +139,7 @@ describe('2Clics property UI', () => {
     // afecta a los campos que efectivamente son cero, no borra el resto de la card.
     expect(html).toContain('3 amb.');
     expect(html).toContain('2 dorm.');
-    expect(html).toContain('92 m2');
+    expect(html).toContain('92 m²');
   });
 
   it('Terreno / Lote solo muestra Superficie total — nunca ambientes/dormitorios/baños/cocheras aunque el dato exista', () => {
@@ -149,7 +157,7 @@ describe('2Clics property UI', () => {
 
     const factsMatch = html.match(/<p class="twoclics-card-facts">([\s\S]*?)<\/p>/);
     const facts = factsMatch ? factsMatch[1] : null;
-    expect(facts).toBe('800 m2');
+    expect(facts).toBe('800 m²');
     expect(html).not.toContain('amb.');
     expect(html).not.toContain('dorm.');
     expect(html).not.toContain('baño');
@@ -175,7 +183,7 @@ describe('2Clics property UI', () => {
     expect(facts).toContain('amb.');
     expect(facts).toContain('baño');
     expect(facts).toContain('cochera');
-    expect(facts).toContain('71 m2');
+    expect(facts).toContain('71 m²');
   });
 
   it('mantiene Superficie total en la card cuando el dato existe, para los 4 tipos reales auditados', () => {
@@ -188,7 +196,7 @@ describe('2Clics property UI', () => {
       const html = render(
         React.createElement(PropertyCard, { property: property({ propertyType, totalArea: 123 }) }),
       );
-      expect(html).toContain('123 m2');
+      expect(html).toContain('123 m²');
     }
   });
 
@@ -295,7 +303,7 @@ describe('2Clics property UI', () => {
       expect(html).toContain('2 dorm.');
       expect(html).toContain('2 baños');
       expect(html).toContain('1 cochera');
-      expect(html).toContain('92 m2');
+      expect(html).toContain('92 m²');
       expect(html).toContain('Ver propiedad');
       expect(html).not.toContain('No publicar');
       expect(html).not.toContain('undefined');
@@ -315,7 +323,7 @@ describe('2Clics property UI', () => {
         }),
       );
       const landFacts = landHtml.match(/<p class="twoclics-card-facts">([\s\S]*?)<\/p>/)?.[1] || '';
-      expect(landFacts).toBe('800 m2');
+      expect(landFacts).toBe('800 m²');
 
       const officeHtml = render(
         React.createElement(PropertyCard, {
@@ -332,7 +340,7 @@ describe('2Clics property UI', () => {
       const officeFacts = officeHtml.match(/<p class="twoclics-card-facts">([\s\S]*?)<\/p>/)?.[1] || '';
       expect(officeFacts).not.toContain('dorm.');
       expect(officeFacts).toContain('amb.');
-      expect(officeFacts).toContain('71 m2');
+      expect(officeFacts).toContain('71 m²');
     });
 
     it('does not affect the default/compact card still used by the ficha (related properties)', () => {
@@ -539,17 +547,20 @@ describe('2Clics property UI', () => {
     expect(source).toContain('<WhatsAppFloat />');
   });
 
-  it('uses the public location formatter in the property detail hero without changing map precision', () => {
+  it('uses the public location formatter in the hero and the map label; the raw CRM address is never the map target', () => {
     const html = render(React.createElement(PropertyDetailView, { property: property() }));
     const detailLocation =
       html.match(/<p class="twoclics-detail-location">([\s\S]*?)<\/p>/)?.[1] || '';
+    const mapLabel = html.match(/<p class="twoclics-map-location">([\s\S]*?)<\/p>/)?.[1] || '';
 
     expect(detailLocation).toContain('Recoleta');
     expect(detailLocation).toContain('CABA');
     expect(detailLocation).toContain('Argentina');
     expect(detailLocation).not.toContain('Buenos Aires');
-    expect(html).toContain('Av.%20Santa%20Fe%201200');
-    expect(html).toContain('Buenos%20Aires');
+    expect(mapLabel).toBe(detailLocation);
+    expect(html).not.toContain('Av.%20Santa%20Fe%201200');
+    // El state crudo solo viaja dentro de la query de búsqueda, nunca como texto visible.
+    expect(html).toContain('Recoleta%2C%20CABA%2C%20Buenos%20Aires');
   });
 
   it('formats uppercase public enum values without changing technical values', () => {
@@ -2438,5 +2449,160 @@ describe('2Clics result counter reliability (Fase 1.1)', () => {
     const pageSource = readFileSync('components/properties/CatalogView.tsx', 'utf8');
     expect(pageSource).toContain('Resultados filtrados');
     expect(pageSource).toContain('catalog.propertyTotalCount !== null');
+  });
+});
+
+describe('Sincronización con 2Clics (2026-10-15) — datos de propiedades tradicionales', () => {
+  function crmProperty(raw: Record<string, unknown>, region: 'AR' | 'US' = 'AR') {
+    return adaptPublicProperty(
+      {
+        propertyId: 9000,
+        address: 'Dirección interna',
+        price: 270000,
+        currency: 'U$D',
+        operationType: 'VENTA',
+        status: 'ACTIVE',
+        propertyType: { typeId: 1, name: 'Departamento' },
+        state: { stateId: 3, name: 'Bs.As. G.B.A. Norte' },
+        city: { cityId: 41, name: 'Tigre' },
+        neighborhood: { neighborhoodId: 700, name: 'Rincón de Milberg' },
+        images: [],
+        meta_data: [],
+        ...raw,
+      } as never,
+      region,
+    );
+  }
+
+  const miami = {
+    state: { stateId: 9, name: 'Estados Unidos' },
+    city: { cityId: 9, name: 'Florida' },
+    neighborhood: { neighborhoodId: 9, name: 'Miami' },
+  };
+
+  it('Remeros (237445/237447): override explícito → AR$ 490.000, nunca el U$D del precio', () => {
+    for (const propertyId of [237445, 237447]) {
+      const remeros = crmProperty({ propertyId, meta_data: [{ metaKey: 'expenses', metaValue: '490000' }] });
+      const html = render(React.createElement(PropertyDetailView, { property: remeros }));
+      expect(html).toContain('AR$ 490.000');
+      expect(html).not.toContain('U$D 490.000');
+    }
+  });
+
+  it('sin inferencia por país: otra propiedad argentina sin moneda de expensas no publica expensas', () => {
+    const other = crmProperty({ propertyId: 187669, meta_data: [{ metaKey: 'expenses', metaValue: '490000' }] });
+    expect(other.region).toBe('AR');
+    const html = render(React.createElement(PropertyDetailView, { property: other }));
+    expect(html).not.toContain('490.000');
+    expect(formatPropertyExpenses('1500', undefined, 999)).toBe('');
+  });
+
+  it('la moneda explícita de 2Clics tiene prioridad sobre el override; cero no se publica', () => {
+    expect(formatPropertyExpenses('490000', 'U$D', 237447)).toBe('U$D 490.000');
+    expect(formatPropertyExpenses('200000', 'AR$', 233702)).toBe('AR$ 200.000');
+    expect(formatPropertyExpenses('0', 'AR$', 233702)).toBe('');
+  });
+
+  it('Home: sin destacadas elegibles la sección "Oportunidades seleccionadas" no se renderiza (sin título ni estado vacío); un error sí se informa', () => {
+    const source = readFileSync('components/properties/FeaturedProperties.tsx', 'utf8');
+    expect(source).toContain("if (!hasProperties && result.status === 'ready') return null;");
+  });
+
+  it('"Apto crédito: No" no se publica como dato; "Sí" se muestra solo en Argentina', () => {
+    const no = render(React.createElement(PropertyDetailView, { property: crmProperty({ aptCredit: false }) }));
+    expect(no).not.toContain('Apto crédito');
+    const yes = render(React.createElement(PropertyDetailView, { property: crmProperty({ aptCredit: true }) }));
+    expect(yes).toContain('Apto crédito');
+    const us = render(React.createElement(PropertyDetailView, { property: crmProperty({ aptCredit: true, ...miami }, 'US') }));
+    expect(us).not.toContain('Apto crédito');
+  });
+
+  it('oficinas: nunca muestran el dormitorio heredado del formulario de 2Clics, ni en la ficha ni en la card', () => {
+    const office = crmProperty({
+      propertyId: 236982,
+      operationType: 'ALQUILER_PERMANENTE',
+      price: 4106625,
+      currency: 'AR$',
+      amountRoom: 2,
+      amountBedroom: 1,
+      totalArea: 109.51,
+      propertyType: { typeId: 7, name: 'Oficina' },
+    });
+    const detail = render(React.createElement(PropertyDetailView, { property: office }));
+    const card = render(React.createElement(PropertyCard, { property: office }));
+    expect(detail).not.toContain('Dormitorios');
+    expect(detail).not.toContain('dorm.');
+    expect(card).not.toContain('dorm.');
+  });
+
+  it('superficies decimales se conservan (44,18 / 59,14 / 109,51 m²) — nunca se redondean', () => {
+    expect(formatArea(44.18)).toBe('44,18 m²');
+    expect(formatArea(59.14)).toBe('59,14 m²');
+    expect(formatArea(109.51)).toBe('109,51 m²');
+    expect(formatArea(71)).toBe('71 m²');
+    const office = crmProperty({ totalArea: 44.18, propertyType: { typeId: 7, name: 'Oficina' } });
+    expect(render(React.createElement(PropertyCard, { property: office }))).toContain('44,18 m²');
+  });
+
+  it('ubicación pública: "Barrio · Tigre · Argentina", nunca "Bs.As. G.B.A. Norte" (hero, card ni mapa)', () => {
+    const remeros = crmProperty({ propertyId: 237445, lat: -34.4270363, long: -58.6120796 });
+    const detail = render(React.createElement(PropertyDetailView, { property: remeros }));
+    const card = render(React.createElement(PropertyCard, { property: remeros }));
+    expect(detail).toContain('Rincón de Milberg · Tigre · Argentina');
+    expect(detail).not.toContain('Bs.As. G.B.A. Norte');
+    expect(card).not.toContain('Bs.As. G.B.A. Norte');
+  });
+
+  it('mapa: (0,0) nunca se publica como pin (187683/187691); cae a una ubicación aproximada pública', () => {
+    expect(hasUsableCoordinates(0, 0)).toBe(false);
+    expect(hasUsableCoordinates(-34.4, -58.6)).toBe(true);
+    const target = resolvePropertyMapTarget({
+      title: 'Lote en Delta',
+      lat: 0,
+      long: 0,
+      address: 'Arroyo Sandor Mikler Y Canal De La Serna 1 100',
+      number: '-',
+      location: {
+        state: { stateId: 3, name: 'Bs.As. G.B.A. Norte' },
+        city: { cityId: 41, name: 'Tigre' },
+        neighborhood: { neighborhoodId: 1, name: 'Delta' },
+      },
+      locationText: 'Delta · Tigre · Argentina',
+    });
+    expect(target?.source).toBe('neighborhood');
+    expect(target?.precision).toBe('approximate');
+    expect(target?.label).toBe('Delta · Tigre · Argentina');
+    expect(target?.query).not.toContain('Arroyo');
+  });
+
+  it('el DTO público no expone campos privados del CRM (info_contact, agent, realEstate, notas)', () => {
+    const adapted = adaptPublicProperty(
+      {
+        propertyId: 1,
+        status: 'ACTIVE',
+        agent: { name: 'Agente', phone: '1111' },
+        realEstate: { name: 'Inmobiliaria' },
+        info_contact: { email: 'x@y.com' },
+        meta_data: [
+          { metaKey: 'private_note', metaValue: 'nota privada' },
+          { metaKey: 'partner_note', metaValue: 'nota socio' },
+          { metaKey: 'report_note', metaValue: 'nota reporte' },
+          { metaKey: 'info_contact', metaValue: 'contacto' },
+        ],
+      } as never,
+      'AR',
+    );
+    const json = JSON.stringify(adapted);
+    for (const key of ['agent', 'realEstate', 'info_contact', 'private_note', 'partner_note', 'nota privada', 'nota socio', 'x@y.com']) {
+      expect(json).not.toContain(key);
+    }
+  });
+
+  it('estado: solo ACTIVE (o sin estado) es público', () => {
+    expect(isPublicPropertyStatus('ACTIVE')).toBe(true);
+    expect(isPublicPropertyStatus('')).toBe(true);
+    expect(isPublicPropertyStatus('OUT_OF_MARKET')).toBe(false);
+    expect(isPublicPropertyStatus('RENTED')).toBe(false);
+    expect(isPublicPropertyStatus('DRAFT')).toBe(false);
   });
 });

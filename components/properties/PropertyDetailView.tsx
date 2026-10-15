@@ -10,9 +10,8 @@ import {
   compactText,
   formatArea,
   formatCount,
-  formatExpenses,
-  formatLocation,
   formatOperation,
+  formatPropertyExpenses,
   formatPublicDisplayValue,
   formatPublicLocation,
   formatPrice,
@@ -106,12 +105,12 @@ export default function PropertyDetailView({
   relatedProperties = [],
 }: PropertyDetailViewProps) {
   const location = formatPublicLocation(property.location, property.region);
-  const mapLocation = formatLocation(property.location);
   const price = formatPrice(property.price, property.currency, property.hidePrice);
   const operation = formatOperation(property.operationType);
-  const expenses = formatExpenses(
+  const expenses = formatPropertyExpenses(
     property.metadata.expenses,
-    property.metadata.expensesCurrency || property.currency,
+    property.metadata.expensesCurrency,
+    property.propertyId,
   );
   const essentials = essentialFacts(property, price);
   // Tipo de propiedad y Operación NO van acá: ya se comunican arriba, en el
@@ -127,7 +126,9 @@ export default function PropertyDetailView({
   const basic = detailList([
     item('Piso', property.metadata.floor),
     item('Estado', property.metadata.condition),
-    item('Apto crédito', property.aptCredit),
+    // "Apto crédito: No" no aporta información — solo se publica la afirmación, y solo en el
+    // mercado argentino (es un criterio de crédito hipotecario local).
+    item('Apto crédito', property.aptCredit === true && property.region === 'AR' ? 'Sí' : ''),
     item('Antigüedad', property.metadata.antiquity),
     item('Año / construcción', hasAntiquity ? '' : property.metadata.constructionDate),
     item('Disposición', property.metadata.disposition),
@@ -287,7 +288,7 @@ export default function PropertyDetailView({
               address={property.address}
               number={property.number}
               location={property.location}
-              locationText={mapLocation}
+              locationText={location}
             />
           </main>
 

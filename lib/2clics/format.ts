@@ -139,6 +139,44 @@ export function formatExpenses(value: string | undefined, currency: string): str
   return formatMetadataMoney(value, currency);
 }
 
+// OVERRIDE EXPLÍCITO de moneda de expensas (2026-10-15) — 2Clics no expone `expenses_currency`
+// para estos registros; García confirmó que sus expensas (AR$ 490.000) están en pesos. Solo
+// corrige la MONEDA de presentación: el monto sigue saliendo de 2Clics. Si 2Clics empieza a
+// devolver `expenses_currency` para estos ids, la fuente tiene prioridad y la entrada puede
+// borrarse. No hay inferencia por país ni herencia de la moneda del precio (antes Remeros se
+// mostraba como "U$D 490.000").
+const EXPENSES_CURRENCY_OVERRIDES: Record<number, string> = {
+  237445: 'AR$', // Remeros Beach Sky 2 — alquiler
+  237447: 'AR$', // Remeros Beach Sky 2 — venta
+};
+
+export function resolveExpensesCurrency(
+  expensesCurrency: string | undefined,
+  propertyId: number | null,
+): string {
+  const explicit = String(expensesCurrency || '').trim();
+  if (explicit) return explicit;
+  return (propertyId !== null && EXPENSES_CURRENCY_OVERRIDES[propertyId]) || '';
+}
+
+// Sin moneda confirmada (fuente u override) las expensas no se publican: un monto sin moneda
+// sería ambiguo.
+export function formatPropertyExpenses(
+  value: string | undefined,
+  expensesCurrency: string | undefined,
+  propertyId: number | null,
+): string {
+  const currency = resolveExpensesCurrency(expensesCurrency, propertyId);
+  return currency ? formatExpenses(value, currency) : '';
+}
+
+// Solo los registros ACTIVOS de 2Clics son públicos. Un registro sin `status` (fixtures, payloads
+// parciales) no se descarta: la fuente de verdad sigue siendo lo que la API decide devolver.
+export function isPublicPropertyStatus(status: string | null | undefined): boolean {
+  const normalized = String(status || '').trim().toUpperCase();
+  return !normalized || normalized === 'ACTIVE';
+}
+
 const NON_PUBLIC_DETAIL_VALUES = new Set([
   '-',
   '--',
@@ -190,7 +228,7 @@ export function formatPublicDisplayValue(
 
 export function formatArea(value: number | null): string {
   if (value === null || !Number.isFinite(value) || value <= 0) return '';
-  return `${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(value)} m2`;
+  return `${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(value)} m²`;
 }
 
 export function numberValue(value: string | number | null | undefined): number | null {

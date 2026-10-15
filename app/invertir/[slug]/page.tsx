@@ -6,26 +6,24 @@ import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import InvestmentOpportunityDetailView from '@/components/properties/InvestmentOpportunityDetailView';
 import ListingState from '@/components/properties/ListingState';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
+import { getInvestmentEditorialCuration, resolveInvestmentImage } from '@/lib/investments';
 import { getInvestmentOpportunityBySlug } from '@/lib/site-curation';
 
 type InvestmentOpportunityPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-// WEB GARCÍA V2 (Invertir, decimocuarta pasada) — `sourceProperty` (206734) es un registro
-// placeholder de 2Clics ("Casa en venta en Miami", U$D 100.000), usado exclusivamente como
-// vínculo técnico (imágenes reales + property_app_id para el lead) — nunca como fuente de
-// title/description públicos. La metadata SEO usa el nombre editorial curado
-// (`opportunity.name`) y una descripción propia, nunca `formatLocation(source.property.location)`
-// ni `source.property.description` (ver lib/investments.ts para el detalle de por qué).
+// `sourceProperty` (206734) es solo el vínculo técnico (imágenes + property_app_id para el lead).
+// La metadata usa el nombre y el intro curados — nunca el título, tipo o descripción del registro.
 export async function generateMetadata({ params }: InvestmentOpportunityPageProps): Promise<Metadata> {
   const { slug } = await params;
   const opportunity = getInvestmentOpportunityBySlug(slug);
   if (!opportunity) return { title: 'Invertir | García Inversiones Inmobiliarias' };
 
   const source = await getPublicPropertyById(opportunity.sourcePropertyId);
-  const description =
-    'Una forma de participar en el desarrollo de residencias de lujo en Coconut Grove, Miami, acompañando económicamente el proyecto hasta su construcción y posterior venta.';
+  const curation = getInvestmentEditorialCuration(opportunity.slug);
+  const description = curation?.intro;
+  const image = curation && source.property ? resolveInvestmentImage(source.property.images, curation.openingImage) : null;
   return {
     title: `${opportunity.name} | García Inversiones Inmobiliarias`,
     description,
@@ -33,7 +31,7 @@ export async function generateMetadata({ params }: InvestmentOpportunityPageProp
     openGraph: {
       title: opportunity.name,
       description,
-      images: source.property?.images[0]?.displayUrl ? [source.property.images[0].displayUrl] : undefined,
+      images: image ? [image.displayUrl] : undefined,
     },
   };
 }

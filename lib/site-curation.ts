@@ -27,55 +27,50 @@ export type CuratedPropertyEntry = {
   humanRef: string;
   classification: CurationClassification;
   excludeFromStandardCatalog: boolean;
+  // Además fuera del catálogo maestro /propiedades (y de "relacionadas" en las fichas). Solo para
+  // registros técnicos cuyo framing de propiedad sería engañoso (oportunidades de inversión).
+  excludeFromMasterCatalog?: boolean;
 };
 
 // Lista central — agregar acá cualquier propiedad que García quiera clasificar editorialmente,
 // sin importar si además aparece en DEVELOPMENTS/INVESTMENT_OPPORTUNITIES más abajo (esas listas
 // agregan metadata de presentación — slug, nombre editorial, unidades — para SU landing propia;
 // esta lista central es la única fuente de verdad de si esa propiedad sale del catálogo estándar).
-// DECIMOSEXTA PASADA — clasificación editorial "desarrollo" ampliada de 1 a 4 property_app_id,
-// confirmada como decisión de negocio (captura de CRM), auditada contra la 2Clics External API
-// real antes de clasificar (docs/ai/PROPERTY_UX_DECISIONS.md tiene el detalle completo de la
-// auditoría). Un quinto id mencionado en la captura del CRM (FAB-187694) NO se clasificó: la
-// External API devuelve "Not found" para 187694 en ambas regiones (AR/US) — confirmado en vivo,
-// no es un problema de nuestro código. Ver docs/ai/PROPERTY_UX_DECISIONS.md para el candidato
-// real encontrado (187684) que coincide con el título de CRM del quinto desarrollo — reportado,
-// NO clasificado, a la espera de confirmación explícita.
+// SINCRONIZACIÓN CON 2CLICS (2026-10-15, handoff final V2) — inventario real: 23 registros
+// activos. Los registros fuera de mercado (Faena viejo 187676, Flow House, Icon Beach, One
+// Hollywood, PALMA, El Yacht, Remeros viejo, etc.) NO se listan acá: quedan fuera porque 2Clics ya
+// no los devuelve como activos (ver `isPublicPropertyStatus` en lib/2clics/format.ts). Esta lista
+// solo declara la clasificación editorial de registros ACTIVOS.
 export const CURATED_PROPERTIES: CuratedPropertyEntry[] = [
-  { propertyId: 187676, humanRef: 'FAB-187676', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  { propertyId: 187677, humanRef: 'FAB-187677', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  { propertyId: 187681, humanRef: 'FAB-187681', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  { propertyId: 187682, humanRef: 'FAB-187682', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  // Primer desarrollo de Argentina (vigesimosegunda pasada) — auditado en vivo contra la 2Clics
-  // External API antes de clasificar: 233719 es el ÚNICO registro, entre los 22 property_app_id
-  // completos de la cartera (AR y US devuelven el mismo inventario con esta cuenta — ver
-  // lib/desarrollos.ts), cuyo address/título/descripción mencionan "Pacheco Central" — identificación
-  // inequívoca, sin candidatos alternativos.
-  { propertyId: 233719, humanRef: 'FAB-233719', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  // Domus Brickell Center — sourcePropertyId CONFIRMADO explícitamente por García como 236682
-  // (nunca 236646, un segundo registro real del mismo proyecto, cargado el mismo día, que NO se
-  // usa ni se modifica). Auditoría completa en docs/ai/PROJECT_STATE.md.
-  { propertyId: 236682, humanRef: 'FAB-236682', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  // 236646 ("Domus Flat Brickell Center") — registro DUPLICADO del mismo proyecto, confirmado
-  // fuera de mercado (vigesimosexta pasada): `GET /api/property/236646` devuelve HTTP 404 "Not
-  // found" en una consulta en vivo, pero el endpoint de LISTADO (`POST /api/property`, el que
-  // alimenta /comprar) todavía lo devolvía como card completa — una inconsistencia real entre los
-  // dos endpoints de 2Clics, no un error de este código. Se excluye explícitamente acá (nunca
-  // como `'desarrollo'` — no tiene ficha propia, no aparece en /desarrollos ni en /invertir) para
-  // que no vuelva a filtrarse a /comprar mientras 2Clics no termine de darlo de baja del todo.
-  // NUNCA usar este id como `sourcePropertyId`/fallback/imágenes/precio/descripción de ningún
-  // desarrollo — ver `docs/ai/PROJECT_STATE.md`.
+  // Faena Residences Miami — registro activo vigente (reemplaza al 187676, fuera de mercado).
+  { propertyId: 236986, humanRef: 'GAR-236986', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // Benavídez Village — 5 unidades activas agrupadas en UN solo desarrollo público.
+  { propertyId: 233708, humanRef: 'GAR-233708', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 237474, humanRef: 'GAR-237474', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 237472, humanRef: 'GAR-237472', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 233702, humanRef: 'GAR-233702', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 233707, humanRef: 'GAR-233707', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // Pacheco Central — único registro de la cartera vinculado al proyecto.
+  { propertyId: 233719, humanRef: 'GAR-233719', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // Domus Brickell Center — 236682 confirmado por García (nunca 236646).
+  { propertyId: 236682, humanRef: 'GAR-236682', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // 236646 — duplicado de Domus fuera de mercado. Exclusión defensiva: en la vigesimosexta pasada
+  // el endpoint de listado lo siguió devolviendo después de que el detalle ya daba 404. Nunca usar
+  // como fuente de ningún desarrollo.
   {
     propertyId: 236646,
     humanRef: 'FAB-236646',
     classification: 'duplicado-fuera-de-mercado',
     excludeFromStandardCatalog: true,
+    excludeFromMasterCatalog: true,
   },
+  // 445 N Shore Drive — oportunidad de participación, vive solo en /invertir.
   {
     propertyId: 206734,
     humanRef: 'FAB-206734',
     classification: 'proyecto-especial',
     excludeFromStandardCatalog: true,
+    excludeFromMasterCatalog: true,
   },
 ];
 
@@ -83,12 +78,22 @@ const EXCLUDED_PROPERTY_IDS = new Set(
   CURATED_PROPERTIES.filter((entry) => entry.excludeFromStandardCatalog).map((entry) => entry.propertyId),
 );
 
+const MASTER_CATALOG_EXCLUDED_IDS = new Set(
+  CURATED_PROPERTIES.filter((entry) => entry.excludeFromMasterCatalog).map((entry) => entry.propertyId),
+);
+
 export function isExcludedFromStandardCatalog(propertyId: number | null | undefined): boolean {
   return propertyId !== null && propertyId !== undefined && EXCLUDED_PROPERTY_IDS.has(propertyId);
 }
 
+// /comprar, /alquilar y la Home: fuera todo lo curado como desarrollo/inversión.
 export function getExcludedPropertyIds(): number[] {
   return Array.from(EXCLUDED_PROPERTY_IDS);
+}
+
+// /propiedades (catálogo maestro) y "relacionadas": solo fuera lo que no es una propiedad.
+export function getMasterCatalogExcludedPropertyIds(): number[] {
+  return Array.from(MASTER_CATALOG_EXCLUDED_IDS);
 }
 
 export function getCurationForPropertyId(propertyId: number | null | undefined): CuratedPropertyEntry | null {
@@ -122,7 +127,7 @@ export type DevelopmentCuration = {
   humanRef: string;
   // Todas las unidades reales que se muestran en "Propiedades disponibles". Hoy puede ser un
   // único id (sourcePropertyId repetido) — diseñado para crecer sin cambiar la forma:
-  // propertyIds: [187676, 123456, ...]
+  // propertyIds: [233708, 237474, ...]
   propertyIds: number[];
   // Mercado editorial del proyecto (decimonovena pasada) — driver del selector US/AR de
   // `/desarrollos`. Explícito por curaduría, NUNCA inferido buscando palabras en el título/
@@ -130,6 +135,9 @@ export type DevelopmentCuration = {
   // desarrollo nuevo declara su mercado a mano, así el selector nunca "adivina" ni deja un
   // proyecto sin clasificar en ningún lado.
   market: 'US' | 'AR';
+  // Identificador público de cada unidad (ej. "UF 16") — dato permanente de la unidad, declarado
+  // por curaduría. Precio, superficie y orientación de cada unidad se leen en vivo de 2Clics.
+  unitLabels?: Record<number, string>;
 };
 
 // La ficha de Faena es el patrón visual/estructural de referencia (apertura editorial, imágenes,
@@ -145,49 +153,38 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
   {
     slug: 'faena',
     name: 'Proyecto Faena',
+    // El título vigente de 236986 en 2Clics ya es el nombre público ("Faena Residences Miami").
     publicName: null,
-    sourcePropertyId: 187676,
-    humanRef: 'FAB-187676',
-    propertyIds: [187676],
+    sourcePropertyId: 236986,
+    humanRef: 'GAR-236986',
+    propertyIds: [236986],
     market: 'US',
   },
   {
-    slug: 'icon-beach',
-    name: 'Icon Beach',
-    publicName: 'Icon Beach',
-    sourcePropertyId: 187677,
-    humanRef: 'FAB-187677',
-    propertyIds: [187677],
-    market: 'US',
-  },
-  {
-    slug: 'flow-house-miami-worldcenter',
-    name: 'Flow House Miami Worldcenter',
-    publicName: 'Flow House Miami Worldcenter',
-    sourcePropertyId: 187681,
-    humanRef: 'FAB-187681',
-    propertyIds: [187681],
-    market: 'US',
-  },
-  {
-    slug: 'one-hollywood',
-    name: 'One Hollywood',
-    publicName: 'One Hollywood',
-    sourcePropertyId: 187682,
-    humanRef: 'FAB-187682',
-    propertyIds: [187682],
-    market: 'US',
+    slug: 'benavidez-village',
+    name: 'Benavídez Village',
+    publicName: 'Benavídez Village',
+    // 233702 es la unidad de referencia para imágenes/descripción del proyecto (las 5 unidades
+    // comparten el mismo texto). `propertyIds` en orden de UF.
+    sourcePropertyId: 233702,
+    humanRef: 'GAR-233702',
+    propertyIds: [233708, 237474, 237472, 233702, 233707],
+    market: 'AR',
+    unitLabels: {
+      233708: 'UF 11',
+      237474: 'UF 12',
+      237472: 'UF 15',
+      233702: 'UF 16',
+      233707: 'UF 20',
+    },
   },
   {
     slug: 'pacheco-central',
     name: 'Pacheco Central',
-    // El título real de 2Clics es un aviso de unidad puntual ("Pacheco Central, Unidad de Dos
-    // Ambientes a Estrenar…") — nunca publicable como nombre del desarrollo. Nombre público
-    // confirmado contra el propio texto de la descripción real ("Pacheco Central es una propuesta
-    // urbanística residencial...") y corroborado en el sitio del developer (soldati.com).
+    // El título de 2Clics describe la unidad de referencia, no el desarrollo.
     publicName: 'Pacheco Central',
     sourcePropertyId: 233719,
-    humanRef: 'FAB-233719',
+    humanRef: 'GAR-233719',
     propertyIds: [233719],
     market: 'AR',
   },
@@ -203,7 +200,7 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     // 2Clics — NUNCA se usa como sourcePropertyId ni se modifica. Ver auditoría completa en
     // docs/ai/PROJECT_STATE.md ("Domus Brickell Center").
     sourcePropertyId: 236682,
-    humanRef: 'FAB-236682',
+    humanRef: 'GAR-236682',
     propertyIds: [236682],
     market: 'US',
   },
@@ -262,12 +259,11 @@ export type InvestmentOpportunityCuration = {
 
 export const INVESTMENT_OPPORTUNITIES: InvestmentOpportunityCuration[] = [
   {
-    slug: 'proyecto-especial-miami',
-    // Decimocuarta pasada: la propiedad técnica asociada (206734) es un registro placeholder de
-    // 2Clics ("Casa en venta en Miami", U$D 100.000, 1000 m2) — nunca el nombre público de esta
-    // oportunidad. El nombre público real vive acá, curado, y describe la oportunidad tal como se
-    // presenta (participación en un desarrollo residencial waterfront), no la propiedad técnica.
-    name: 'Coconut Grove · Desarrollo residencial waterfront',
+    // 206734 es el vínculo técnico en 2Clics (tipo "Casa", campos de propiedad que no describen
+    // una participación). La oportunidad vigente es 445 N Shore Drive (Normandy Shores, Miami
+    // Beach) — reemplazó a la de Coconut Grove en el CRM (octubre 2026).
+    slug: '445-n-shore-drive',
+    name: '445 N Shore Drive · Normandy Shores',
     sourcePropertyId: 206734,
     humanRef: 'FAB-206734',
     propertyIds: [206734],
@@ -287,4 +283,14 @@ export function getInvestmentOpportunityBySlug(slug: string): InvestmentOpportun
 // desorden arbitrario.
 export function getActiveInvestmentOpportunities(): InvestmentOpportunityCuration[] {
   return INVESTMENT_OPPORTUNITIES.filter((entry) => entry.active).sort((a, b) => a.order - b.order);
+}
+
+// La URL /propiedades/[id] del registro técnico de una oportunidad redirige a su landing.
+export function getInvestmentOpportunityByPropertyId(
+  propertyId: number | null | undefined,
+): InvestmentOpportunityCuration | null {
+  if (propertyId === null || propertyId === undefined) return null;
+  return (
+    INVESTMENT_OPPORTUNITIES.find((entry) => entry.active && entry.propertyIds.includes(propertyId)) || null
+  );
 }

@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import ListingState from '@/components/properties/ListingState';
 import PropertyDetailView from '@/components/properties/PropertyDetailView';
 import { formatPublicLocation } from '@/lib/2clics/format';
 import { getPublicPropertyById, getRelatedPublicProperties } from '@/lib/2clics/listings';
+import { getInvestmentOpportunityByPropertyId, getMasterCatalogExcludedPropertyIds } from '@/lib/site-curation';
 
 type PropertyDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -20,6 +21,14 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
   const { id } = await params;
   const propertyId = parseId(id);
   if (!propertyId) return { title: 'Propiedad | García Inversiones Inmobiliarias' };
+
+  const opportunity = getInvestmentOpportunityByPropertyId(propertyId);
+  if (opportunity) {
+    return {
+      title: `${opportunity.name} | García Inversiones Inmobiliarias`,
+      alternates: { canonical: `/invertir/${opportunity.slug}` },
+    };
+  }
 
   const result = await getPublicPropertyById(propertyId);
   if (!result.property) {
@@ -48,9 +57,15 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
   const propertyId = parseId(id);
   if (!propertyId) notFound();
 
+  // El registro técnico de una oportunidad de inversión no se presenta como "VENTA · CASA".
+  const opportunity = getInvestmentOpportunityByPropertyId(propertyId);
+  if (opportunity) permanentRedirect(`/invertir/${opportunity.slug}`);
+
   const result = await getPublicPropertyById(propertyId);
   const property = result.property;
-  const relatedProperties = property ? await getRelatedPublicProperties(property, 8) : [];
+  const relatedProperties = property
+    ? await getRelatedPublicProperties(property, 8, { excludePropertyIds: getMasterCatalogExcludedPropertyIds() })
+    : [];
 
   return (
     <>

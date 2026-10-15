@@ -117,7 +117,12 @@ const HOW_GARCIA_ANALYZES = [
   { label: 'Estrategia de salida', text: 'Cómo y cuándo se espera recuperar o materializar el capital invertido.' },
 ];
 
-type OpportunityEntry = { opportunity: InvestmentOpportunityCuration; image: PublicImage | null };
+type OpportunityEntry = {
+  opportunity: InvestmentOpportunityCuration;
+  image: PublicImage | null;
+  eyebrow: string;
+  intro: string;
+};
 
 async function loadOpportunities(): Promise<OpportunityEntry[]> {
   const results = await Promise.all(
@@ -126,7 +131,12 @@ async function loadOpportunities(): Promise<OpportunityEntry[]> {
       if (!curation) return null;
       const result = await getPublicPropertyById(opportunity.sourcePropertyId);
       if (!result.property) return null;
-      return { opportunity, image: resolveInvestmentImage(result.property.images, curation.indexImage) };
+      return {
+        opportunity,
+        image: resolveInvestmentImage(result.property.images, curation.indexImage),
+        eyebrow: curation.eyebrow,
+        intro: curation.intro,
+      };
     }),
   );
   return results.filter((entry): entry is OpportunityEntry => entry !== null);
@@ -241,11 +251,11 @@ export default async function InvertirPage() {
           </div>
         </section>
 
-        {/* E. Oportunidad Coconut Grove — card compacta, escala de catálogo, no de landing propia */}
+        {/* E. Oportunidades activas — card compacta, escala de catálogo, no de landing propia */}
         {entries.length ? (
           <section className="invest-opportunity-section">
             <div className="container">
-              {entries.map(({ opportunity, image }) => (
+              {entries.map(({ opportunity, image, eyebrow, intro }) => (
                 <article className="invest-opportunity-card" key={opportunity.slug}>
                   {image ? (
                     <div className="invest-opportunity-media">
@@ -259,13 +269,9 @@ export default async function InvertirPage() {
                     </div>
                   ) : null}
                   <div className="invest-opportunity-copy">
-                    <p className="eyebrow">Oportunidad de inversión · Miami</p>
+                    <p className="eyebrow">{eyebrow}</p>
                     <h2>{opportunity.name}</h2>
-                    <p>
-                      Una forma de participar en el desarrollo de residencias en Miami,
-                      acompañando económicamente el proyecto hasta su construcción y posterior
-                      venta — no la compra de una propiedad terminada.
-                    </p>
+                    <p>{intro}</p>
                     <Link className="btn btn-primary" href={`/invertir/${opportunity.slug}`}>
                       Conocer la oportunidad
                     </Link>

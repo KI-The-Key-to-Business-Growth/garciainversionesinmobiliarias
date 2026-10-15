@@ -7826,3 +7826,159 @@ body[data-page-type='thank_you'] {
     font-size: 1.6rem;
   }
 }
+
+/* Tabla de unidades de un desarrollo (Benavídez Village) — mismo lenguaje que la tabla
+   comparativa de /invertir: sin fondos, divisores finos. En mobile cada fila pasa a ser un bloque
+   apilado con su etiqueta, para no forzar scroll horizontal. */
+.project-units-table-section {
+  padding: 56px 0;
+}
+
+.project-units-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.project-units-heading h2 {
+  margin: 0;
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.project-units-heading p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--text-soft);
+}
+
+.project-units-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.project-units-table th,
+.project-units-table td {
+  text-align: left;
+  padding: 14px 16px 14px 0;
+  border-top: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.project-units-table thead th {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--navy);
+  border-top: none;
+  padding-bottom: 10px;
+}
+
+.project-units-table tbody th {
+  font-family: var(--font-jost), sans-serif;
+  font-weight: 600;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+.project-units-table td {
+  font-size: 0.92rem;
+  color: var(--text-soft);
+}
+
+.project-units-link {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.project-units-link a {
+  color: var(--navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.project-units-link a:hover {
+  color: var(--gold);
+}
+
+@media (max-width: 640px) {
+  .project-units-heading {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .project-units-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .project-units-table,
+  .project-units-table tbody,
+  .project-units-table tr,
+  .project-units-table th,
+  .project-units-table td {
+    display: block;
+  }
+
+  .project-units-table tr {
+    border-top: 1px solid var(--line);
+    padding: 12px 0;
+  }
+
+  .project-units-table th,
+  .project-units-table td {
+    border-top: none;
+    padding: 2px 0;
+  }
+
+  .project-units-table td[data-label] {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .project-units-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 0.78rem;
+    color: var(--text-soft);
+  }
+
+  .project-units-link {
+    text-align: left;
+    padding-top: 6px;
+  }
+}
+
+/* Grupos de imágenes horizontales (fotos de obra / renders de /invertir) — misma grilla que
+   "Interiores", con proporción apaisada y una aclaración de qué muestran las imágenes. */
+.project-interiors-heading p {
+  margin: 8px auto 0;
+  max-width: 620px;
+  color: var(--text-soft);
+}
+
+.project-interiors-grid--landscape .project-interiors-media {
+  aspect-ratio: 4 / 3;
+}
+
+.project-interiors-note {
+  margin: 12px auto 0;
+  max-width: 1080px;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+/* Párrafo + lista en el mismo bloque (ej. "Unidad de referencia"): aire entre ambos. */
+.project-block-text + .project-block-list {
+  margin-top: 18px;
+}

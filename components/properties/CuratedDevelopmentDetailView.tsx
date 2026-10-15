@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import PropertyInquiryPanel from '@/components/properties/PropertyInquiryPanel';
 import PropertyCard from '@/components/properties/PropertyCard';
 import { googleMapsEmbedUrl, googleMapsSearchUrl } from '@/components/properties/PropertyMap';
@@ -9,6 +10,8 @@ import {
   formatCurrencyAmount,
   formatDevelopmentPriceRange,
   getDevelopmentEditorialCuration,
+  resolveDevelopmentUnitRows,
+  resolveReferenceUnitFacts,
   resolveSectionImages,
   resolveSourceTextSegment,
   sumDepositSchedule,
@@ -90,9 +93,9 @@ export default function CuratedDevelopmentDetailView({
   // confirmado por curaduría → título real de la fuente, como Faena) — `curation.name` queda
   // solo como último fallback defensivo si ni siquiera eso resolvió.
   const displayName = source.title || curation.name;
-  const location = formatPublicLocation(source.location, source.region);
   const description = source.description || '';
   const editorial = getDevelopmentEditorialCuration(curation.slug);
+  const location = editorial?.publicLocation || formatPublicLocation(source.location, source.region);
 
   // Sin curaduría editorial declarada para este desarrollo: degrada con gracia a apertura + CTA
   // de cierre, sin inventar secciones ni intentar adivinar bloques de una descripción no curada.
@@ -100,7 +103,9 @@ export default function CuratedDevelopmentDetailView({
   const introSegment = editorial ? editorial.introSegment : ({ type: 'firstParagraphLead' } as const);
   const introText = resolveSourceTextSegment(description, introSegment);
 
-  const hasIndependentUnits = units.length > 1;
+  const sourceUnit = units.find((unit) => unit.propertyId === source.propertyId) || null;
+  const unitRows = editorial?.unitsTable ? resolveDevelopmentUnitRows(curation, units) : [];
+  const hasIndependentUnits = !editorial?.unitsTable && units.length > 1;
 
   // Amenities editoriales — opt-in explícito por desarrollo (ver lib/desarrollos.ts), solo con 2+
   // reales estructurados de 2Clics, filtrados primero contra amenities que no aportan al relato
@@ -167,7 +172,16 @@ export default function CuratedDevelopmentDetailView({
 
       {editorial
         ? editorial.sections.map((section) =>
-            renderSection(section, source.images, description, priceRangeField, displayName, source.price, source.currency, source.hidePrice),
+            renderSection(section, {
+              images: source.images,
+              description,
+              priceRangeField,
+              displayName,
+              sourcePrice: source.price,
+              sourceCurrency: source.currency,
+              sourceHidePrice: source.hidePrice,
+              referenceUnit: sourceUnit,
+            }),
           )
         : null}
 
@@ -222,6 +236,47 @@ export default function CuratedDevelopmentDetailView({
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+      ) : null}
+
+      {unitRows.length ? (
+        <section className="project-units-table-section">
+          <div className="container">
+            <div className="project-units-heading">
+              <h2>{editorial?.unitsTable?.title}</h2>
+              <p>
+                {unitRows.length === 1 ? '1 unidad publicada' : `${unitRows.length} unidades publicadas`}
+              </p>
+            </div>
+            <table className="project-units-table">
+              <thead>
+                <tr>
+                  <th scope="col">Unidad</th>
+                  <th scope="col">Superficie total</th>
+                  <th scope="col">Orientación</th>
+                  <th scope="col">Precio</th>
+                  <th scope="col">
+                    <span className="sr-only">Ficha</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {unitRows.map((row) => (
+                  <tr key={row.propertyId}>
+                    <th scope="row" data-label="Unidad">
+                      {row.label || '—'}
+                    </th>
+                    <td data-label="Superficie total">{row.totalArea || '—'}</td>
+                    <td data-label="Orientación">{row.orientation || '—'}</td>
+                    <td data-label="Precio">{row.price || '—'}</td>
+                    <td className="project-units-link">
+                      <Link href={row.href}>Ver ficha →</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       ) : null}
@@ -338,19 +393,26 @@ function renderLocationMap(map: DevelopmentLocationMap | undefined, displayName:
   );
 }
 
-function renderSection(
-  section: DevelopmentSection,
-  images: PublicImage[],
-  description: string,
-  priceRangeField: DevelopmentSnapshotField | null,
-  displayName: string,
-  sourcePrice: number | null,
-  sourceCurrency: string,
-  sourceHidePrice: boolean,
-) {
+type SectionContext = {
+  images: PublicImage[];
+  description: string;
+  priceRangeField: DevelopmentSnapshotField | null;
+  displayName: string;
+  sourcePrice: number | null;
+  sourceCurrency: string;
+  sourceHidePrice: boolean;
+  referenceUnit: PublicProperty | null;
+};
+
+function renderSection(section: DevelopmentSection, ctx: SectionContext) {
+  const { images, description, priceRangeField, displayName, sourcePrice, sourceCurrency, sourceHidePrice } = ctx;
   const sectionImages: PublicImage[] = resolveSectionImages(images, section.imageIndexes);
   const segment = resolveSourceTextSegment(description, section.sourceTextSegment);
-  const items = Array.isArray(segment) ? segment : [];
+  const items = section.referenceUnit
+    ? resolveReferenceUnitFacts(ctx.referenceUnit, section.referenceUnit.uncoveredLabel)
+    : Array.isArray(segment)
+      ? segment
+      : [];
   const text = typeof segment === 'string' ? segment : '';
   const hasImage = sectionImages.length > 0;
 

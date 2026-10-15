@@ -1,3 +1,10 @@
+import {
+  formatArea,
+  formatCount,
+  formatPrice,
+  formatPublicDisplayValue,
+  propertyHref,
+} from '@/lib/2clics/format';
 import type { DevelopmentCuration } from '@/lib/site-curation';
 import type { PublicImage, PublicLocation, PublicProperty, TwoclicsAmenity, TwoclicsRegion } from '@/lib/2clics/types';
 
@@ -205,10 +212,18 @@ export type DevelopmentSection = {
   commercialReferenceCurrency?: string;
   commercialSchedule?: DevelopmentDepositStep[];
   commercialBalanceNote?: string;
+  // La lista del bloque se arma EN VIVO con los datos de la unidad fuente (ambientes, superficies,
+  // precio sin "Desde") — para desarrollos cuyo registro de 2Clics es una unidad de referencia
+  // (Pacheco Central). Nunca se guardan esas medidas en la curaduría. `uncoveredLabel` nombra la
+  // superficie descubierta de esa unidad (ej. "balcón").
+  referenceUnit?: { uncoveredLabel: string };
 };
 
 export type DevelopmentEditorialCuration = {
   heroImageIndex: number;
+  // Ubicación pública editorial de la apertura — reemplaza la que se arma desde la ubicación de
+  // 2Clics cuando esa no alcanza para describir el desarrollo (ej. Faena: "Miami River").
+  publicLocation?: string;
   // Imagen de portada del índice /desarrollos (vigesimotercera pasada, FASE 3) — override
   // editorial explícito, independiente de `heroImageIndex` cuando conviene una imagen distinta
   // (ej. Icon Beach/One Hollywood: el hero es el exterior completo de mayor resolución, pero
@@ -263,6 +278,10 @@ export type DevelopmentEditorialCuration = {
   // declarar, el modal conserva exactamente su título/mensaje inicial genéricos actuales.
   ctaModalTitle?: string;
   ctaInitialMessage?: string;
+  // Tabla de unidades disponibles (Benavídez Village) — una fila por unidad ACTIVA de
+  // `curation.propertyIds`, con precio/superficie/orientación leídos en vivo. La cantidad que se
+  // muestra es la de unidades que 2Clics devuelve hoy, nunca un número fijo.
+  unitsTable?: { title: string };
 };
 
 // Amenities estructuradas de 2Clics que NO aportan al relato editorial de NINGÚN desarrollo,
@@ -279,128 +298,33 @@ export function filterEditorialAmenities(amenities: TwoclicsAmenity[]): Twoclics
 
 // ── Auditorías ───────────────────────────────────────────────────────────────────────────────────
 //
-// Faena (187676) — contenido/imágenes sin cambios respecto a la decimotercera pasada (ya
-// aprobado). Snapshot (decimoctava pasada) con datos verificados contra faena.com/residences/
-// miami-river y faenaresidencesmiami.com (developer: Fortune International Group + KAR
-// Properties, en asociación con Alan Faena — el propio Alan Faena firma la descripción real de
-// 2Clics; arquitectura: Rafael Viñoly Architects; interiorismo: Bryan O'Sullivan Studio;
-// paisajismo: Sasaki Studio). Cantidad de unidades/pisos NO se confirmó en ningún sitio oficial
-// consultado — se omiten. `imageAspect` de "El edificio"/"Residencias" fijado explícitamente a
-// los ratios reales ya aprobados (5/3 y 3/4) para no alterar el crop de imágenes ya validadas.
+// Faena — fuente 236986 (registro activo; el 187676 quedó fuera de mercado). Re-auditado contra la
+// External API (2026-10-15): mismas 14 imágenes en el mismo orden que el registro anterior, mismos
+// markers "El edificio"/"Residencias", sin el tag interno [FABIANAGA-456], building_date
+// ESTRENAR, y U$D 1.300.000 coincide con "1 Habitación desde" de su tabla de tipologías — la
+// curaduría aprobada se mantiene sin cambios. Snapshot verificado contra faena.com/residences/
+// miami-river (Rafael Viñoly Architects; Bryan O'Sullivan Studio). El mapa usa el texto de
+// ubicación curado como query.
 //
-// VIGESIMOTERCERA PASADA — Faena no tenía ninguna sección de ubicación (a diferencia de Icon
-// Beach/One Hollywood). Se agrega "Miami River y Brickell", texto curado a partir de la MISMA
-// fuente oficial ya usada para el snapshot (faena.com/residences/miami-river: "situated along the
-// Miami River in the Brickell area... proximity to world-class restaurants, art galleries, and
-// entertainment near Brickell City Centre") — sin volver a buscar, ya estaba verificado. Mapa con
-// `lat`/`long` reales de 2Clics DESCARTADOS esta pasada (ver más abajo, "Auditoría de mapa") — se
-// usa el texto de ubicación como query. Se agregan también "Por qué considerar Faena" y "Puede ser
-// una alternativa para", ambos con hechos ya confirmados en pasadas anteriores, sin datos nuevos.
-// `cardImageIndex: 0` — la card ya usaba esta misma imagen (portada real), sin cambios.
+// Benavídez Village — 5 unidades activas (UF 11, 12, 15, 16, 20) agrupadas en un solo desarrollo.
+// Todo el copy sale de la descripción vigente de 2Clics (idéntica en las 5 unidades): 25 viviendas
+// de dos plantas con jardín privado, piscina/SUM/parrillas/seguridad 24 hs, ~5 min de Panamericana,
+// entrega estimada primer trimestre de 2027. Precio/superficie/orientación de cada unidad se leen
+// en vivo (tabla de unidades). Imágenes: las 20 fotos reales de la unidad de referencia (233702),
+// tomadas con el proyecto en obra — todavía no hay material editorial oficial en el repo.
 //
-// Icon Beach (187677) — auditoría completa de imágenes en la decimoséptima pasada, revisada de
-// nuevo en la decimoctava:
-// - índice 14 (usado hasta ahora en "El edificio") es una COMPOSICIÓN gráfica tipo brochure: el
-//   render de la torre aparece recortado dentro de un marco rectangular superpuesto sobre una
-//   textura de fondo de olas/espuma a pantalla completa — no es una foto/render arquitectónico
-//   limpio, es una pieza de marketing. Reemplazado por el índice 2 (exterior real: la torre vista
-//   desde una galería/pérgola ajardinada de acceso, sin marcos ni textos superpuestos, 1520px).
-// - índice 15 sigue excluido (eslogan comercial grande incrustado: "UNDERSTATED LUXURY,
-//   EFFORTLESS STYLE...").
-// - índice 16 sigue sin usarse como imagen (brochure de texto), pero sus datos reales siguen
-//   alimentando el copy de "Hollywood Beach y la ubicación".
-// - "Permite mascotas" se retira de la sección de Amenities (ver `NON_EDITORIAL_AMENITY_NAMES`) —
-//   quedan Sauna y Piscina, todavía ≥2, la sección se mantiene.
-// - BUG DE RENDER CORREGIDO en la decimoctava pasada: el bloque "Hollywood Beach y la ubicación"
-//   declaraba `curatedText` (un párrafo) con `layout: 'image-right'`, pero
-//   `CuratedDevelopmentDetailView` solo renderizaba `items` (listas) en ese layout — el párrafo
-//   nunca llegaba a pintarse. Corregido en el componente.
+// Pacheco Central — 233719 es la unidad de referencia (2 ambientes): sus datos se muestran como
+// tales, en vivo, nunca como características del desarrollo. Copy del proyecto sincronizado con la
+// descripción vigente de 2Clics (tipologías de 1 a 4 ambientes, coworking/laundry, etapas de
+// entrega dic. 2026 / dic. 2029). Coordenadas reales de 2Clics (General Pacheco) usadas en el mapa.
 //
-// VIGESIMOTERCERA PASADA — se agrega el mapa dentro de "Hollywood Beach y la ubicación" (mismo
-// texto ya curado, `lat`/`long` de 2Clics DESCARTADOS, ver auditoría de mapa más abajo). Se agrega
-// "Por qué considerar Icon Beach" y "Puede ser una alternativa para", con hechos ya verificados en
-// la decimoséptima pasada (Related Group/BH Group, CFE Architects, Meyer Davis, Witkin Hults +
-// Partners — nunca se vuelve a nombrar al developer en el copy público, solo en comentarios
-// internos ya existentes). `cardImageIndex: 5` (antes la card usaba `images[0]`, el porte-cochère
-// de acceso — funcional pero menos evocador que el hero real, la torre completa con océano de
-// mayor resolución) — mejora explícita pedida en FASE 14.
-//
-// Flow House Miami Worldcenter (187681) — auditoría completa de 21 imágenes (decimoctava pasada):
-// - índice 1 es un plano aéreo con el ISOTIPO "flow" escrito directamente en el mosaico de la
-//   pileta — pieza de marca, no foto editorial. Excluido.
-// - índices 16 a 20 son páginas completas de un brochure (collage con logo "flow HOUSE", líneas
-//   doradas decorativas, y el texto íntegro de la ficha comercial, incluida la promesa "Programa
-//   de renta garantizada... 6% de retorno neto anual" IMPRESA en los píxeles de la imagen).
-//   Excluidos sin excepción — no hay ninguna imagen de exterior de torre utilizable en todo el set.
-// - índices 2/3, 5/6, 10/11 y 14/15 son pares de casi-duplicados — se usa un solo índice de cada
-//   par. índice 7 tiene el texto "FLOW HOUSE" impreso — evitado.
-// - CONSECUENCIA EDITORIAL: sin ninguna foto de exterior de torre ni de una residencia individual
-//   utilizables, la ficha NO tiene secciones "El edificio" ni "Residencias" con imagen.
-// - Developer verificado (Hoodline, nota de prensa fechada 2026-04, y resident.com): Flow (Adam
-//   Neumann) en asociación con Merrimac Ventures — documentado internamente, nunca público.
-// - PROHIBICIÓN EXPLÍCITA: el título real de 2Clics contiene "Renta 6 % Anual" y la descripción
-//   completa el reclamo de "renta garantizada" — verificado ausente de toda capa pública.
-//
-// VIGESIMOTERCERA PASADA — se agrega "Miami Worldcenter y la ubicación" (Flow House no tenía
-// ninguna sección de ubicación), texto curado a partir de fuentes ya verificadas en la
-// decimoctava pasada (Hoodline: "697 North Miami Avenue places you inside Miami Worldcenter, the
-// second-largest mixed-use development in the United States after Hudson Yards"). Mapa con texto
-// de ubicación como query (sin lat/long confiables, ver auditoría de mapa). "Vida en Flow House"
-// pasa a usar `groups` (FASE 10): la propia descripción real de 2Clics YA organiza sus amenidades
-// en "BIENESTAR"/"FLUJO DE TRABAJO"/"EXPERIENCIA" — se usa esa estructura real, no una inventada.
-// Se agrega "Por qué considerar Flow House" y "Puede ser una alternativa para". `cardImageIndex: 0`
-// (misma imagen que ya usaba la card, sin cambios — es la única imagen de exterior limpia del set).
-//
-// One Hollywood (187682) — auditoría completa de 13 imágenes (decimoctava pasada): todas
-// utilizables, sin texto de marketing incrustado. índice 11 es una foto aérea real (no render) de
-// Downtown Hollywood/ArtsPark at Young Circle — confirma visualmente la ubicación real. índice 12
-// es un casi-duplicado del índice 2 — se usa el 2. Developer verificado independientemente en
-// onehollywoodresidences.us, onehollywoodresidences.com y una nota de South Florida Business &
-// Wealth: Star Developers Group (documentado internamente, nunca público). Arquitectura (BC
-// Architects) corroborada por dos fuentes, confianza media. Interiorismo NO se publica: fuentes
-// contradictorias. Dirección exacta también en conflicto — se omite cualquier número de calle.
-//
-// VIGESIMOTERCERA PASADA — mapa agregado dentro de "Downtown Hollywood y la ubicación" (texto ya
-// curado como query, sin lat/long confiables). "Por qué considerar One Hollywood" y "Puede ser una
-// alternativa para" con hechos ya verificados. `cardImageIndex: 2` (antes la card usaba
-// `images[0]`, el porte-cochère — funcional pero el hero real, exterior completo de mayor
-// resolución y composición más limpia según su propia auditoría, funciona mejor como portada).
-//
-// Pacheco Central (233719) — primer desarrollo de Argentina (vigesimosegunda pasada), re-auditado
-// esta pasada contra la 2Clics External API en vivo y soldati.com/emprendimiento/
-// pacheco-central--4729 (developer, sin cambios respecto a la pasada anterior: mismo precio
-// 112.000 U$D de la unidad puntual, misma descripción, mismas 6 imágenes, mismos 260
-// unidades/8 módulos). El registro fuente sigue siendo el aviso de UNA unidad de 2 ambientes — sus
-// datos (46 m², 1 baño, sin cochera) NUNCA se presentan como si fueran de todo el desarrollo.
-//
-// VIGESIMOTERCERA PASADA:
-// - `cardImageIndex: 4` — la card usaba `images[0]` (living retrato, 719×1600) que no funciona
-//   como portada en el crop 16:9 de la card compacta (FASE 3, problema señalado explícitamente).
-//   Se usa la misma imagen horizontal ya elegida como hero (balcón/parrilla con vista al parque,
-//   1600×900) — es la única imagen del set con orientación apta para ese crop. No se forzó ningún
-//   render externo ni asset local: el material real de 2Clics ya tenía una opción funcional.
-// - Mapa: `lat -34.4536035`/`long -58.6276873` SÍ se usan (a diferencia de los 4 de Miami) — son
-//   coordenadas reales y coherentes con General Pacheco, Tigre (verificado por rango geográfico:
-//   Buenos Aires/Tigre está en el hemisferio sur-oeste, lat negativa ~-34, long negativa ~-58 —
-//   consistente; no es (0,0) ni un valor fuera de rango).
-// - "Por qué considerar Pacheco Central" y "Puede ser una alternativa para" agregados, con hechos
-//   ya confirmados (260 unidades/8 módulos/272 cocheras/amenities de soldati.com).
-//
-// AUDITORÍA DE MAPA (vigesimotercera pasada, FASE 8) — se re-consultó `lat`/`long` en vivo para
-// los 5 property_app_id: los 4 de Miami devuelven `lat: 0, long: 0` — "Null Island", el punto
-// (0,0) del océano Atlántico frente a África, un valor placeholder/no seteado del CRM, NUNCA una
-// coordenada real de ningún desarrollo. Se descartaron explícitamente (ver `hasSaneCoordinates()`
-// en CuratedDevelopmentDetailView.tsx) — mostrar un pin ahí habría sido peor que no mostrar mapa.
-// En su lugar, el mapa de esos 4 usa como texto de búsqueda el mismo string de "Ubicación" ya
-// verificado y mostrado en el snapshot (ej. "Hollywood Beach, Florida") — Google Maps geolocaliza
-// ese texto con precisión de área, suficiente y honesto dado que no hay una dirección exacta
-// confirmada para ninguno de los 4 (ver conflictos de fuente ya documentados en pasadas
-// anteriores). Pacheco Central es el único de los 5 con coordenadas reales utilizables.
+// Domus Brickell Center — ver bloque propio más abajo (sin cambios en esta sincronización).
 const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
   faena: {
     heroImageIndex: 0, // exterior nocturno con marquesina FAENA — portada
     cardImageIndex: 0,
     priceRepresentsProjectRange: true, // 1.300.000 U$D coincide con el mínimo real de la tabla de tipologías
+    publicLocation: 'Miami River · Miami · Florida · Estados Unidos',
     introSegment: { type: 'firstParagraphLead' },
     sections: [
       {
@@ -411,10 +335,7 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         snapshotFields: [
           { label: 'Ubicación', value: 'Miami River, Brickell' },
           { label: 'Tipologías', value: '1 a 4 dormitorios · River Lofts · Sky Lofts' },
-          // "Estado" (vigesimoséptima pasada) — re-auditado en vivo contra 187676: `building_date:
-          // "ESTRENAR"` en el registro real de 2Clics, mismo mecanismo ya usado para Domus ("En
-          // construcción") — acá el valor real es "A estrenar", no "En construcción": son estados
-          // distintos del mismo campo, no se asume uno por el otro.
+          // `building_date: "ESTRENAR"` en 236986 (re-auditado 2026-10-15).
           { label: 'Estado', value: 'A estrenar' },
           { label: 'Arquitectura', value: 'Rafael Viñoly Architects' },
           { label: 'Interiorismo', value: "Bryan O'Sullivan Studio" },
@@ -442,7 +363,8 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         },
         imageIndexes: [],
         layout: 'text-only',
-        map: { queryLabel: 'Miami River, Brickell, Florida' },
+        // Sin mapa: no hay todavía una ubicación del desarrollo verificada para publicar como pin
+        // (la dirección/coordenadas de 236986 en el CRM no se usan para esto).
       },
       {
         key: 'edificio',
@@ -519,13 +441,17 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
     // falta variar, no se usa acá para no competir con idx4/idx3 recién auditadas.
     interiors: { title: 'Interiores y residencias', imageIndexes: [4, 3] },
   },
-  'icon-beach': {
-    heroImageIndex: 5, // torre + pileta + océano en un mismo plano — la toma de mayor resolución (1520px)
-    cardImageIndex: 5, // mismo hero — más evocador que la card anterior (images[0], porte-cochère)
-    priceRepresentsProjectRange: true, // 900.000 U$D coincide con "desde $900,000 de 1 dormitorio"
+  'benavidez-village': {
+    // Imágenes de 233702 (fotos reales de obra, máx. 1024px): idx7 exterior de las viviendas con
+    // jardín — única toma de fachada horizontal utilizable; idx12 living con ventanal al jardín;
+    // idx2 planta baja completa; idx0 cocina; idx10 dormitorio. Excluidas: movimiento de suelo
+    // (idx5, idx13), pasillo de obra (idx3), primeros planos de anafe/cajón (idx9, idx15).
+    heroImageIndex: 7,
+    cardImageIndex: 7,
+    priceRepresentsProjectRange: false, // cada unidad tiene su precio — se muestran en la tabla
     introSegment: {
       type: 'curatedText',
-      text: 'Una torre residencial frente al mar en Hollywood Beach, entre Miami y Fort Lauderdale, con vistas al Océano Atlántico y al Intracoastal Waterway.',
+      text: 'Un conjunto residencial de 25 viviendas de dos plantas con jardín privado, en Benavídez, Tigre.',
     },
     sections: [
       {
@@ -534,85 +460,60 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         imageIndexes: [],
         layout: 'snapshot',
         snapshotFields: [
-          { label: 'Ubicación', value: 'Hollywood Beach, Florida' },
-          { label: 'Unidades', value: '350' },
-          { label: 'Pisos', value: '38' },
-          { label: 'Tipologías', value: '1 a 3 dormitorios' },
-          // "Estado" (vigesimoséptima pasada) — re-auditado en vivo contra 187677:
-          // `building_date: "ESTRENAR"` en el registro real de 2Clics.
-          { label: 'Estado', value: 'A estrenar' },
-          { label: 'Arquitectura', value: 'CFE Architects' },
+          { label: 'Ubicación', value: 'Benavídez, Tigre' },
+          { label: 'Viviendas', value: '25' },
+          { label: 'Tipología', value: 'Dúplex de 3 ambientes con jardín' },
+          // `building_date: "UNDER_CONSTRUCTION"` en las 5 unidades.
+          { label: 'Estado', value: 'En construcción' },
+          { label: 'Entrega estimada', value: 'Primer trimestre de 2027' },
         ],
-      },
-      {
-        key: 'momento-visual',
-        sourceTextSegment: { type: 'none' },
-        imageIndexes: [0], // porte-cochère de acceso
-        layout: 'image-large',
       },
       {
         key: 'proyecto',
         title: 'El proyecto',
         sourceTextSegment: {
           type: 'curatedText',
-          text: 'Icon Beach ocupa un terreno frente al mar en Hollywood Beach, con vistas al Atlántico y al Intracoastal Waterway. El interiorismo está a cargo de Meyer Davis y el paisajismo de Witkin Hults + Partners.',
+          text: 'Benavídez Village reúne 25 viviendas de dos plantas, cada una con jardín privado y cochera. El conjunto suma áreas parquizadas y espacios de uso común con piscina, SUM, parrillas y seguridad 24 hs.',
         },
         imageIndexes: [],
         layout: 'text-only',
       },
       {
+        key: 'residencias',
+        title: 'Las viviendas',
+        sourceTextSegment: {
+          type: 'curatedList',
+          items: [
+            '3 ambientes y 2 dormitorios',
+            'Living comedor con cocina integrada',
+            '1 baño completo y toilette',
+            'Jardín privado y cochera',
+            'Posibilidad de incorporar pileta propia, con un diferencial sobre el valor final',
+          ],
+        },
+        imageIndexes: [12],
+        layout: 'image-right',
+      },
+      {
         key: 'ubicacion',
-        title: 'Hollywood Beach y la ubicación',
+        title: 'Benavídez y la ubicación',
         sourceTextSegment: {
           type: 'curatedText',
-          text: 'Hollywood Beach está ubicada entre Miami y Fort Lauderdale, sobre una franja costera conocida por su boardwalk de casi cuatro kilómetros junto al Atlántico. La zona combina playa, marinas y clubes náuticos con acceso a campos de golf, restaurantes y comercios en las cercanías de Aventura y Bal Harbour.',
+          text: 'Benavídez Village se ubica en Benavídez, Tigre, aproximadamente a 5 minutos de la Panamericana, próximo a servicios y puntos de interés.',
         },
-        imageIndexes: [13], // plano aéreo real del proyecto — muestra el frente de agua directo
-        layout: 'image-right',
-        map: { queryLabel: 'Hollywood Beach, Florida' },
-      },
-      {
-        key: 'edificio',
-        title: 'El edificio',
-        sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Porte-cochère de acceso y lobby con recepción',
-            'Marina propia',
-            'Beach club de uso exclusivo para residentes',
-            'Frente directo al Intracoastal Waterway',
-            'Estacionamiento asignado por unidad, con servicio de valet',
-          ],
-        },
-        imageIndexes: [2], // exterior real — torre vista desde la galería/pérgola ajardinada de acceso
-        layout: 'image-left',
-      },
-      {
-        key: 'residencias',
-        title: 'Residencias',
-        sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Residencias de 1 a 3 dormitorios',
-            'Ventanales de piso a techo',
-            'Balcones privados',
-            'Cocinas totalmente equipadas',
-            'Interiorismo a cargo de Meyer Davis',
-          ],
-        },
-        imageIndexes: [7], // living interior real, con vista
-        layout: 'image-right',
+        imageIndexes: [],
+        layout: 'text-only',
+        map: { queryLabel: 'Benavídez, Tigre, Argentina', lat: -34.4171266, long: -58.6954548 },
       },
       {
         key: 'reasons',
-        title: 'Por qué considerar Icon Beach',
+        title: 'Por qué considerar Benavídez Village',
         sourceTextSegment: {
           type: 'curatedList',
           items: [
-            'Frente directo al mar en Hollywood Beach, con vistas al Atlántico y al Intracoastal Waterway.',
-            'Marina propia y beach club de uso exclusivo para residentes.',
-            'Interiorismo de Meyer Davis y paisajismo de Witkin Hults + Partners.',
-            'Residencias de 1 a 3 dormitorios, con ventanales de piso a techo y balcones privados.',
+            'Viviendas de dos plantas con jardín privado y cochera, en un conjunto de escala reducida.',
+            'Espacios comunes con piscina, SUM, parrillas y seguridad 24 hs.',
+            'Ubicación a aproximadamente 5 minutos de la Panamericana.',
           ],
         },
         imageIndexes: [],
@@ -623,304 +524,7 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         title: 'Puede ser una alternativa para',
         sourceTextSegment: {
           type: 'curatedText',
-          text: 'Puede ser una alternativa para quienes priorizan la cercanía al mar y buscan una residencia frente a la playa en Hollywood Beach, con marina y beach club propios.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-      {
-        // (vigesimoséptima pasada, corregido en la vigesimoctava) — mismo criterio que Faena: el
-        // precio es dato D, ya resuelto en runtime en el snapshot (`priceRepresentsProjectRange:
-        // true`, auditado en la vigésima pasada: 900.000 U$D coincide con "desde $900,000 de 1
-        // dormitorio") — este bloque referencia ese dato, nunca repite el monto en copy estático.
-        key: 'puede-no-tener-sentido',
-        title: 'Puede no tener sentido si',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'Preferís vivir en el centro de Miami en lugar de una zona costera, o buscás una unidad de entrada más accesible que el precio desde ya indicado arriba.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-      {
-        key: 'garcia-acompanamiento',
-        title: 'El rol de García Inversiones',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'En Icon Beach, el trabajo de García Inversiones es entender tu objetivo, explicar el proyecto, ayudarte a evaluar si tiene sentido para lo que buscás, y solicitar y contrastar la información vigente antes de avanzar. García Inversiones no administra el desarrollo ni es parte de él, y no reemplaza el asesoramiento legal o fiscal que un proceso de este tipo requiere.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-    ],
-    amenities: {
-      imageIndex: 11, // pileta a nivel de suelo, toma distinta a la de apertura
-      layout: 'image-left',
-    },
-    // idx6 ("GATHERING LOUNGE" según su propio pie de imagen) se descartó para este bloque — es un
-    // espacio común, no una residencia, y el título del bloque exige poder afirmar que lo es.
-    // idx8 (baño real, con vista a un dormitorio a través de la puerta — pie de imagen "BATHROOM")
-    // es la única interior de unidad SIN USAR en el resto de la ficha (idx7 ya está en
-    // "Residencias") — un solo image, sin rellenar con espacios comunes.
-    interiors: { title: 'Interiores', imageIndexes: [8] },
-  },
-  'flow-house-miami-worldcenter': {
-    heroImageIndex: 0, // pileta y patio con pabellón — única toma de exterior limpia del set
-    cardImageIndex: 0,
-    priceRepresentsProjectRange: true, // 450.000 U$D coincide con "desde los $450s"
-    introSegment: {
-      type: 'curatedText',
-      text: 'Una torre residencial en Miami Worldcenter pensada en torno al bienestar, el trabajo y la vida en comunidad.',
-    },
-    sections: [
-      {
-        key: 'snapshot',
-        sourceTextSegment: { type: 'none' },
-        imageIndexes: [],
-        layout: 'snapshot',
-        snapshotFields: [
-          { label: 'Ubicación', value: 'Miami Worldcenter, Downtown Miami' },
-          { label: 'Unidades', value: '466' },
-          { label: 'Pisos', value: '41' },
-          { label: 'Tipologías', value: 'Estudio a 2 dormitorios' },
-          // "Estado" (vigesimoséptima pasada) — re-auditado en vivo contra 187681:
-          // `building_date: "ESTRENAR"` en el registro real de 2Clics.
-          { label: 'Estado', value: 'A estrenar' },
-          { label: 'Interiorismo', value: 'Cola Blanca · Flow Furnishings' },
-        ],
-      },
-      {
-        key: 'proyecto',
-        title: 'El proyecto',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'Flow House ocupa una manzana de Miami Worldcenter, el distrito de uso mixto en desarrollo en el centro de Miami. El edificio organiza más de 4.280 metros cuadrados de amenidades en tres ejes — bienestar, espacios de trabajo y vida social — pensados como una extensión de cada residencia.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-      {
-        key: 'ubicacion',
-        title: 'Miami Worldcenter y la ubicación',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'Miami Worldcenter es uno de los distritos de uso mixto en desarrollo más grandes de Estados Unidos, en el centro de Miami. Combina residencias, oficinas, comercios y espacio público en un entorno caminable, con conexión directa al resto del centro de la ciudad.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-        map: { queryLabel: 'Miami Worldcenter, Downtown Miami, Florida' },
-      },
-      {
-        key: 'residencias',
-        title: 'Residencias',
-        sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Residencias completamente amuebladas',
-            'Cocinas gourmet disponibles',
-            'Balcones privados con vistas en algunas unidades',
-            'Lavadora y secadora en la unidad',
-            'Edificio que admite mascotas',
-          ],
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-      {
-        key: 'bienestar',
-        title: 'Vida en Flow House',
-        // Grupos reales: la propia descripción de 2Clics organiza las amenidades del edificio en
-        // estos 3 ejes con encabezado propio ("BIENESTAR"/"FLUJO DE TRABAJO"/"EXPERIENCIA") — se
-        // usa esa estructura real (FASE 10), no una categorización inventada. Se muestra un
-        // subconjunto representativo de cada eje (no las 24 líneas completas) para evitar ruido.
-        sourceTextSegment: { type: 'none' },
-        groups: [
-          {
-            title: 'Bienestar',
-            items: ['Spa, sauna y baño de vapor', 'Piscina lap de 126 pies', 'Estudio de Pilates y sala de meditación', 'Gimnasio Premier Fitness y CrossFit'],
-          },
-          {
-            title: 'Flujo de trabajo',
-            items: ['Espacio de coworking', 'Salón para residentes', 'Salas de conferencias'],
-          },
-          {
-            title: 'Experiencia',
-            items: ['Club Social Flow', 'Cafetería', 'Área de parrilla'],
-          },
-        ],
-        imageIndexes: [4], // estudio de pilates/reformer, ambiente real sin texto de marca
-        layout: 'image-left',
-      },
-      {
-        key: 'momento-visual',
-        sourceTextSegment: { type: 'none' },
-        imageIndexes: [10], // lounge social con bar, ambiente real
-        layout: 'image-large',
-      },
-      {
-        key: 'reasons',
-        title: 'Por qué considerar Flow House',
-        sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Ubicación en Miami Worldcenter, el distrito de uso mixto en desarrollo más grande del centro de Miami.',
-            'Más de 4.280 metros cuadrados de amenidades organizadas en bienestar, trabajo y vida social.',
-            'Residencias completamente amuebladas, listas para habitar.',
-            'Espacios de coworking y salas de reunión integrados al edificio.',
-          ],
-        },
-        imageIndexes: [],
-        layout: 'reasons',
-      },
-      {
-        key: 'para-quien',
-        title: 'Puede ser una alternativa para',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'Puede tener sentido para quienes buscan una base ágil en el centro de Miami, con residencias amuebladas y un fuerte componente de bienestar y trabajo remoto.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-      {
-        // (vigesimoséptima pasada) — límites reales basados en el propio concepto del edificio
-        // (amuebladas/coworking integrado, distrito todavía en desarrollo) — nunca se menciona
-        // "renta garantizada"/retorno/rentabilidad, el claim del título crudo histórico que nunca
-        // se publicó (ver auditoría decimoctava pasada).
-        key: 'puede-no-tener-sentido',
-        title: 'Puede no tener sentido si',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'Buscás una residencia tradicional, sin el componente de coworking y bienestar compartido que organiza buena parte del edificio, o preferís comprar en una zona ya consolidada en lugar de un distrito todavía en desarrollo como Miami Worldcenter.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-      {
-        key: 'garcia-acompanamiento',
-        title: 'El rol de García Inversiones',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'En Flow House, el trabajo de García Inversiones es entender tu objetivo, explicar el proyecto, ayudarte a evaluar si tiene sentido para lo que buscás, y solicitar y contrastar la información vigente antes de avanzar. García Inversiones no administra el desarrollo ni es parte de él, y no reemplaza el asesoramiento legal o fiscal que un proceso de este tipo requiere.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-    ],
-    // Sin ninguna fotografía de una residencia individual en las 21 imágenes reales del set (ver
-    // auditoría completa más arriba) — "Interiores" acá son espacios compartidos reales del
-    // edificio, nunca residencias, por eso el título es "Interiores" (nunca "...y residencias").
-    // idx2: estudio de pilates/reformer (distinto del idx4 ya usado en "Vida en Flow House").
-    // idx13: barra social. idx8: nicho de café bajo arco. Ninguna se usa en otro bloque de la
-    // ficha; todas sin eslogan ni texto de marca visible.
-    interiors: { title: 'Interiores', imageIndexes: [2, 13, 8] },
-  },
-  'one-hollywood': {
-    heroImageIndex: 2, // exterior completo de la torre — mayor resolución y composición más limpia
-    cardImageIndex: 2, // mismo hero — más evocador que la card anterior (images[0], porte-cochère)
-    priceRepresentsProjectRange: true, // 420.000 U$D coincide exacto con "desde $420,000 de 1 dormitorio"
-    introSegment: {
-      type: 'curatedText',
-      text: 'Una torre residencial en el centro de Hollywood, Florida, a pasos de ArtsPark at Young Circle.',
-    },
-    sections: [
-      {
-        key: 'snapshot',
-        sourceTextSegment: { type: 'none' },
-        imageIndexes: [],
-        layout: 'snapshot',
-        snapshotFields: [
-          { label: 'Ubicación', value: 'Downtown Hollywood, Florida' },
-          { label: 'Unidades', value: '248' },
-          { label: 'Pisos', value: '23' },
-          { label: 'Tipologías', value: 'Estudio a 3 dormitorios' },
-          // "Estado" (vigesimoséptima pasada) — re-auditado en vivo contra 187682:
-          // `building_date: "ESTRENAR"` en el registro real de 2Clics.
-          { label: 'Estado', value: 'A estrenar' },
-          { label: 'Arquitectura', value: 'BC Architects' },
-        ],
-      },
-      {
-        key: 'momento-visual',
-        sourceTextSegment: { type: 'none' },
-        imageIndexes: [1], // balcón con vista al golf course y al agua
-        layout: 'image-large',
-      },
-      {
-        key: 'proyecto',
-        title: 'El proyecto',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'One Hollywood se ubica en el centro de Hollywood, junto a ArtsPark at Young Circle, con acceso directo a los comercios y restaurantes del downtown. El edificio combina 2 espacios comerciales en planta baja con residencias desde estudios hasta 3 dormitorios.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-      },
-      {
-        key: 'ubicacion',
-        title: 'Downtown Hollywood y la ubicación',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'El centro de Hollywood se organiza alrededor de Young Circle, con su parque y anfiteatro al aire libre, rodeado de comercios, restaurantes y galerías. La zona está a pocos minutos de Hollywood Beach y con buena conexión hacia Aventura y Fort Lauderdale.',
-        },
-        imageIndexes: [11], // foto aérea real de Downtown Hollywood / Young Circle
-        layout: 'image-right',
-        map: { queryLabel: 'Downtown Hollywood, Florida' },
-      },
-      {
-        key: 'edificio',
-        title: 'El edificio',
-        sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Porte-cochère de acceso con servicio de valet',
-            'Lobby de doble altura con recepción y conserjería',
-            'Vestuario de paquetes inteligente',
-            'Espacios de coworking y centro de negocios',
-            'Almacenamiento de bicicletas',
-            'Cargadores para vehículos eléctricos',
-          ],
-        },
-        imageIndexes: [0], // porte-cochère de acceso, fachada con nombre del edificio
-        layout: 'image-left',
-      },
-      {
-        key: 'residencias',
-        title: 'Residencias',
-        sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Tecnología de gestión del hogar inteligente',
-            'Ventanales de piso a techo',
-            'Balcones con barandillas de cristal',
-            'Cocinas de estilo europeo con encimeras de cuarzo',
-            'Baños con pisos de porcelanato importado',
-          ],
-        },
-        imageIndexes: [3], // cocina real, sin texto de marca
-        layout: 'image-right',
-      },
-      {
-        key: 'reasons',
-        title: 'Por qué considerar One Hollywood',
-        sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Ubicación en el centro de Hollywood, junto a ArtsPark at Young Circle.',
-            'Porte-cochère de acceso con servicio de valet y lobby de doble altura.',
-            'Tecnología de gestión del hogar inteligente en todas las residencias.',
-            'Cocinas de estilo europeo con encimeras de cuarzo y baños con porcelanato importado.',
-          ],
-        },
-        imageIndexes: [],
-        layout: 'reasons',
-      },
-      {
-        key: 'para-quien',
-        title: 'Puede ser una alternativa para',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'Puede ser una alternativa para quienes buscan vivir en una zona urbana caminable, con acceso directo a comercios, restaurantes y vida cultural en el centro de Hollywood.',
+          text: 'Puede ser una alternativa para quienes buscan una casa con jardín en zona norte, dentro de un conjunto pequeño con espacios comunes, y pueden esperar a la entrega del proyecto.',
         },
         imageIndexes: [],
         layout: 'text-only',
@@ -930,7 +534,7 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         title: 'Puede no tener sentido si',
         sourceTextSegment: {
           type: 'curatedText',
-          text: 'Buscás una ubicación frente al mar —Downtown Hollywood está a varios minutos de la playa— o preferís un edificio de mayor escala, con más unidades y amenities.',
+          text: 'Necesitás mudarte de inmediato —el proyecto todavía está en obra— o buscás una vivienda en una zona céntrica.',
         },
         imageIndexes: [],
         layout: 'text-only',
@@ -940,17 +544,16 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         title: 'El rol de García Inversiones',
         sourceTextSegment: {
           type: 'curatedText',
-          text: 'En One Hollywood, el trabajo de García Inversiones es entender tu objetivo, explicar el proyecto, ayudarte a evaluar si tiene sentido para lo que buscás, y solicitar y contrastar la información vigente antes de avanzar. García Inversiones no administra el desarrollo ni es parte de él, y no reemplaza el asesoramiento legal o fiscal que un proceso de este tipo requiere.',
+          text: 'En Benavídez Village, el trabajo de García Inversiones es entender tu objetivo, explicar el proyecto, ayudarte a evaluar si tiene sentido para lo que buscás, y solicitar y contrastar la información vigente antes de avanzar. García Inversiones no administra el desarrollo ni es parte de él, y no reemplaza el asesoramiento legal o fiscal que un proceso de este tipo requiere.',
         },
         imageIndexes: [],
         layout: 'text-only',
       },
     ],
-    // idx6: baño real de una residencia, sin captions/marca, la única interior de unidad SIN usar
-    // en el resto de la ficha (idx3, cocina, ya está en "Residencias"). No hay dormitorio/living
-    // fotografiado en el set de 13 imágenes — un solo image, sin rellenar con vistas de amenities
-    // comunes (rooftop lounge) para no diluir "Interiores" con espacios que no son residencias.
-    interiors: { title: 'Interiores', imageIndexes: [6] },
+    // Dos imágenes y no tres: con fotos de 1024px, la celda alta de la grilla de 3 las agranda de
+    // más y se ven borrosas.
+    interiors: { title: 'Interiores y residencias', imageIndexes: [0, 10] },
+    unitsTable: { title: 'Unidades disponibles' },
   },
   'pacheco-central': {
     heroImageIndex: 4, // balcón/parrilla con vista al parque — única imagen horizontal, conecta con "parque central"
@@ -970,6 +573,8 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
           { label: 'Ubicación', value: 'General Pacheco, Tigre' },
           { label: 'Unidades', value: '260' },
           { label: 'Módulos', value: '8' },
+          { label: 'Tipologías', value: '1 a 4 ambientes · planta y dúplex' },
+          { label: 'Entrega estimada', value: 'Etapa 1: dic. 2026 · Etapa 2: dic. 2029' },
           { label: 'Cocheras', value: '272' },
         ],
       },
@@ -984,7 +589,7 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         title: 'El proyecto',
         sourceTextSegment: {
           type: 'curatedText',
-          text: 'Pacheco Central es un desarrollo residencial de 260 unidades, distribuidas en 8 módulos organizados en torno a un parque central con espejo de agua. Su arquitectura privilegia líneas rectas y volumetrías variadas, buscando luminosidad y vistas tanto interiores como exteriores.',
+          text: 'Pacheco Central es un desarrollo residencial de 260 unidades, distribuidas en 8 módulos organizados en torno a un parque central con espejo de agua. Ofrece unidades de 1, 2, 3 y 4 ambientes, en una planta y dúplex, con expansiones propias como balcón, terraza o jardín.',
         },
         imageIndexes: [],
         layout: 'text-only',
@@ -998,8 +603,6 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         },
         imageIndexes: [],
         layout: 'text-only',
-        // Únicas coordenadas reales y verificadas de los 5 desarrollos — ver auditoría de mapa
-        // más arriba (los 4 de Miami traen lat:0/long:0, un placeholder, no una coordenada real).
         map: { queryLabel: 'General Pacheco, Tigre, Argentina', lat: -34.4536035, long: -58.6276873 },
       },
       {
@@ -1008,32 +611,32 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         sourceTextSegment: {
           type: 'curatedList',
           items: [
+            'Parque central con espejo de agua',
             'Pileta semiolímpica con solarium',
             'SUM con parrilla',
             'Gimnasio',
-            'Espacio de juegos',
-            'Zona zen y huerta orgánica',
-            'Bicicletero',
-            'Seguridad 24 hs con CCTV',
+            'Coworking',
+            'Laundry',
+            'Espacio para bicicletas',
+            'Seguridad 24 hs',
           ],
         },
         imageIndexes: [],
         layout: 'text-only',
       },
       {
-        key: 'residencias',
-        title: 'Residencias',
+        // Medidas y precio de la unidad publicada en 2Clics (233719), leídos en vivo — el precio
+        // es de esta unidad (contado), nunca un "desde" del proyecto. La financiación se informa
+        // en la fuente; acá no se resume ni se recalcula.
+        key: 'unidad-referencia',
+        title: 'Unidad de referencia',
         sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Unidades de 2 ambientes con balcón privado',
-            '46 m² totales, 42 m² cubiertos',
-            'Living integrado con cocina',
-            '1 baño',
-          ],
+          type: 'curatedText',
+          text: 'Departamento de 2 ambientes con balcón. Las medidas y el precio corresponden a esta unidad, no al conjunto del desarrollo. La unidad cuenta con opciones de financiación vigentes: consultá las condiciones actualizadas.',
         },
         imageIndexes: [2], // dormitorio con ventanal a parque/césped
         layout: 'image-right',
+        referenceUnit: { uncoveredLabel: 'balcón' },
       },
       {
         key: 'reasons',
@@ -1043,7 +646,7 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
           items: [
             'Parque central con espejo de agua como eje del desarrollo.',
             '260 unidades distribuidas en 8 módulos, con 272 cocheras.',
-            'Amenities completos: pileta semiolímpica, SUM con parrilla, gimnasio y zona zen.',
+            'Amenities completos: pileta semiolímpica, SUM con parrilla, gimnasio y coworking.',
             'A 4 km de la Panamericana, con buena conexión hacia CABA y el corredor Bancalari.',
           ],
         },
@@ -1542,4 +1145,44 @@ export function formatCurrencyAmount(
 // de la etapa, para que nunca se desincronice de los pasos reales del calendario.
 export function sumDepositSchedule(schedule: DevelopmentDepositStep[]): number {
   return schedule.reduce((sum, step) => sum + step.percent, 0);
+}
+
+function withSuffix(value: string, suffix: string): string {
+  return value ? `${value} ${suffix}` : '';
+}
+
+export function resolveReferenceUnitFacts(unit: PublicProperty | null, uncoveredLabel: string): string[] {
+  if (!unit) return [];
+  const price = formatCurrencyAmount(unit.price, unit.currency, unit.hidePrice);
+  return [
+    formatCount(unit.amountRoom, 'ambiente', 'ambientes'),
+    withSuffix(formatArea(unit.totalArea), 'totales'),
+    withSuffix(formatArea(unit.coveredArea), 'cubiertos'),
+    withSuffix(formatArea(unit.uncoveredArea), `de ${uncoveredLabel}`),
+    price ? `Precio de esta unidad: ${price}` : '',
+  ].filter(Boolean);
+}
+
+export type DevelopmentUnitRow = {
+  propertyId: number;
+  label: string;
+  totalArea: string;
+  orientation: string;
+  price: string;
+  href: string;
+};
+
+// `units` llega en el orden de `curation.propertyIds` y ya filtrado a lo que 2Clics devuelve como
+// activo — una unidad dada de baja desaparece sola de la tabla y del conteo.
+export function resolveDevelopmentUnitRows(curation: DevelopmentCuration, units: PublicProperty[]): DevelopmentUnitRow[] {
+  return units
+    .filter((unit): unit is PublicProperty & { propertyId: number } => unit.propertyId !== null)
+    .map((unit) => ({
+      propertyId: unit.propertyId,
+      label: curation.unitLabels?.[unit.propertyId] || '',
+      totalArea: formatArea(unit.totalArea),
+      orientation: formatPublicDisplayValue(unit.metadata.orientation),
+      price: formatPrice(unit.price, unit.currency, unit.hidePrice),
+      href: propertyHref(unit),
+    }));
 }

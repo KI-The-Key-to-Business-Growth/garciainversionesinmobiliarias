@@ -18,7 +18,7 @@ export type PropertyMapTarget = {
   query: string;
   label: string;
   precision: 'exact' | 'approximate';
-  source: 'coordinates' | 'address' | 'neighborhood' | 'city' | 'state' | 'location';
+  source: 'coordinates' | 'neighborhood' | 'city' | 'state' | 'location';
 };
 
 export type PropertyMapInput = Pick<
@@ -30,7 +30,9 @@ function cleanPart(value: string | null | undefined): string {
   return formatPublicDetailValue(value);
 }
 
-function hasUsableCoordinates(lat: number | null, long: number | null): boolean {
+// (0,0) — "Null Island" — es el placeholder que 2Clics devuelve cuando nunca se cargó una
+// coordenada real (ej. 187683, 187691): nunca se publica como pin.
+export function hasUsableCoordinates(lat: number | null, long: number | null): boolean {
   return (
     lat !== null &&
     long !== null &&
@@ -39,16 +41,9 @@ function hasUsableCoordinates(lat: number | null, long: number | null): boolean 
     lat >= -90 &&
     lat <= 90 &&
     long >= -180 &&
-    long <= 180
+    long <= 180 &&
+    !(lat === 0 && long === 0)
   );
-}
-
-function hasStreetNumber(address: string, number: string): boolean {
-  return Boolean(number || /\d/.test(address));
-}
-
-function joinAddress(address: string, number: string, locationText: string): string {
-  return compactText([compactText([address, number], ' '), locationText], ', ');
 }
 
 export function googleMapsSearchUrl(query: string): string {
@@ -67,10 +62,13 @@ export function googleMapsEmbedUrl(query: string, apiKey?: string): string {
   return apiKey ? googleMapsApiEmbedUrl(query, apiKey) : googleMapsPublicEmbedUrl(query);
 }
 
+// El campo `address` de 2Clics es una dirección interna/operativa del CRM (ej. "Pacheco Central 2
+// Ambientes a Estrenar con Financiacion", "Benavídez Village · UF 16") — no se usa ni como query ni
+// como texto visible. El texto visible es siempre la ubicación pública (`locationText`); el `state`
+// crudo (ej. "Bs.As. G.B.A. Norte") solo viaja dentro de la query de búsqueda, nunca como label.
 export function resolvePropertyMapTarget(input: PropertyMapInput): PropertyMapTarget | null {
-  const locationText = cleanPart(input.locationText || formatLocation(input.location));
-  const address = cleanPart(input.address);
-  const number = cleanPart(input.number);
+  const publicText = cleanPart(input.locationText);
+  const locationText = publicText || cleanPart(formatLocation(input.location));
   const neighborhood = cleanPart(input.location.neighborhood?.name);
   const city = cleanPart(input.location.city?.name);
   const state = cleanPart(input.location.state?.name);
@@ -85,21 +83,11 @@ export function resolvePropertyMapTarget(input: PropertyMapInput): PropertyMapTa
     };
   }
 
-  if (address && hasStreetNumber(address, number)) {
-    const query = joinAddress(address, number, locationText);
-    return {
-      query,
-      label: compactText([address, number], ' '),
-      precision: 'exact',
-      source: 'address',
-    };
-  }
-
   const neighborhoodQuery = compactText([neighborhood, city, state], ', ');
   if (neighborhood && city && state) {
     return {
       query: neighborhoodQuery,
-      label: neighborhoodQuery,
+      label: publicText || neighborhoodQuery,
       precision: 'approximate',
       source: 'neighborhood',
     };
@@ -109,7 +97,7 @@ export function resolvePropertyMapTarget(input: PropertyMapInput): PropertyMapTa
   if (city && state) {
     return {
       query: cityQuery,
-      label: cityQuery,
+      label: publicText || cityQuery,
       precision: 'approximate',
       source: 'city',
     };
@@ -118,7 +106,7 @@ export function resolvePropertyMapTarget(input: PropertyMapInput): PropertyMapTa
   if (state) {
     return {
       query: state,
-      label: state,
+      label: publicText || state,
       precision: 'approximate',
       source: 'state',
     };
