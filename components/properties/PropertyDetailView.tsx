@@ -25,6 +25,9 @@ import type { PublicProperty } from '@/lib/2clics/types';
 type PropertyDetailViewProps = {
   property: PublicProperty;
   relatedProperties?: PublicProperty[];
+  // Destino de "Volver" según el activo (desarrollo, Comprar o Alquilar) — ver
+  // `getPropertyBackLink` en lib/site-curation.ts.
+  backLink?: { href: string; label: string };
 };
 
 type DetailItem = {
@@ -103,10 +106,16 @@ function essentialFacts(property: PublicProperty, price: string): DetailItem[] {
 export default function PropertyDetailView({
   property,
   relatedProperties = [],
+  backLink,
 }: PropertyDetailViewProps) {
   const location = formatPublicLocation(property.location, property.region);
   const price = formatPrice(property.price, property.currency, property.hidePrice);
   const operation = formatOperation(property.operationType);
+  const back =
+    backLink ||
+    (operation.toLowerCase().startsWith('alquiler')
+      ? { href: '/alquilar', label: 'Volver a Alquilar' }
+      : { href: '/comprar', label: 'Volver a Comprar' });
   const expenses = formatPropertyExpenses(
     property.metadata.expenses,
     property.metadata.expensesCurrency,
@@ -170,8 +179,8 @@ export default function PropertyDetailView({
       <section className="twoclics-detail-hero twoclics-detail-hero--property">
         <div className="container twoclics-detail-hero-container">
           <div className="twoclics-detail-hero-nav">
-            <Link className="twoclics-back-link" href="/propiedades">
-              ← Volver a propiedades
+            <Link className="twoclics-back-link" href={back.href}>
+              ← {back.label}
             </Link>
           </div>
           <div className="twoclics-detail-hero-inner twoclics-detail-hero-inner--property">

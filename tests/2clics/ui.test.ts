@@ -1369,7 +1369,7 @@ describe('2Clics filters and states', () => {
     expect(html).not.toContain('Limpiar filtros');
   });
 
-  it('shows "Limpiar filtros" as a link to /propiedades when at least one filter is active', () => {
+  it('shows "Limpiar filtros" as a link to the catalog entry (/comprar by default) when at least one filter is active', () => {
     const cases: Array<{
       location: 'all' | 'city:10';
       operation: 'all' | 'venta';
@@ -1399,7 +1399,7 @@ describe('2Clics filters and states', () => {
       );
 
       expect(html).toContain('Limpiar filtros');
-      expect(html).toContain('href="/propiedades"');
+      expect(html).toContain('href="/comprar"');
     }
   });
 

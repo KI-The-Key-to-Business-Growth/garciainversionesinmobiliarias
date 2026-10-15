@@ -158,7 +158,6 @@ export default async function InvertirPage() {
       <main>
         <section className="twoclics-catalog-hero twoclics-catalog-hero--compact">
           <div className="container">
-            <p className="eyebrow">Invertir</p>
             <h1>Invertir empieza por entender qué estás buscando.</h1>
             <p>
               No todas las oportunidades inmobiliarias generan valor de la misma manera. Analizamos

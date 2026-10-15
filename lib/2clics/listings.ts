@@ -253,7 +253,7 @@ export function parsePropertyListingFilters(
 // datos derivados que el usuario no escribió.
 // `basePath` por defecto preserva el comportamiento original (/propiedades). /comprar y /alquilar
 // pasan su propia ruta para que "Ver más" nunca saque al usuario de la página en la que está.
-export function nextPageHref(filters: PropertyListingFilters, basePath = '/propiedades'): string {
+export function nextPageHref(filters: PropertyListingFilters, basePath = '/comprar'): string {
   const params = new URLSearchParams();
   if (filters.location !== 'all') params.set('ubicacion', filters.location);
   if (filters.operation !== 'all') params.set('operacion', filters.operation);

@@ -8,6 +8,7 @@ import DevelopmentDetailView from '@/components/properties/DevelopmentDetailView
 import ListingState from '@/components/properties/ListingState';
 import { formatLocation } from '@/lib/2clics/format';
 import { getPublicDevelopmentById, getPublicPropertyById } from '@/lib/2clics/listings';
+import { resolveDevelopmentAssets } from '@/lib/development-assets';
 import { getDevelopmentEditorialCuration, resolveSafeDescription } from '@/lib/desarrollos';
 import { getDevelopmentBySlug } from '@/lib/site-curation';
 import type { PublicProperty } from '@/lib/2clics/types';
@@ -125,6 +126,7 @@ export default async function DevelopmentDetailPage({ params }: DevelopmentDetai
                 hidePrice: sourceProperty.hidePrice,
               }}
               units={units}
+              assets={resolveDevelopmentAssets(curation.slug)}
             />
           ) : (
             <section className="twoclics-detail-section">

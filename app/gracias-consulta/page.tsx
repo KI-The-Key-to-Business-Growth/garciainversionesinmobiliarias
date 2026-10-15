@@ -24,7 +24,7 @@ export default function GraciasPage() {
               a contactar con vos para avanzar con la consulta.
             </p>
             <div className="thank-you-actions">
-              <Link href="/propiedades" className="btn btn-primary">
+              <Link href="/comprar" className="btn btn-primary">
                 Ver propiedades
               </Link>
               <Link href="/" className="btn btn-secondary">

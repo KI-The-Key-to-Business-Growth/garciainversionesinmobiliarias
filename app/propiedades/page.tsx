@@ -1,52 +1,21 @@
-import type { Metadata } from 'next';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
-import CatalogView from '@/components/properties/CatalogView';
-import { getPropertyCatalog } from '@/lib/2clics/listings';
-import { getMasterCatalogExcludedPropertyIds } from '@/lib/site-curation';
-
-export const metadata: Metadata = {
-  title: 'Propiedades | García Inversiones Inmobiliarias',
-  description: 'Propiedades y desarrollos seleccionados en Buenos Aires y Miami.',
-  alternates: { canonical: '/propiedades' },
-};
+import { redirect } from 'next/navigation';
 
 type PropiedadesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+// /propiedades dejó de ser un catálogo público mezclado: las entradas de catálogo son /comprar y
+// /alquilar. Las fichas /propiedades/[id] siguen siendo las URLs canónicas de cada propiedad. Un
+// link viejo con filtros conserva los filtros y cae en la intención correcta según `operacion`.
 export default async function PropiedadesPage({ searchParams }: PropiedadesPageProps) {
-  const resolvedSearchParams = (await searchParams) || {};
-  const catalog = await getPropertyCatalog(resolvedSearchParams, {
-    excludePropertyIds: getMasterCatalogExcludedPropertyIds(),
-  });
-  const showDevelopments =
-    catalog.filters.operation === 'all' && catalog.filters.propertyTypeId === null;
-
-  return (
-    <>
-      <Header />
-      <main>
-        <section className="twoclics-catalog-hero">
-          <div className="container">
-            <h1>Propiedades seleccionadas</h1>
-            <p>
-              Explorá propiedades y desarrollos en Buenos Aires y Miami. Cada alternativa se
-              presenta con información clara para que puedas evaluar qué tiene sentido según tu
-              objetivo.
-            </p>
-          </div>
-        </section>
-
-        <section className="twoclics-catalog-section">
-          <div className="container">
-            <CatalogView catalog={catalog} showDevelopments={showDevelopments} />
-          </div>
-        </section>
-      </main>
-      <Footer />
-      <WhatsAppFloat />
-    </>
-  );
+  const params = (await searchParams) || {};
+  const operation = Array.isArray(params.operacion) ? params.operacion[0] : params.operacion;
+  const target = operation === 'alquiler' || operation === 'temporario' ? '/alquilar' : '/comprar';
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key === 'operacion' || value === undefined) continue;
+    for (const item of Array.isArray(value) ? value : [value]) query.append(key, item);
+  }
+  const queryString = query.toString();
+  redirect(queryString ? `${target}?${queryString}` : target);
 }

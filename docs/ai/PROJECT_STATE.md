@@ -743,7 +743,31 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   aunque esté DESTACADO en 2Clics; sin destacadas tradicionales la sección no se renderiza (vuelve
   sola cuando haya al menos una).
 
+### V2.1 (2026-10) — routing de catálogo, Remeros Beach y assets editoriales
+
+- **`/propiedades` deja de ser catálogo público**: redirige a `/comprar` (o a `/alquilar` si el link
+  traía `operacion=alquiler`, conservando los demás filtros). No queda navegación pública hacia
+  ella (footer, 404, gracias, sitemap, ficha).
+- **`/propiedades/[id]` sigue siendo la URL canónica** de cada propiedad. **Comprar y Alquilar son
+  las entradas de catálogo.**
+- **"Volver" contextual** en las fichas (`getPropertyBackLink`, lib/site-curation.ts): la unidad de
+  un desarrollo curado vuelve a su desarrollo (Benavídez, Pacheco, Faena, Domus, Remeros); el resto
+  vuelve a Comprar o Alquilar según la operación. Se resuelve en el server, funciona entrando directo
+  por URL. 206734 sigue redirigiendo a `/invertir/445-n-shore-drive`.
+- **Remeros Beach pasa a Desarrollos** (`/desarrollos/remeros-beach`, mercado AR): masterplan de 17
+  ha alrededor de una Crystal Lagoon de ~3,5 ha, sectores Sky Residences (Sky One + Sky Two,
+  entregado), Árboris y Beach. **237447** (venta, Sky Two) deja `/comprar` y es la unidad del
+  desarrollo, con sus datos en vivo. **237445** (alquiler) sigue en `/alquilar` y no forma parte del
+  desarrollo.
+- **Assets editoriales locales** (`lib/development-assets.ts`, `public/developments/<slug>/`):
+  renders/masterplans oficiales separados de 2Clics. Cada slot se activa solo si el archivo existe;
+  los renders y planos llevan el rótulo "Imagen ilustrativa"/"Plano ilustrativo". Hoy no hay
+  ningún archivo en el repo — las fichas usan las imágenes de 2Clics.
+
 ## Pendiente de decisión (no confundir con "roto")
+
+- **Assets oficiales de Benavídez, Pacheco y Remeros**: faltan los archivos (ver slots en
+  `lib/development-assets.ts`).
 
 - **Home sin destacadas**: hoy el único registro DESTACADO de 2Clics es 206734 (inversión), así que
   "Oportunidades seleccionadas" no aparece hasta que García marque propiedades tradicionales como

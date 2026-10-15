@@ -2641,8 +2641,8 @@ body[data-page-type='thank_you'] {
   position: fixed;
   bottom: 28px;
   right: 28px;
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: #25d366;
   color: var(--white);
@@ -2650,8 +2650,8 @@ body[data-page-type='thank_you'] {
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 6px 24px rgba(37, 211, 102, 0.38),
-    0 2px 8px rgba(0, 0, 0, 0.12);
+    0 4px 14px rgba(37, 211, 102, 0.24),
+    0 2px 6px rgba(0, 0, 0, 0.12);
   z-index: 800;
   transition:
     transform 0.25s ease,
@@ -2665,8 +2665,8 @@ body[data-page-type='thank_you'] {
     0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .whatsapp-float svg {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   fill: var(--white);
   display: block;
 }
@@ -7358,7 +7358,8 @@ body[data-page-type='thank_you'] {
   font-size: 0.9rem;
 }
 
-.invest-analysis-note {
+.invest-analysis-note,
+.project-editorial-text-inner .invest-analysis-note {
   font-family: var(--font-cormorant), serif;
   font-style: italic;
   font-size: 1.1rem;
@@ -8126,5 +8127,40 @@ body[data-page-type='thank_you'] {
 
   .project-facts-band-value {
     font-size: 1.6rem;
+  }
+}
+
+/* Rótulo sobre renders/planos editoriales: distingue imagen ilustrativa de fotografía real. */
+.project-media-tag {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(12, 41, 72, 0.78);
+  color: var(--ivory);
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.project-commercial-summary-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+}
+
+/* Grilla de datos de unidad con más de 4 ítems (ej. Remeros: 8) — cada fila arranca sin divisor. */
+.project-commercial-facts .project-commercial-schedule-step:nth-child(4n + 1) {
+  border-left: none;
+  padding-left: 0;
+}
+
+@media (max-width: 680px) {
+  .project-commercial-facts .project-commercial-schedule-step:nth-child(4n + 1) {
+    border-left: none;
   }
 }

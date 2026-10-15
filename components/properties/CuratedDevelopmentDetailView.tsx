@@ -4,7 +4,7 @@ import Link from 'next/link';
 import PropertyInquiryPanel from '@/components/properties/PropertyInquiryPanel';
 import PropertyCard from '@/components/properties/PropertyCard';
 import { googleMapsEmbedUrl, googleMapsSearchUrl } from '@/components/properties/PropertyMap';
-import { formatPublicLocation } from '@/lib/2clics/format';
+import { formatPublicLocation, propertyHref } from '@/lib/2clics/format';
 import {
   filterEditorialAmenities,
   formatCurrencyAmount,
@@ -24,6 +24,7 @@ import type {
   DevelopmentSnapshotField,
   DevelopmentUnitRow,
 } from '@/lib/desarrollos';
+import type { ResolvedEditorialAsset, ResolvedEditorialAssets } from '@/lib/development-assets';
 import type { DevelopmentCuration } from '@/lib/site-curation';
 import type { PublicImage, PublicLocation, PublicProperty, TwoclicsAmenity, TwoclicsRegion } from '@/lib/2clics/types';
 
@@ -75,7 +76,30 @@ type CuratedDevelopmentDetailViewProps = {
   curation: DevelopmentCuration;
   source: DevelopmentSource;
   units: PublicProperty[];
+  // Assets editoriales locales que existen físicamente (lib/development-assets.ts), por destino.
+  assets?: ResolvedEditorialAssets;
 };
+
+// Imagen de la ficha: de 2Clics o un asset editorial local. Los renders/planos llevan un rótulo
+// visible para no confundirse con fotografías reales.
+type EditorialImage = PublicImage & { tag?: string };
+
+function assetToImage(asset: ResolvedEditorialAsset, index: number): EditorialImage {
+  return {
+    id: `asset-${index}-${asset.src}`,
+    name: '',
+    url: asset.src,
+    thumbnailUrl: asset.src,
+    displayUrl: asset.src,
+    displayThumbnailUrl: asset.src,
+    useVirtualized: false,
+    tag: asset.kind === 'render' ? 'Imagen ilustrativa' : asset.kind === 'plan' ? 'Plano ilustrativo' : undefined,
+  };
+}
+
+function MediaTag({ image }: { image: EditorialImage }) {
+  return image.tag ? <span className="project-media-tag">{image.tag}</span> : null;
+}
 
 // Landing EDITORIAL de desarrollo (WEB GARCÍA V2 — decimotercera pasada; generalizada a múltiples
 // desarrollos en la decimosexta). Reescrita sobre la duodécima pasada: alternar mecánicamente
@@ -95,6 +119,7 @@ export default function CuratedDevelopmentDetailView({
   curation,
   source,
   units,
+  assets = {},
 }: CuratedDevelopmentDetailViewProps) {
   // `source.title` ya viene resuelto de forma segura por quien arma este prop (publicName
   // confirmado por curaduría → título real de la fuente, como Faena) — `curation.name` queda
@@ -106,7 +131,11 @@ export default function CuratedDevelopmentDetailView({
 
   // Sin curaduría editorial declarada para este desarrollo: degrada con gracia a apertura + CTA
   // de cierre, sin inventar secciones ni intentar adivinar bloques de una descripción no curada.
-  const heroImage = editorial ? source.images[editorial.heroImageIndex] : source.images[0];
+  const heroImage: EditorialImage | undefined = assets.hero?.length
+    ? assetToImage(assets.hero[0], 0)
+    : editorial
+      ? source.images[editorial.heroImageIndex]
+      : source.images[0];
   const introSegment = editorial ? editorial.introSegment : ({ type: 'firstParagraphLead' } as const);
   const introText = resolveSourceTextSegment(description, introSegment);
 
@@ -168,6 +197,7 @@ export default function CuratedDevelopmentDetailView({
                 sizes="(max-width: 900px) 100vw, 600px"
                 style={{ objectFit: 'cover', objectPosition: 'center' }}
               />
+              <MediaTag image={heroImage} />
             </div>
           ) : null}
           <div className="project-open-copy">
@@ -184,6 +214,7 @@ export default function CuratedDevelopmentDetailView({
             renderSection(section, {
               editorial,
               unitRows,
+              assets,
               images: source.images,
               description,
               priceRangeField,
@@ -365,6 +396,7 @@ function renderLocationMap(map: DevelopmentLocationMap | undefined, displayName:
 }
 
 type SectionContext = {
+  assets: ResolvedEditorialAssets;
   editorial: DevelopmentEditorialCuration;
   unitRows: DevelopmentUnitRow[];
   images: PublicImage[];
@@ -379,7 +411,8 @@ type SectionContext = {
 
 function renderSection(section: DevelopmentSection, ctx: SectionContext) {
   const { images, description, priceRangeField, displayName, sourcePrice, sourceCurrency, sourceHidePrice } = ctx;
-  const sectionImages: PublicImage[] = resolveSectionImages(images, section.imageIndexes);
+  const assetImages = (ctx.assets[section.key] || []).map(assetToImage);
+  const sectionImages: EditorialImage[] = assetImages.length ? assetImages : resolveSectionImages(images, section.imageIndexes);
   const segment = resolveSourceTextSegment(description, section.sourceTextSegment);
   const items = Array.isArray(segment) ? segment : [];
   const text = typeof segment === 'string' ? segment : '';
@@ -420,6 +453,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
             sizes="(max-width: 1200px) 100vw, 1160px"
             style={{ objectFit: 'cover', objectPosition: 'center' }}
           />
+          <MediaTag image={sectionImages[0]} />
         </div>
       </section>
     );
@@ -479,7 +513,9 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
       ctx.referenceUnit,
     );
     if (!price) return null;
-    const facts = section.referenceUnit ? resolveReferenceUnitFacts(ctx.referenceUnit, section.referenceUnit.uncoveredLabel) : [];
+    const facts = section.referenceUnit
+      ? resolveReferenceUnitFacts(ctx.referenceUnit, section.referenceUnit.uncoveredLabel, section.referenceUnit.detail)
+      : [];
     return (
       <section key={section.key} className="project-commercial-entry project-commercial-summary">
         <div className="container project-commercial-entry-inner">
@@ -512,9 +548,16 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
               {note}
             </p>
           ))}
-          <a className="project-commercial-entry-link" href="#project-cta-final">
-            Consultar condiciones vigentes ↓
-          </a>
+          <div className="project-commercial-summary-links">
+            {section.commercialUnitLinkLabel && ctx.referenceUnit ? (
+              <Link className="btn btn-primary" href={propertyHref(ctx.referenceUnit)}>
+                {section.commercialUnitLinkLabel}
+              </Link>
+            ) : null}
+            <a className="project-commercial-entry-link" href="#project-cta-final">
+              Consultar condiciones vigentes ↓
+            </a>
+          </div>
         </div>
       </section>
     );
@@ -559,8 +602,9 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
                   alt=""
                   fill
                   sizes="(max-width: 780px) 100vw, (max-width: 1080px) 50vw, 540px"
-                  style={{ objectFit: 'cover', objectPosition: 'center' }}
+                  style={{ objectFit: image.tag === 'Plano ilustrativo' ? 'contain' : 'cover', objectPosition: 'center' }}
                 />
+                <MediaTag image={image} />
               </div>
             ))}
           </div>
@@ -632,7 +676,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
     );
   }
 
-  if (section.layout === 'text-only') {
+  if (section.layout === 'text-only' && !hasImage) {
     // Bloque sin imagen — puede ser un párrafo curado (`curatedText`/`firstParagraphRest`), una
     // lista curada sin foto disponible (ej. "Residencias" de Flow House, sin material fotográfico
     // real de unidades), o una lista agrupada (ej. amenities por eje) — nunca se fuerza una
@@ -663,7 +707,9 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
   const listContent = renderListContent(section, items);
   const mapContent = renderLocationMap(section.map, displayName);
   if (!text && !listContent && !mapContent && !hasImage) return null;
-  const modifier = section.layout === 'image-left' ? 'left' : 'right';
+  // Una sección de solo texto que recibe un asset editorial se presenta como bloque con imagen a la
+  // izquierda.
+  const modifier = section.layout === 'image-right' ? 'right' : 'left';
   const mediaStyle = section.imageAspect ? { aspectRatio: section.imageAspect } : undefined;
   const mediaClassName = `project-block-media${section.imageNarrow ? ' project-block-media--narrow' : ''}`;
   return (
@@ -678,6 +724,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
               sizes="(max-width: 900px) 100vw, 560px"
               style={{ objectFit: 'cover', objectPosition: 'center' }}
             />
+            <MediaTag image={sectionImages[0]} />
           </div>
         ) : null}
         <div className="project-block-content">

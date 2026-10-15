@@ -265,15 +265,15 @@ export function isOfficePropertyType(typeName: string | undefined): boolean {
 }
 
 export function propertyHref(property: PublicProperty): string {
-  return property.propertyId ? `/propiedades/${property.propertyId}` : '/propiedades';
+  return property.propertyId ? `/propiedades/${property.propertyId}` : '/comprar';
 }
 
 export function developmentHref(development: PublicDevelopment): string {
-  return development.developmentId ? `/desarrollos/${development.developmentId}` : '/propiedades';
+  return development.developmentId ? `/desarrollos/${development.developmentId}` : '/desarrollos';
 }
 
 export function developmentUnitHref(unit: PublicDevelopmentUnit): string {
-  return unit.propertyId ? `/propiedades/${encodeURIComponent(unit.propertyId)}` : '/propiedades';
+  return unit.propertyId ? `/propiedades/${encodeURIComponent(unit.propertyId)}` : '/comprar';
 }
 
 export function marketPublicLabel(region: PublicProperty['region'] | PublicDevelopment['region']): string {

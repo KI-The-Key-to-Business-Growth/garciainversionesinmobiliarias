@@ -6,7 +6,11 @@ import ListingState from '@/components/properties/ListingState';
 import PropertyDetailView from '@/components/properties/PropertyDetailView';
 import { formatPublicLocation } from '@/lib/2clics/format';
 import { getPublicPropertyById, getRelatedPublicProperties } from '@/lib/2clics/listings';
-import { getInvestmentOpportunityByPropertyId, getMasterCatalogExcludedPropertyIds } from '@/lib/site-curation';
+import {
+  getInvestmentOpportunityByPropertyId,
+  getMasterCatalogExcludedPropertyIds,
+  getPropertyBackLink,
+} from '@/lib/site-curation';
 
 type PropertyDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -71,7 +75,11 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
     <>
       <main>
         {property ? (
-          <PropertyDetailView property={property} relatedProperties={relatedProperties} />
+          <PropertyDetailView
+            property={property}
+            relatedProperties={relatedProperties}
+            backLink={getPropertyBackLink(property.propertyId, property.operationType)}
+          />
         ) : result.status === 'not-found' ? (
           notFound()
         ) : (

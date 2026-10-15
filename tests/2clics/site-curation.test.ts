@@ -32,11 +32,13 @@ import {
   getAllDevelopmentSlugs,
   getCurationForPropertyId,
   getDevelopmentBySlug,
+  getDevelopmentForPropertyId,
   getDevelopmentsByMarket,
   getExcludedPropertyIds,
   getInvestmentOpportunityByPropertyId,
   getInvestmentOpportunityBySlug,
   getMasterCatalogExcludedPropertyIds,
+  getPropertyBackLink,
   isExcludedFromStandardCatalog,
 } from '@/lib/site-curation';
 
@@ -133,13 +135,13 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
 
   it('sincronización 2026-10-15: curaduría = desarrollos activos + 445 N Shore + duplicado Domus defensivo', () => {
     expect(CURATED_PROPERTIES.map((entry) => entry.propertyId).sort((a, b) => a - b)).toEqual(
-      [206734, 233702, 233707, 233708, 233719, 236646, 236682, 236986, 237472, 237474],
+      [206734, 233702, 233707, 233708, 233719, 236646, 236682, 236986, 237447, 237472, 237474],
     );
     for (const entry of CURATED_PROPERTIES) {
       expect(entry.excludeFromStandardCatalog).toBe(true);
     }
     expect(getExcludedPropertyIds().sort((a, b) => a - b)).toEqual(
-      [206734, 233702, 233707, 233708, 233719, 236646, 236682, 236986, 237472, 237474],
+      [206734, 233702, 233707, 233708, 233719, 236646, 236682, 236986, 237447, 237472, 237474],
     );
     // /propiedades (maestro) solo excluye lo que no es una propiedad: la oportunidad de inversión y
     // el duplicado fuera de mercado.
@@ -158,6 +160,7 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
       humanRef: 'GAR-236986',
       propertyIds: [236986],
       market: 'US',
+      backLabel: 'Faena',
     });
     expect(getDevelopmentBySlug('FAENA')).toEqual(faena);
     const curationSource = readFileSync('lib/site-curation.ts', 'utf8');
@@ -173,9 +176,9 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
     }
   });
 
-  it('desarrollos activos: Faena, Benavídez Village, Pacheco Central y Domus — nada más', () => {
+  it('desarrollos activos: Faena, Benavídez Village, Pacheco Central, Remeros Beach y Domus — nada más', () => {
     expect(getAllDevelopmentSlugs().sort()).toEqual(
-      ['benavidez-village', 'domus-brickell-center', 'faena', 'pacheco-central'].sort(),
+      ['benavidez-village', 'domus-brickell-center', 'faena', 'pacheco-central', 'remeros-beach'].sort(),
     );
     expect(getDevelopmentBySlug('pacheco-central')?.sourcePropertyId).toBe(233719);
     expect(getDevelopmentBySlug('domus-brickell-center')?.sourcePropertyId).toBe(236682);
@@ -208,7 +211,7 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
   it('la clasificación como "desarrollo" es explícita por property_app_id — nunca deriva de palabras en título/descripción', () => {
     // Propiedades tradicionales activas — incluidas 187683 y 236984, dos propiedades distintas de
     // Sunny Isles que nunca se fusionan ni se excluyen.
-    const traditionalIds = [187669, 187691, 187683, 236984, 237445, 237447, 233429, 236978, 233430, 233431, 233434, 233435, 233436, 236982];
+    const traditionalIds = [187669, 187691, 187683, 236984, 237445, 233429, 236978, 233430, 233431, 233434, 233435, 233436, 236982];
     for (const id of traditionalIds) {
       expect(isExcludedFromStandardCatalog(id)).toBe(false);
       expect(getCurationForPropertyId(id)).toBeNull();
@@ -344,10 +347,10 @@ describe('CatalogView — /comprar y /alquilar reutilizan el motor de /propiedad
     expect(html).not.toContain('href="/propiedades?');
   });
 
-  it('sin pasar actionPath/lockedOperation (uso de /propiedades), el comportamiento no cambia: form a /propiedades y selector de Operación visible', () => {
+  it('sin pasar actionPath/lockedOperation, el formulario apunta a /comprar (ya no existe un catálogo general /propiedades) y el selector de Operación queda visible', () => {
     const catalog = emptyCatalogResult({ properties: [property({ propertyId: 1 })], propertyTotalCount: 1 });
     const html = render(React.createElement(CatalogView, { catalog, showDevelopments: true }));
-    expect(html).toContain('action="/propiedades"');
+    expect(html).toContain('action="/comprar"');
     expect(html).toContain('id="operacion"');
   });
 
@@ -1658,7 +1661,7 @@ describe('/desarrollos — sistema editorial: snapshot, descripción segura, im�
   it('187694/187684 no se incorporan como desarrollo', () => {
     expect(getDevelopmentBySlug('187694')).toBeNull();
     expect(getDevelopmentBySlug('187684')).toBeNull();
-    expect(getAllDevelopmentSlugs()).toEqual(['faena', 'benavidez-village', 'pacheco-central', 'domus-brickell-center']);
+    expect(getAllDevelopmentSlugs()).toEqual(['faena', 'benavidez-village', 'pacheco-central', 'remeros-beach', 'domus-brickell-center']);
   });
 });
 
@@ -1666,17 +1669,17 @@ describe('/desarrollos — sistema editorial: snapshot, descripción segura, im�
 describe('/desarrollos (índice) — apertura editorial, selector de mercado y grilla compacta (decimonovena pasada)', () => {
   const source = property({ propertyId: 236986 });
 
-  it('cada desarrollo declara su mercado explícitamente en la curaduría (nunca inferido del título) — Faena y Domus en US, Benavídez Village y Pacheco Central en AR', () => {
+  it('cada desarrollo declara su mercado explícitamente en la curaduría (nunca inferido del título) — Faena y Domus en US, Benavídez Village, Pacheco Central y Remeros Beach en AR', () => {
     for (const entry of DEVELOPMENTS) {
       expect(['US', 'AR']).toContain(entry.market);
     }
     expect(DEVELOPMENTS.filter((d) => d.market === 'US')).toHaveLength(2);
-    expect(DEVELOPMENTS.filter((d) => d.market === 'AR')).toHaveLength(2);
+    expect(DEVELOPMENTS.filter((d) => d.market === 'AR')).toHaveLength(3);
   });
 
   it('getDevelopmentsByMarket devuelve los desarrollos activos de cada mercado', () => {
     expect(getDevelopmentsByMarket('US').map((d) => d.slug)).toEqual(['faena', 'domus-brickell-center']);
-    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toEqual(['benavidez-village', 'pacheco-central']);
+    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toEqual(['benavidez-village', 'pacheco-central', 'remeros-beach']);
   });
 
   it('el filtro es por el campo explícito `market`, no por texto de ubicación/título — cambiar el título de la fuente no reclasifica el mercado', () => {
@@ -1960,7 +1963,7 @@ describe('/desarrollos/pacheco-central — primer desarrollo de Argentina (viges
 
   it('regresión: el selector de mercado devuelve Faena/Domus en US y Benavídez/Pacheco en AR', () => {
     expect(getDevelopmentsByMarket('US').map((d) => d.slug)).toEqual(['faena', 'domus-brickell-center']);
-    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toEqual(['benavidez-village', 'pacheco-central']);
+    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toEqual(['benavidez-village', 'pacheco-central', 'remeros-beach']);
   });
 });
 
@@ -2693,14 +2696,16 @@ describe('/desarrollos — sistema editorial compartido (pulido 2026-10)', () =>
 
   it('Benavídez sigue la progresión editorial: proyecto → viviendas → interiores → conjunto → ubicación → estado → disponibilidad', () => {
     const keys = getDevelopmentEditorialCuration('benavidez-village')?.sections.map((s) => s.key);
-    expect(keys?.slice(0, 8)).toEqual([
+    expect(keys?.slice(0, 10)).toEqual([
       'snapshot',
       'proyecto',
       'residencias',
       'interiores',
       'vida-en-el-conjunto',
+      'masterplan',
       'ubicacion',
       'estado-entrega',
+      'estado-obra',
       'disponibilidad',
     ]);
     const html = renderSlug('benavidez-village');
@@ -2723,5 +2728,222 @@ describe('/desarrollos — sistema editorial compartido (pulido 2026-10)', () =>
       type: 'curatedText',
       text: 'En Pacheco Central, el trabajo de García Inversiones es entender tu objetivo, explicar el proyecto, ayudarte a evaluar si tiene sentido para lo que buscás, y solicitar y contrastar la información vigente antes de avanzar. García Inversiones no administra el desarrollo ni es parte de él, y no reemplaza el asesoramiento legal o fiscal que un proceso de este tipo requiere.',
     });
+  });
+});
+
+describe('V2.1 — routing de catálogo, "Volver" contextual y Remeros Beach', () => {
+  it('/propiedades redirige a /comprar (y a /alquilar si el link viejo pedía alquiler), conservando filtros', async () => {
+    const { default: PropiedadesPage } = await import('@/app/propiedades/page');
+    const redirectTarget = async (params: Record<string, string>) => {
+      try {
+        await PropiedadesPage({ searchParams: Promise.resolve(params) });
+      } catch (error) {
+        return String((error as { digest?: string }).digest || '');
+      }
+      return 'no-redirect';
+    };
+    expect(await redirectTarget({})).toContain(';/comprar;');
+    expect(await redirectTarget({ operacion: 'alquiler', tipo: '7' })).toContain(';/alquilar?tipo=7;');
+    expect(await redirectTarget({ operacion: 'venta', ubicacion: 'city:41' })).toContain(';/comprar?ubicacion=city%3A41;');
+  });
+
+  it('no queda navegación pública hacia el catálogo general /propiedades', () => {
+    for (const file of [
+      'components/layout/Footer.tsx',
+      'components/layout/Header.tsx',
+      'app/not-found.tsx',
+      'app/gracias-consulta/page.tsx',
+      'components/properties/PropertyDetailView.tsx',
+    ]) {
+      expect(readFileSync(file, 'utf8'), file).not.toContain('href="/propiedades"');
+    }
+    expect(readFileSync('app/sitemap.ts', 'utf8')).not.toContain("'/propiedades',");
+  });
+
+  it('"Volver" depende del activo: desarrollo de la unidad, o Comprar/Alquilar por operación', () => {
+    for (const id of [233702, 237472, 233707, 233708, 237474]) {
+      expect(getPropertyBackLink(id, 'Venta')).toEqual({ href: '/desarrollos/benavidez-village', label: 'Volver a Benavídez Village' });
+    }
+    expect(getPropertyBackLink(233719, 'Venta')).toEqual({ href: '/desarrollos/pacheco-central', label: 'Volver a Pacheco Central' });
+    expect(getPropertyBackLink(236986, 'Venta')).toEqual({ href: '/desarrollos/faena', label: 'Volver a Faena' });
+    expect(getPropertyBackLink(236682, 'Venta')).toEqual({
+      href: '/desarrollos/domus-brickell-center',
+      label: 'Volver a Domus Brickell Center',
+    });
+    expect(getPropertyBackLink(237447, 'Venta')).toEqual({ href: '/desarrollos/remeros-beach', label: 'Volver a Remeros Beach' });
+    expect(getPropertyBackLink(187669, 'Venta')).toEqual({ href: '/comprar', label: 'Volver a Comprar' });
+    expect(getPropertyBackLink(237445, 'Alquiler')).toEqual({ href: '/alquilar', label: 'Volver a Alquilar' });
+    expect(getPropertyBackLink(236982, 'Alquiler')).toEqual({ href: '/alquilar', label: 'Volver a Alquilar' });
+    // La ficha lo resuelve en el server (funciona entrando directo por URL).
+    expect(readFileSync('app/propiedades/[id]/page.tsx', 'utf8')).toContain(
+      'backLink={getPropertyBackLink(property.propertyId, property.operationType)}',
+    );
+  });
+
+  it('Remeros Beach: desarrollo en Argentina con 237447 como unidad; 237445 (alquiler) queda afuera', () => {
+    const remeros = getDevelopmentBySlug('remeros-beach');
+    expect(remeros?.propertyIds).toEqual([237447]);
+    expect(remeros?.sourcePropertyId).toBe(237447);
+    expect(remeros?.market).toBe('AR');
+    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toContain('remeros-beach');
+    expect(isExcludedFromStandardCatalog(237447)).toBe(true);
+    expect(isExcludedFromStandardCatalog(237445)).toBe(false);
+    expect(getDevelopmentForPropertyId(237445)).toBeNull();
+  });
+
+  it('Remeros Beach: la unidad de Sky Two se muestra en vivo dentro del desarrollo, con link a su ficha, sin "en construcción"', () => {
+    const remeros = getDevelopmentBySlug('remeros-beach')!;
+    const unit = property(
+      {
+        propertyId: 237447,
+        price: 270000,
+        currency: 'U$D',
+        totalArea: 84,
+        coveredArea: 74,
+        uncoveredArea: 10,
+        amountRoom: 3,
+        amountBedroom: 2,
+        state: { stateId: 3, name: 'Bs.As. G.B.A. Norte' },
+        city: { cityId: 41, name: 'Tigre' },
+        neighborhood: { neighborhoodId: 700, name: 'Rincón de Milberg' },
+        images: Array.from({ length: 25 }, (_, i) => ({ imageId: `rb${i}`, url: `https://cdn.2clics.com/rb${i}.jpg` })),
+        meta_data: [
+          { metaKey: 'title', metaValue: 'Departamento de 3 ambientes en venta en Remeros Beach Sky 2' },
+          { metaKey: 'amount_bath', metaValue: '2' },
+          { metaKey: 'amount_garage', metaValue: '1' },
+          { metaKey: 'expenses', metaValue: '490000' },
+        ],
+      },
+      'AR',
+    );
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: remeros, source: toDevSource(unit, remeros.publicName), units: [unit] }),
+    );
+    expect(html).toContain('<h1>Remeros Beach</h1>');
+    expect(html).toContain('Camino de los Remeros · Tigre · Argentina');
+    expect(html).toContain('>Unidad disponible · Sky Two<');
+    expect(html).toContain('<span>Precio de esta unidad</span><strong>U$D 270.000</strong>');
+    for (const [value, label] of [
+      ['84 m²', 'Superficie total'],
+      ['74 m²', 'Cubierta'],
+      ['10 m²', 'Balcón'],
+      ['3', 'Ambientes'],
+      ['2', 'Dormitorios'],
+      ['2', 'Baños'],
+      ['1', 'Cocheras'],
+      ['AR$ 490.000', 'Expensas'],
+    ]) {
+      expect(html).toContain(`>${value}</span><span class="project-commercial-schedule-label">${label}<`);
+    }
+    expect(html).toContain('href="/propiedades/237447"');
+    expect(html).toContain('>Ver ficha de la unidad<');
+    expect(html.toLowerCase()).not.toContain('en construcción');
+    expect(html).toContain('Entregado');
+    for (const forbidden of ['rentabilidad', 'retorno', 'financiación', 'cuotas']) {
+      expect(html.toLowerCase()).not.toContain(forbidden);
+    }
+  });
+
+  it('/comprar no muestra 237447 (vive en Remeros) y /alquilar sigue mostrando 237445', async () => {
+    const item = (propertyId: number, operationType: string) => ({
+      propertyId,
+      address: `Propiedad ${propertyId}`,
+      price: 1000,
+      currency: 'U$D',
+      operationType,
+      status: 'ACTIVE',
+      webListing: 'SIMPLE',
+      propertyType: { typeId: 1, name: 'Departamento', appId: '5785' },
+      state: { stateId: 3, name: 'Bs.As. G.B.A. Norte' },
+      city: { cityId: 41, name: 'Tigre' },
+      neighborhood: { neighborhoodId: 700, name: 'Rincón de Milberg' },
+      images: [],
+      meta_data: [],
+    });
+    globalThis.fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(String(init.body)) : {};
+      const all = [item(237447, 'VENTA'), item(187669, 'VENTA'), item(237445, 'ALQUILER_PERMANENTE')];
+      const wanted = body.filters?.operation_type;
+      const properties = wanted ? all.filter((p) => p.operationType === wanted) : all;
+      return jsonResponse({ status: 'success', count: properties.length, properties }) as never;
+    }) as never;
+    const { getPropertyCatalog } = await loadListings();
+    const comprar = await getPropertyCatalog({ operacion: 'venta' }, { excludePropertyIds: getExcludedPropertyIds() });
+    expect(comprar.properties.map((p) => p.propertyId)).toEqual([187669]);
+    const alquilar = await getPropertyCatalog({ operacion: 'alquiler' }, { excludePropertyIds: getExcludedPropertyIds() });
+    expect(alquilar.properties.map((p) => p.propertyId)).toEqual([237445]);
+  });
+});
+
+describe('V2.1 — assets editoriales locales (public/developments)', () => {
+  it('sin archivos en el repo ningún slot se activa (no hay placeholders) y cada slot declara su archivo exacto', async () => {
+    const { DEVELOPMENT_ASSET_SLOTS, resolveDevelopmentAssets } = await import('@/lib/development-assets');
+    for (const slug of ['benavidez-village', 'pacheco-central', 'remeros-beach']) {
+      expect(resolveDevelopmentAssets(slug)).toEqual({});
+      for (const slot of DEVELOPMENT_ASSET_SLOTS[slug]) {
+        expect(slot.file).toMatch(/^[a-z0-9-]+\.jpg$/);
+      }
+    }
+    expect(existsSync('public/developments')).toBe(false);
+  });
+
+  it('cuando el archivo existe, el slot se activa y reemplaza la imagen de 2Clics de su sección, con rótulo de imagen ilustrativa', async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const path = await import('node:path');
+    const { resolveDevelopmentAssets } = await import('@/lib/development-assets');
+    const publicDir = mkdtempSync(path.join(tmpdir(), 'garcia-public-'));
+    mkdirSync(path.join(publicDir, 'developments', 'pacheco-central'), { recursive: true });
+    writeFileSync(path.join(publicDir, 'developments', 'pacheco-central', 'hero.jpg'), '');
+    writeFileSync(path.join(publicDir, 'developments', 'pacheco-central', 'masterplan.jpg'), '');
+    const assets = resolveDevelopmentAssets('pacheco-central', publicDir);
+    expect(assets).toEqual({
+      hero: [{ src: '/developments/pacheco-central/hero.jpg', kind: 'render' }],
+      masterplan: [{ src: '/developments/pacheco-central/masterplan.jpg', kind: 'plan' }],
+    });
+
+    const pacheco = getDevelopmentBySlug('pacheco-central')!;
+    const fixture = property({
+      propertyId: 233719,
+      price: 112000,
+      images: Array.from({ length: 6 }, (_, i) => ({ imageId: `pc${i}`, url: `https://cdn.2clics.com/pc${i}.jpg` })),
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation: pacheco,
+        source: toDevSource(fixture, pacheco.publicName),
+        units: [fixture],
+        assets,
+      }),
+    );
+    expect(html).toContain(encodeURIComponent('/developments/pacheco-central/hero.jpg'));
+    expect(html).toContain('<h2>Masterplan</h2>');
+    expect(html).toContain('>Imagen ilustrativa<');
+    expect(html).toContain('>Plano ilustrativo<');
+    // Sin el asset, la sección "Masterplan" no existe (no hay fallback inventado).
+    const without = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation: pacheco, source: toDevSource(fixture, pacheco.publicName), units: [fixture] }),
+    );
+    expect(without).not.toContain('<h2>Masterplan</h2>');
+    expect(without).not.toContain('Imagen ilustrativa');
+  });
+});
+
+describe('V2.1 — /invertir', () => {
+  it('/invertir no repite el eyebrow "Invertir" sobre el H1', () => {
+    const source = readFileSync('app/invertir/page.tsx', 'utf8');
+    expect(source).not.toContain('<p className="eyebrow">Invertir</p>');
+    expect(source).toContain('Invertir empieza por entender qué estás buscando.');
+  });
+
+  it('445 N Shore mantiene su copy, datos, riesgos y condiciones', () => {
+    const curation = getInvestmentEditorialCuration('445-n-shore-drive')!;
+    expect(curation.headline).toBe('Participar en el desarrollo de una residencia frente al agua en Normandy Shores');
+    expect(curation.intro).toBe(
+      'Una oportunidad para participar como socio en el desarrollo de una residencia unifamiliar de obra nueva en Miami Beach. No consiste en comprar la residencia ni una unidad en preventa.',
+    );
+    expect(curation.asset.facts).toHaveLength(9);
+    expect(curation.risks).toContain('Retorno no garantizado');
+    expect(curation.conditions.price).toBe('Consultar precio');
   });
 });

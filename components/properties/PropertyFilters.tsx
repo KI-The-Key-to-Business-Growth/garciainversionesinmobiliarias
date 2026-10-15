@@ -299,7 +299,7 @@ export default function PropertyFilters({
   availableOperations,
   priceFacet,
   resolvedPrice,
-  actionPath = '/propiedades',
+  actionPath = '/comprar',
   lockedOperation,
 }: PropertyFiltersProps) {
   const operations = new Set<ListingOperationFilter>(['all', 'venta', 'alquiler']);

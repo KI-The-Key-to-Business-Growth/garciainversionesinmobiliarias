@@ -6,6 +6,7 @@ import CuratedDevelopmentCard from '@/components/properties/CuratedDevelopmentCa
 import DesarrollosMarketTabs from '@/components/properties/DesarrollosMarketTabs';
 import ListingState from '@/components/properties/ListingState';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
+import { resolveDevelopmentAssets } from '@/lib/development-assets';
 import { DEVELOPMENTS } from '@/lib/site-curation';
 import { getDevelopmentEditorialCuration, toDevelopmentCardSource } from '@/lib/desarrollos';
 import type { CuratedEntry } from '@/lib/desarrollos';
@@ -29,6 +30,19 @@ async function loadCuratedDevelopments(): Promise<CuratedEntry[]> {
       // `images[0]` a ciegas. Sin curaduría editorial, degrada al mismo fallback de siempre.
       const editorial = getDevelopmentEditorialCuration(curation.slug);
       const source = toDevelopmentCardSource(result.property, curation.publicName, editorial?.cardImageIndex);
+      // Un hero editorial local (render oficial), cuando existe, también es la portada de la card.
+      const heroAsset = resolveDevelopmentAssets(curation.slug).hero?.[0];
+      if (heroAsset) {
+        source.image = {
+          id: heroAsset.src,
+          name: '',
+          url: heroAsset.src,
+          thumbnailUrl: heroAsset.src,
+          displayUrl: heroAsset.src,
+          displayThumbnailUrl: heroAsset.src,
+          useVirtualized: false,
+        };
+      }
       return { curation, source };
     }),
   );

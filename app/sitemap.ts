@@ -8,7 +8,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
   const routes = [
     '/',
-    '/propiedades',
     '/comprar',
     '/alquilar',
     '/desarrollos',

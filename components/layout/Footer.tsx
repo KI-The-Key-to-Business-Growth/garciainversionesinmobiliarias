@@ -86,9 +86,6 @@ export default function Footer() {
               <li>
                 <Link href="/contacto">Contacto</Link>
               </li>
-              <li>
-                <Link href="/propiedades">Propiedades</Link>
-              </li>
             </ul>
           </div>
 

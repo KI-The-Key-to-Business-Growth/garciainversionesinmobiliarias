@@ -8,11 +8,18 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [{ protocol: 'https', hostname: 'storage.googleapis.com' }],
   },
+  // Los assets editoriales de desarrollos (public/developments/**) se activan solo si el archivo
+  // existe (lib/development-assets.ts) — incluirlos en la función server para que esa verificación
+  // también funcione en Vercel.
+  outputFileTracingIncludes: {
+    '/desarrollos': ['./public/developments/**/*'],
+    '/desarrollos/[id]': ['./public/developments/**/*'],
+  },
   // Redirecciones 301 .html → URL limpia (paridad con server.js:172-176 y vercel.json)
   async redirects() {
     return [
       { source: '/index.html', destination: '/', permanent: true },
-      { source: '/propiedades.html', destination: '/propiedades', permanent: true },
+      { source: '/propiedades.html', destination: '/comprar', permanent: true },
       { source: '/propiedad.html', destination: '/propiedad', permanent: true },
       { source: '/gracias-consulta.html', destination: '/gracias-consulta', permanent: true },
       { source: '/privacidad.html', destination: '/privacidad', permanent: true },

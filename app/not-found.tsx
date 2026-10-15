@@ -18,7 +18,7 @@ export default function NotFound() {
               disponibles o volver al inicio.
             </p>
             <div className="error-404-actions">
-              <Link href="/propiedades" className="btn btn-primary">
+              <Link href="/comprar" className="btn btn-primary">
                 Ver propiedades
               </Link>
               <Link href="/" className="btn btn-secondary">

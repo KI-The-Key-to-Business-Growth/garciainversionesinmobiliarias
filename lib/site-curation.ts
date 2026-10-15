@@ -50,6 +50,9 @@ export const CURATED_PROPERTIES: CuratedPropertyEntry[] = [
   { propertyId: 237472, humanRef: 'GAR-237472', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 233702, humanRef: 'GAR-233702', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 233707, humanRef: 'GAR-233707', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // Remeros Beach — la unidad en venta de Sky Two vive dentro del desarrollo (no en /comprar).
+  // 237445 (alquiler) no se clasifica: sigue siendo una propiedad tradicional de /alquilar.
+  { propertyId: 237447, humanRef: 'GAR-237447', classification: 'desarrollo', excludeFromStandardCatalog: true },
   // Pacheco Central — único registro de la cartera vinculado al proyecto.
   { propertyId: 233719, humanRef: 'GAR-233719', classification: 'desarrollo', excludeFromStandardCatalog: true },
   // Domus Brickell Center — 236682 confirmado por García (nunca 236646).
@@ -138,6 +141,9 @@ export type DevelopmentCuration = {
   // Identificador público de cada unidad (ej. "UF 16") — dato permanente de la unidad, declarado
   // por curaduría. Precio, superficie y orientación de cada unidad se leen en vivo de 2Clics.
   unitLabels?: Record<number, string>;
+  // Nombre corto para "Volver a …" en las fichas de sus unidades (ej. "Faena"). Sin declarar se
+  // usa `publicName`.
+  backLabel?: string;
 };
 
 // La ficha de Faena es el patrón visual/estructural de referencia (apertura editorial, imágenes,
@@ -159,6 +165,7 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     humanRef: 'GAR-236986',
     propertyIds: [236986],
     market: 'US',
+    backLabel: 'Faena',
   },
   {
     slug: 'benavidez-village',
@@ -189,6 +196,17 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     market: 'AR',
   },
   {
+    // Remeros Beach es el masterplan; 237447 (venta) es una unidad de Sky Two, sector entregado.
+    // 237445 (alquiler del mismo edificio) NO forma parte del desarrollo: sigue en /alquilar.
+    slug: 'remeros-beach',
+    name: 'Remeros Beach',
+    publicName: 'Remeros Beach',
+    sourcePropertyId: 237447,
+    humanRef: 'GAR-237447',
+    propertyIds: [237447],
+    market: 'AR',
+  },
+  {
     slug: 'domus-brickell-center',
     name: 'Domus Brickell Center',
     // Nombre público confirmado explícitamente por García — no se infiere del título crudo de
@@ -205,6 +223,27 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     market: 'US',
   },
 ];
+
+export function getDevelopmentForPropertyId(propertyId: number | null | undefined): DevelopmentCuration | null {
+  if (propertyId === null || propertyId === undefined) return null;
+  return DEVELOPMENTS.find((entry) => entry.propertyIds.includes(propertyId)) || null;
+}
+
+export type PropertyBackLink = { href: string; label: string };
+
+// "Volver" de una ficha /propiedades/[id] — depende del activo, no del historial del navegador
+// (tiene que funcionar entrando directo por URL): la unidad de un desarrollo curado vuelve a su
+// desarrollo; el resto vuelve a la intención de catálogo de su operación.
+export function getPropertyBackLink(propertyId: number | null | undefined, operationLabel: string): PropertyBackLink {
+  const development = getDevelopmentForPropertyId(propertyId);
+  if (development) {
+    const name = development.backLabel || development.publicName || development.name;
+    return { href: `/desarrollos/${development.slug}`, label: `Volver a ${name}` };
+  }
+  const operation = operationLabel.trim().toLowerCase();
+  if (operation.startsWith('alquiler')) return { href: '/alquilar', label: 'Volver a Alquilar' };
+  return { href: '/comprar', label: 'Volver a Comprar' };
+}
 
 export function getDevelopmentBySlug(slug: string): DevelopmentCuration | null {
   const normalized = String(slug || '').trim().toLowerCase();

@@ -1,6 +1,7 @@
 import {
   formatArea,
   formatPrice,
+  formatPropertyExpenses,
   formatPublicDisplayValue,
   numberValue,
   propertyHref,
@@ -235,7 +236,10 @@ export type DevelopmentSection = {
   // — para desarrollos cuyo registro de 2Clics es una unidad puntual (Pacheco Central). Nunca se
   // guardan esas medidas en la curaduría. `uncoveredLabel` nombra la superficie descubierta de esa
   // unidad (ej. "Balcón").
-  referenceUnit?: { uncoveredLabel: string };
+  // `detail: 'full'` agrega dormitorios, baños, cocheras y expensas (unidad en venta de Remeros).
+  referenceUnit?: { uncoveredLabel: string; detail?: 'full' };
+  // Link a la ficha canónica de la unidad de referencia dentro del bloque comercial.
+  commercialUnitLinkLabel?: string;
   // Solo layout 'facts-band'.
   bandItems?: DevelopmentSnapshotField[];
   // Aclaración breve bajo una galería (ej. "Fotografías del avance de obra.").
@@ -489,14 +493,9 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
     // idx2 planta baja completa; idx0 cocina; idx10 dormitorio. Excluidas: movimiento de suelo
     // (idx5, idx13), pasillo de obra (idx3), primeros planos de anafe/cajón (idx9, idx15).
     //
-    // ESPACIOS PARA MATERIAL OFICIAL (todavía no está en el repo ni en 2Clics) — cuando llegue, se
-    // asigna a estas secciones sin cambiar la estructura:
-    // 1 Hero → `heroImageIndex`/`cardImageIndex` (hoy: foto de obra idx7).
-    // 2 Amenities → sección `vida-en-el-conjunto` (hoy sin imagen).
-    // 3 Exterior / conjunto → sección `proyecto` (hoy: interior idx2).
-    // 4 Tipologías / masterplan → sección `residencias` (hoy: idx12).
-    // 5 Estado de obra → galería junto a `estado-entrega` (hoy sin fotos: las de movimiento de
-    //   suelo no alcanzan para una galería).
+    // Material oficial (brochure y PDF de unidades): slots en lib/development-assets.ts — cada
+    // render reemplaza la imagen de 2Clics de su sección solo cuando el archivo existe en
+    // public/developments/benavidez-village/. "Estado de obra" usa fotos reales de 2Clics.
     heroImageIndex: 7,
     cardImageIndex: 7,
     priceRepresentsProjectRange: false, // cada unidad tiene su precio — se muestran en la tabla
@@ -564,6 +563,14 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         layout: 'text-only',
       },
       {
+        // Solo aparece cuando existe el masterplan oficial (asset local) — sin fallback de 2Clics.
+        key: 'masterplan',
+        title: 'Masterplan',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'gallery',
+      },
+      {
         key: 'ubicacion',
         title: 'Benavídez y la ubicación',
         sourceTextSegment: {
@@ -586,6 +593,15 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
           { label: 'Estado', value: 'En construcción' },
           { label: 'Entrega estimada', value: 'Primer trimestre de 2027' },
         ],
+      },
+      {
+        // Fotografías reales de 2Clics (no renders): patio/jardín y frente en obra.
+        key: 'estado-obra',
+        title: 'Avance de obra',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [13, 5],
+        layout: 'gallery',
+        note: 'Fotografías reales del avance de obra.',
       },
       {
         key: 'disponibilidad',
@@ -642,9 +658,10 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
   },
   'pacheco-central': {
     // Las 6 imágenes de 233719 son interiores/balcón de la unidad de referencia — no hay material
-    // de exterior, parque ni masterplan. ESPACIOS PARA MATERIAL OFICIAL (no está en el repo):
-    // hero/master render → `heroImageIndex`; parque/piscina → `momento-visual`; masterplan y
-    // tipologías → `tipologias`; amenities → `amenities` (hoy sin imagen); interiores → galería.
+    // de exterior, parque ni masterplan. Las páginas del brochure oficial tienen slots en
+    // lib/development-assets.ts (hero, parque, verde, amenities, interior, cocina, masterplan) y
+    // se activan solo cuando el archivo existe en public/developments/pacheco-central/. Ninguna
+    // planta de unidad del brochure se presenta como si fuera la de 233719.
     heroImageIndex: 4, // balcón/parrilla con vista al parque — única imagen horizontal, conecta con "parque central"
     cardImageIndex: 4, // antes la card usaba images[0] (living retrato, no recorta bien en 16:9) — ver auditoría arriba
     priceRepresentsProjectRange: false, // 112.000 U$D es el precio de una unidad puntual, no del desarrollo — ver auditoría arriba
@@ -683,6 +700,13 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         layout: 'text-only',
       },
       {
+        key: 'masterplan',
+        title: 'Masterplan',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'gallery',
+      },
+      {
         key: 'tipologias',
         title: 'Tipologías',
         sourceTextSegment: {
@@ -697,6 +721,13 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         layout: 'image-right',
       },
       {
+        key: 'terminaciones',
+        title: 'Terminaciones',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'gallery',
+      },
+      {
         key: 'amenities',
         title: 'Amenities',
         sourceTextSegment: { type: 'none' },
@@ -707,6 +738,13 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         ],
         imageIndexes: [],
         layout: 'text-only',
+      },
+      {
+        // Gimnasio, SUM y coworking del brochure — solo con los assets locales presentes.
+        key: 'amenities-imagenes',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'gallery',
       },
       {
         key: 'ubicacion',
@@ -799,6 +837,127 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
     // idx2 (dormitorio con ventanal al parque), idx3 (baño), idx5 (dormitorio con 2 camas) —
     // interiores de la unidad, sin usar en el resto de la ficha (idx1 pasó a "Tipologías").
     interiors: { title: 'Interiores y residencias', imageIndexes: [2, 3, 5] },
+  },
+  'remeros-beach': {
+    // Remeros Beach es el masterplan; la unidad publicada por García (237447) está en Sky Two,
+    // sector ENTREGADO — nunca se la describe como en construcción. Hechos: base editorial
+    // aprobada (17 ha, Crystal Lagoon de ~3,5 ha, playas, sectores Sky Residences/Árboris/Beach,
+    // Sky One + Sky Two entregado) + descripción vigente de 237447 en 2Clics (amenities, accesos).
+    // Sin rentabilidades, sin financiación del developer, sin otras unidades.
+    //
+    // Imágenes: las 25 de 237447 son fotos reales propias de García (no renders): idx11 torres
+    // sobre la laguna (hero/card), idx2 laguna y playa, idx4 muelle, idx0 torres Sky con la laguna,
+    // idx24 canchas, idx14/15/18/21 interiores de la unidad. Slots para producción propia (drone,
+    // laguna, exterior Sky, amenities, interior) en lib/development-assets.ts.
+    heroImageIndex: 11,
+    cardImageIndex: 11,
+    priceRepresentsProjectRange: false, // el precio es el de la unidad de Sky Two, no del masterplan
+    publicLocation: 'Camino de los Remeros · Tigre · Argentina',
+    introSegment: {
+      type: 'curatedText',
+      text: 'Un masterplan residencial en Tigre organizado alrededor de una Crystal Lagoon.',
+    },
+    sections: [
+      {
+        key: 'snapshot',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'snapshot',
+        snapshotFields: [
+          { label: 'Ubicación', value: 'Camino de los Remeros, Tigre' },
+          { label: 'Predio', value: '17 ha' },
+          { label: 'Laguna', value: 'Crystal Lagoon de 3,5 ha' },
+          { label: 'Sectores', value: 'Sky Residences · Árboris · Beach' },
+          { label: 'Sky Residences', value: 'Entregado' },
+        ],
+      },
+      {
+        key: 'proyecto',
+        title: 'El proyecto',
+        sourceTextSegment: {
+          type: 'curatedText',
+          text: 'Remeros Beach es un masterplan residencial sobre un predio de 17 hectáreas, organizado alrededor de una Crystal Lagoon de aproximadamente 3,5 hectáreas con playas. El desarrollo se divide en sectores con etapas propias: Sky Residences, Árboris y Beach.',
+        },
+        imageIndexes: [],
+        layout: 'text-only',
+      },
+      {
+        key: 'momento-visual',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [2], // laguna y playa
+        layout: 'image-large',
+      },
+      {
+        key: 'laguna',
+        title: 'La laguna y el entorno',
+        sourceTextSegment: {
+          type: 'curatedText',
+          text: 'La Crystal Lagoon es el eje del masterplan: una laguna de aguas cristalinas con playas, muelle, reposeras y camastros, y guardavidas.',
+        },
+        imageIndexes: [4], // muelle sobre la laguna
+        layout: 'image-right',
+      },
+      {
+        key: 'sky-residences',
+        title: 'Sky Residences',
+        sourceTextSegment: {
+          type: 'curatedText',
+          text: 'Sky Residences es el sector de torres del masterplan, formado por Sky One y Sky Two. Es un sector entregado: sus departamentos ya están en uso. La unidad que presenta García pertenece a Sky Two.',
+        },
+        imageIndexes: [0], // torres Sky con la laguna
+        layout: 'image-left',
+      },
+      {
+        key: 'amenities',
+        title: 'Amenities',
+        sourceTextSegment: { type: 'none' },
+        groups: [
+          { title: 'Laguna', items: ['Crystal Lagoon con playas', 'Muelle, reposeras y camastros', 'Guardavidas', 'Clases de buceo'] },
+          { title: 'Deporte', items: ['SportClub y área deportiva', 'Canchas de tenis y paddle', 'Club náutico'] },
+          {
+            title: 'Social y servicios',
+            items: ['Restaurante y salón de eventos', 'Parrillas, SUM y área de juegos para niños', 'Solarium', 'Seguridad 24 hs'],
+          },
+        ],
+        imageIndexes: [24], // canchas
+        layout: 'image-right',
+      },
+      {
+        // Todo en vivo desde 237447: precio, superficies, ambientes, dormitorios, baños, cochera y
+        // expensas (moneda por override explícito AR$, ver lib/2clics/format.ts).
+        key: 'unidad-disponible',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'commercial-summary',
+        commercialEyebrow: 'Unidad disponible · Sky Two',
+        commercialTitle: 'Departamento en Sky Two',
+        commercialPriceSource: 'reference-unit',
+        commercialPriceLead: 'Precio de esta unidad',
+        referenceUnit: { uncoveredLabel: 'Balcón', detail: 'full' },
+        commercialUnitLinkLabel: 'Ver ficha de la unidad',
+      },
+      {
+        key: 'interiores',
+        title: 'La unidad',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [14, 15, 18, 21],
+        layout: 'gallery',
+      },
+      {
+        key: 'ubicacion',
+        title: 'Ubicación',
+        sourceTextSegment: {
+          type: 'curatedText',
+          text: 'Remeros Beach tiene salida directa sobre el Camino de los Remeros, a metros de la Av. Santa María y de la Ruta 27, a unos 10 minutos del centro de Tigre y 15 minutos de la Panamericana.',
+        },
+        imageIndexes: [],
+        layout: 'text-only',
+        map: { queryLabel: 'Remeros Beach, Tigre, Argentina', lat: -34.4270363, long: -58.6120796 },
+      },
+    ],
+    ctaTitle: '¿Querés conocer la unidad en Remeros Beach?',
+    ctaSubtitle: 'Consultanos por el departamento disponible en Sky Two, su precio y sus condiciones vigentes.',
+    ctaLabel: 'Consultar por la unidad',
   },
   // ── Domus Brickell Center (vigesimocuarta pasada) ──────────────────────────────────────────
   // sourcePropertyId 236682 CONFIRMADO explícitamente por García (nunca 236646 — un segundo
@@ -1252,15 +1411,35 @@ export function sumDepositSchedule(schedule: DevelopmentDepositStep[]): number {
   return schedule.reduce((sum, step) => sum + step.percent, 0);
 }
 
-export function resolveReferenceUnitFacts(unit: PublicProperty | null, uncoveredLabel: string): DevelopmentSnapshotField[] {
+function positiveCount(value: string | number | null | undefined): string {
+  const parsed = numberValue(value);
+  return parsed !== null && parsed > 0 ? String(parsed) : '';
+}
+
+export function resolveReferenceUnitFacts(
+  unit: PublicProperty | null,
+  uncoveredLabel: string,
+  detail: 'basic' | 'full' = 'basic',
+): DevelopmentSnapshotField[] {
   if (!unit) return [];
-  const rooms = numberValue(unit.amountRoom);
-  return [
+  const facts = [
     { label: 'Superficie total', value: formatArea(unit.totalArea) },
     { label: 'Cubierta', value: formatArea(unit.coveredArea) },
     { label: uncoveredLabel, value: formatArea(unit.uncoveredArea) },
-    { label: 'Ambientes', value: rooms && rooms > 0 ? String(rooms) : '' },
-  ].filter((fact) => Boolean(fact.value));
+    { label: 'Ambientes', value: positiveCount(unit.amountRoom) },
+  ];
+  if (detail === 'full') {
+    facts.push(
+      { label: 'Dormitorios', value: positiveCount(unit.amountBedroom) },
+      { label: 'Baños', value: positiveCount(unit.metadata.bathrooms) },
+      { label: 'Cocheras', value: positiveCount(unit.metadata.garages) },
+      {
+        label: 'Expensas',
+        value: formatPropertyExpenses(unit.metadata.expenses, unit.metadata.expensesCurrency, unit.propertyId),
+      },
+    );
+  }
+  return facts.filter((fact) => Boolean(fact.value));
 }
 
 // Precio del bloque comercial — siempre en vivo, nunca un número guardado en la curaduría.
