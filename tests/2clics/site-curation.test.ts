@@ -2876,15 +2876,56 @@ describe('V2.1 — routing de catálogo, "Volver" contextual y Remeros Beach', (
 });
 
 describe('V2.1 — assets editoriales locales (public/developments)', () => {
-  it('sin archivos en el repo ningún slot se activa (no hay placeholders) y cada slot declara su archivo exacto', async () => {
+  it('assets entregados: Benavídez (4, sin vivienda-interior ni amenities) y Pacheco (9) activos; Remeros sin archivos; nada fuera de los slots', async () => {
     const { DEVELOPMENT_ASSET_SLOTS, resolveDevelopmentAssets } = await import('@/lib/development-assets');
-    for (const slug of ['benavidez-village', 'pacheco-central', 'remeros-beach']) {
-      expect(resolveDevelopmentAssets(slug)).toEqual({});
-      for (const slot of DEVELOPMENT_ASSET_SLOTS[slug]) {
-        expect(slot.file).toMatch(/^[a-z0-9-]+\.jpg$/);
+    const benavidez = resolveDevelopmentAssets('benavidez-village');
+    expect(Object.keys(benavidez).sort()).toEqual(['hero', 'interiores', 'masterplan', 'proyecto'].sort());
+    // amenities.jpg duplicaba el render del hero: "Vida en el conjunto" queda sin imagen dedicada (sin fallback).
+    expect(benavidez['vida-en-el-conjunto']).toBeUndefined();
+    expect(existsSync('public/developments/benavidez-village/amenities.jpg')).toBe(false);
+    // vivienda-interior.jpg no se entregó: "Las viviendas" mantiene la foto de 2Clics.
+    expect(benavidez.residencias).toBeUndefined();
+    expect(existsSync('public/developments/benavidez-village/vivienda-interior.jpg')).toBe(false);
+    expect(benavidez.masterplan).toEqual([{ src: '/developments/benavidez-village/masterplan.jpg', kind: 'plan' }]);
+
+    const pacheco = resolveDevelopmentAssets('pacheco-central');
+    expect(Object.values(pacheco).flat()).toHaveLength(9);
+    expect(pacheco['amenities-imagenes']?.map((a) => a.src)).toEqual([
+      '/developments/pacheco-central/gimnasio.jpg',
+      '/developments/pacheco-central/sum.jpg',
+      '/developments/pacheco-central/coworking.jpg',
+    ]);
+    expect(pacheco.masterplan?.[0].kind).toBe('plan');
+
+    expect(resolveDevelopmentAssets('remeros-beach')).toEqual({});
+
+    // Solo archivos declarados por algún slot (sin extras ni placeholders).
+    const { readdirSync } = await import('node:fs');
+    for (const slug of ['benavidez-village', 'pacheco-central']) {
+      const declared = DEVELOPMENT_ASSET_SLOTS[slug].map((slot) => slot.file);
+      for (const file of readdirSync(`public/developments/${slug}`)) {
+        expect(declared, `${slug}/${file}`).toContain(file);
       }
     }
-    expect(existsSync('public/developments')).toBe(false);
+  });
+
+  it('Benavídez: el avance de obra sigue con fotos reales de 2Clics, rotuladas como tales', () => {
+    const section = getDevelopmentEditorialCuration('benavidez-village')?.sections.find((s) => s.key === 'estado-obra');
+    expect(section?.imageIndexes).toEqual([13, 5]);
+    expect(section?.imageTag).toBe('Fotografía real');
+    const curation = getDevelopmentBySlug('benavidez-village')!;
+    const fixture = property({
+      propertyId: 233702,
+      images: Array.from({ length: 20 }, (_, i) => ({ imageId: `bv${i}`, url: `https://cdn.2clics.com/bv${i}.jpg` })),
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation, source: toDevSource(fixture, curation.publicName), units: [fixture] }),
+    );
+    const idx = html.indexOf('<h2>Avance de obra</h2>');
+    expect(idx).toBeGreaterThan(-1);
+    const block = html.slice(idx, html.indexOf('</section>', idx));
+    expect((block.match(/>Fotografía real</g) || []).length).toBe(2);
+    expect(block).not.toContain('Imagen ilustrativa');
   });
 
   it('cuando el archivo existe, el slot se activa y reemplaza la imagen de 2Clics de su sección, con rótulo de imagen ilustrativa', async () => {

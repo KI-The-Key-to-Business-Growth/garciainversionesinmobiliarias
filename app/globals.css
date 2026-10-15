@@ -8164,3 +8164,19 @@ body[data-page-type='thank_you'] {
     border-left: none;
   }
 }
+
+/* Planos (masterplan) dentro de una galería: fondo blanco y el plano completo, sin recorte. */
+.project-interiors-media--plan {
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
+.project-interiors-grid--1 .project-interiors-media--plan {
+  aspect-ratio: 4 / 3;
+}
+
+/* Galería de una sola imagen apaisada (ej. render de dormitorio de Benavídez): marco 16/9 para no
+   recortar el render (y no cortar a la mitad la marca del brochure). */
+.project-interiors-grid--1.project-interiors-grid--landscape .project-interiors-media:not(.project-interiors-media--plan) {
+  aspect-ratio: 16 / 9;
+}

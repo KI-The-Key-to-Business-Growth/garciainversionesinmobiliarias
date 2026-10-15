@@ -412,7 +412,9 @@ type SectionContext = {
 function renderSection(section: DevelopmentSection, ctx: SectionContext) {
   const { images, description, priceRangeField, displayName, sourcePrice, sourceCurrency, sourceHidePrice } = ctx;
   const assetImages = (ctx.assets[section.key] || []).map(assetToImage);
-  const sectionImages: EditorialImage[] = assetImages.length ? assetImages : resolveSectionImages(images, section.imageIndexes);
+  const sectionImages: EditorialImage[] = assetImages.length
+    ? assetImages
+    : resolveSectionImages(images, section.imageIndexes).map((image) => ({ ...image, tag: section.imageTag }));
   const segment = resolveSourceTextSegment(description, section.sourceTextSegment);
   const items = Array.isArray(segment) ? segment : [];
   const text = typeof segment === 'string' ? segment : '';
@@ -596,7 +598,10 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
             className={`project-interiors-grid project-interiors-grid--${Math.min(sectionImages.length, 4)} project-interiors-grid--landscape`}
           >
             {sectionImages.slice(0, 4).map((image, index) => (
-              <div className="project-interiors-media" key={image.id || index}>
+              <div
+                className={`project-interiors-media${image.tag === 'Plano ilustrativo' ? ' project-interiors-media--plan' : ''}`}
+                key={image.id || index}
+              >
                 <Image
                   src={image.displayUrl}
                   alt=""

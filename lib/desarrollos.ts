@@ -244,6 +244,9 @@ export type DevelopmentSection = {
   bandItems?: DevelopmentSnapshotField[];
   // Aclaración breve bajo una galería (ej. "Fotografías del avance de obra.").
   note?: string;
+  // Rótulo sobre cada imagen de 2Clics de la sección (ej. "Fotografía real" en el avance de
+  // obra), para distinguirlas de los renders editoriales.
+  imageTag?: string;
 };
 
 export type DevelopmentEditorialCuration = {
@@ -602,6 +605,7 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         imageIndexes: [13, 5],
         layout: 'gallery',
         note: 'Fotografías reales del avance de obra.',
+        imageTag: 'Fotografía real',
       },
       {
         key: 'disponibilidad',
