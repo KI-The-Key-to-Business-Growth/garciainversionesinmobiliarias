@@ -7982,3 +7982,149 @@ body[data-page-type='thank_you'] {
 .project-block-text + .project-block-list {
   margin-top: 18px;
 }
+
+/* ── Sistema de fichas de desarrollo — bloques compartidos (pulido editorial, 2026-10) ───────── */
+
+/* Dos bloques de texto seguidos no suman dos paddings completos: evita los tramos crema largos sin
+   función editorial (ej. "Puede ser una alternativa para" → "Puede no tener sentido si"). */
+.project-editorial-text + .project-editorial-text {
+  padding-top: 8px;
+}
+
+/* Dirección de un mapa con dirección exacta (Domus) — reemplaza a cualquier rótulo interno. */
+.project-location-address {
+  margin: 10px 0 0;
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.9rem;
+  color: var(--navy);
+}
+
+/* Bloque comercial de cualquier desarrollo — misma familia visual que "Estructura de ingreso" de
+   Domus (filete dorado, titular serif, datos en grilla con divisores finos). */
+.project-commercial-summary-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 0 0 22px;
+}
+
+.project-commercial-summary-price span {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.project-commercial-summary-price strong {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.project-commercial-facts--2 { grid-template-columns: repeat(2, 1fr); }
+.project-commercial-facts--3 { grid-template-columns: repeat(3, 1fr); }
+
+.project-commercial-facts .project-commercial-schedule-percent {
+  font-size: 1.45rem;
+}
+
+.project-commercial-summary-note {
+  margin: 0 0 6px;
+}
+
+.project-commercial-summary-note:last-of-type {
+  margin-bottom: 22px;
+}
+
+/* Banda navy de énfasis (etapas / estado y entrega) — pocos datos con jerarquía propia. Mismo navy
+   y tipografía que el bloque de riesgos de /invertir; no es una card. */
+.project-facts-band {
+  background: var(--navy);
+  padding: 52px 0;
+}
+
+.project-facts-band-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.project-facts-band h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.6rem;
+  color: var(--ivory);
+  margin: 0 0 28px;
+}
+
+.project-facts-band-items {
+  display: grid;
+  grid-template-columns: repeat(var(--band-columns, 2), minmax(0, 1fr));
+}
+
+.project-facts-band-items--1 { --band-columns: 1; }
+.project-facts-band-items--2 { --band-columns: 2; }
+.project-facts-band-items--3 { --band-columns: 3; }
+
+.project-facts-band-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 24px;
+}
+
+.project-facts-band-item + .project-facts-band-item {
+  border-left: 1px solid rgba(247, 244, 237, 0.22);
+}
+
+.project-facts-band-value {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.9rem;
+  color: var(--gold);
+  line-height: 1.15;
+}
+
+.project-facts-band-label {
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(247, 244, 237, 0.78);
+}
+
+@media (max-width: 680px) {
+  .project-editorial-text + .project-editorial-text {
+    padding-top: 4px;
+  }
+
+  .project-commercial-facts--3 { grid-template-columns: 1fr 1fr; }
+
+  .project-commercial-summary-price strong {
+    font-size: 1.6rem;
+  }
+
+  .project-facts-band {
+    padding: 40px 0;
+  }
+
+  .project-facts-band-items {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .project-facts-band-item {
+    padding: 0;
+  }
+
+  .project-facts-band-item + .project-facts-band-item {
+    border-left: none;
+    border-top: 1px solid rgba(247, 244, 237, 0.22);
+    padding-top: 18px;
+  }
+
+  .project-facts-band-value {
+    font-size: 1.6rem;
+  }
+}

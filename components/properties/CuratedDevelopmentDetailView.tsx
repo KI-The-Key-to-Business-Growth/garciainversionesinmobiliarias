@@ -10,13 +10,20 @@ import {
   formatCurrencyAmount,
   formatDevelopmentPriceRange,
   getDevelopmentEditorialCuration,
+  resolveCommercialPrice,
   resolveDevelopmentUnitRows,
   resolveReferenceUnitFacts,
   resolveSectionImages,
   resolveSourceTextSegment,
   sumDepositSchedule,
 } from '@/lib/desarrollos';
-import type { DevelopmentLocationMap, DevelopmentSection, DevelopmentSnapshotField } from '@/lib/desarrollos';
+import type {
+  DevelopmentEditorialCuration,
+  DevelopmentLocationMap,
+  DevelopmentSection,
+  DevelopmentSnapshotField,
+  DevelopmentUnitRow,
+} from '@/lib/desarrollos';
 import type { DevelopmentCuration } from '@/lib/site-curation';
 import type { PublicImage, PublicLocation, PublicProperty, TwoclicsAmenity, TwoclicsRegion } from '@/lib/2clics/types';
 
@@ -104,8 +111,9 @@ export default function CuratedDevelopmentDetailView({
   const introText = resolveSourceTextSegment(description, introSegment);
 
   const sourceUnit = units.find((unit) => unit.propertyId === source.propertyId) || null;
-  const unitRows = editorial?.unitsTable ? resolveDevelopmentUnitRows(curation, units) : [];
-  const hasIndependentUnits = !editorial?.unitsTable && units.length > 1;
+  const hasUnitsTable = Boolean(editorial?.sections.some((section) => section.layout === 'units-table'));
+  const unitRows = hasUnitsTable ? resolveDevelopmentUnitRows(curation, units) : [];
+  const hasIndependentUnits = !hasUnitsTable && units.length > 1;
 
   // Amenities editoriales — opt-in explícito por desarrollo (ver lib/desarrollos.ts), solo con 2+
   // reales estructurados de 2Clics, filtrados primero contra amenities que no aportan al relato
@@ -130,9 +138,10 @@ export default function CuratedDevelopmentDetailView({
   // donde el precio estructurado es de una sola unidad dentro de un desarrollo de 260). Si
   // `hidePrice`, no hay precio válido, o `priceRepresentsProjectRange` es false, no se agrega nada
   // (nunca un placeholder). Ver `formatDevelopmentPriceRange()` en lib/desarrollos.ts.
-  const priceRangeValue = editorial?.priceRepresentsProjectRange
-    ? formatDevelopmentPriceRange(source.price, source.currency, source.hidePrice)
-    : null;
+  const priceRangeValue =
+    editorial?.priceRepresentsProjectRange && editorial.priceInSnapshot !== false
+      ? formatDevelopmentPriceRange(source.price, source.currency, source.hidePrice)
+      : null;
   const priceRangeField: DevelopmentSnapshotField | null = priceRangeValue
     ? { label: 'Rango de precio', value: priceRangeValue }
     : null;
@@ -173,6 +182,8 @@ export default function CuratedDevelopmentDetailView({
       {editorial
         ? editorial.sections.map((section) =>
             renderSection(section, {
+              editorial,
+              unitRows,
               images: source.images,
               description,
               priceRangeField,
@@ -236,47 +247,6 @@ export default function CuratedDevelopmentDetailView({
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-      ) : null}
-
-      {unitRows.length ? (
-        <section className="project-units-table-section">
-          <div className="container">
-            <div className="project-units-heading">
-              <h2>{editorial?.unitsTable?.title}</h2>
-              <p>
-                {unitRows.length === 1 ? '1 unidad publicada' : `${unitRows.length} unidades publicadas`}
-              </p>
-            </div>
-            <table className="project-units-table">
-              <thead>
-                <tr>
-                  <th scope="col">Unidad</th>
-                  <th scope="col">Superficie total</th>
-                  <th scope="col">Orientación</th>
-                  <th scope="col">Precio</th>
-                  <th scope="col">
-                    <span className="sr-only">Ficha</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {unitRows.map((row) => (
-                  <tr key={row.propertyId}>
-                    <th scope="row" data-label="Unidad">
-                      {row.label || '—'}
-                    </th>
-                    <td data-label="Superficie total">{row.totalArea || '—'}</td>
-                    <td data-label="Orientación">{row.orientation || '—'}</td>
-                    <td data-label="Precio">{row.price || '—'}</td>
-                    <td className="project-units-link">
-                      <Link href={row.href}>Ver ficha →</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </section>
       ) : null}
@@ -371,10 +341,10 @@ function renderLocationMap(map: DevelopmentLocationMap | undefined, displayName:
   const query = useCoordinates ? `${map.lat},${map.long}` : map.queryLabel;
   const embedUrl = googleMapsEmbedUrl(query);
   const searchUrl = googleMapsSearchUrl(query);
-  // Nota del mapa (vigesimocuarta pasada): "Ubicación aproximada" sigue siendo correcta para un
-  // texto de barrio/ciudad sin lat/long (los 4 desarrollos de Miami); una dirección exacta
-  // confirmada (calle y número) sin lat/long usable no es "aproximada" — usa `addressIsExact`.
-  const note = useCoordinates ? null : map.addressIsExact ? 'Dirección confirmada' : 'Ubicación aproximada';
+  // Con una dirección exacta (calle y número) se muestra la dirección misma; con un texto de
+  // barrio/ciudad sin coordenadas, "Ubicación aproximada". Nunca rótulos internos de verificación.
+  const addressLine = !useCoordinates && map.addressIsExact ? map.queryLabel : null;
+  const note = useCoordinates || map.addressIsExact ? null : 'Ubicación aproximada';
   return (
     <div className="project-location-map">
       <iframe
@@ -385,6 +355,7 @@ function renderLocationMap(map: DevelopmentLocationMap | undefined, displayName:
         referrerPolicy="no-referrer-when-downgrade"
         allowFullScreen
       />
+      {addressLine ? <p className="project-location-address">{addressLine}</p> : null}
       {note ? <p className="project-location-note">{note}</p> : null}
       <a className="project-location-link" href={searchUrl} target="_blank" rel="noopener">
         Ver en Google Maps ↗
@@ -394,6 +365,8 @@ function renderLocationMap(map: DevelopmentLocationMap | undefined, displayName:
 }
 
 type SectionContext = {
+  editorial: DevelopmentEditorialCuration;
+  unitRows: DevelopmentUnitRow[];
   images: PublicImage[];
   description: string;
   priceRangeField: DevelopmentSnapshotField | null;
@@ -408,11 +381,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
   const { images, description, priceRangeField, displayName, sourcePrice, sourceCurrency, sourceHidePrice } = ctx;
   const sectionImages: PublicImage[] = resolveSectionImages(images, section.imageIndexes);
   const segment = resolveSourceTextSegment(description, section.sourceTextSegment);
-  const items = section.referenceUnit
-    ? resolveReferenceUnitFacts(ctx.referenceUnit, section.referenceUnit.uncoveredLabel)
-    : Array.isArray(segment)
-      ? segment
-      : [];
+  const items = Array.isArray(segment) ? segment : [];
   const text = typeof segment === 'string' ? segment : '';
   const hasImage = sectionImages.length > 0;
 
@@ -497,6 +466,148 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
           <a className="project-commercial-entry-link" href="#project-cta-final">
             Consultar disponibilidad ↓
           </a>
+        </div>
+      </section>
+    );
+  }
+
+  if (section.layout === 'commercial-summary') {
+    const price = resolveCommercialPrice(
+      section,
+      ctx.editorial,
+      { price: sourcePrice, currency: sourceCurrency, hidePrice: sourceHidePrice },
+      ctx.referenceUnit,
+    );
+    if (!price) return null;
+    const facts = section.referenceUnit ? resolveReferenceUnitFacts(ctx.referenceUnit, section.referenceUnit.uncoveredLabel) : [];
+    return (
+      <section key={section.key} className="project-commercial-entry project-commercial-summary">
+        <div className="container project-commercial-entry-inner">
+          {section.commercialEyebrow ? <p className="eyebrow">{section.commercialEyebrow}</p> : null}
+          {section.commercialTitle ? (
+            <>
+              <h2>{section.commercialTitle}</h2>
+              <p className="project-commercial-summary-price">
+                <span>{section.commercialPriceLead}</span>
+                <strong>{price}</strong>
+              </p>
+            </>
+          ) : (
+            <h2>
+              {section.commercialPriceLead} {price}
+            </h2>
+          )}
+          {facts.length ? (
+            <div className={`project-commercial-schedule project-commercial-facts project-commercial-facts--${facts.length}`}>
+              {facts.map((fact) => (
+                <div className="project-commercial-schedule-step" key={fact.label}>
+                  <span className="project-commercial-schedule-percent">{fact.value}</span>
+                  <span className="project-commercial-schedule-label">{fact.label}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {section.commercialNotes?.map((note) => (
+            <p className="project-commercial-entry-note project-commercial-summary-note" key={note}>
+              {note}
+            </p>
+          ))}
+          <a className="project-commercial-entry-link" href="#project-cta-final">
+            Consultar condiciones vigentes ↓
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  if (section.layout === 'facts-band') {
+    if (!section.bandItems?.length) return null;
+    return (
+      <section key={section.key} className="project-facts-band">
+        <div className="container project-facts-band-inner">
+          {section.title ? <h2>{section.title}</h2> : null}
+          <div className={`project-facts-band-items project-facts-band-items--${section.bandItems.length}`}>
+            {section.bandItems.map((item) => (
+              <div className="project-facts-band-item" key={item.label}>
+                <span className="project-facts-band-value">{item.value}</span>
+                <span className="project-facts-band-label">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (section.layout === 'gallery') {
+    if (!hasImage) return null;
+    return (
+      <section key={section.key} className="project-interiors">
+        <div className="container">
+          {section.title ? (
+            <div className="project-interiors-heading">
+              <h2>{section.title}</h2>
+            </div>
+          ) : null}
+          <div
+            className={`project-interiors-grid project-interiors-grid--${Math.min(sectionImages.length, 4)} project-interiors-grid--landscape`}
+          >
+            {sectionImages.slice(0, 4).map((image, index) => (
+              <div className="project-interiors-media" key={image.id || index}>
+                <Image
+                  src={image.displayUrl}
+                  alt=""
+                  fill
+                  sizes="(max-width: 780px) 100vw, (max-width: 1080px) 50vw, 540px"
+                  style={{ objectFit: 'cover', objectPosition: 'center' }}
+                />
+              </div>
+            ))}
+          </div>
+          {section.note ? <p className="project-interiors-note">{section.note}</p> : null}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.layout === 'units-table') {
+    const rows = ctx.unitRows;
+    if (!rows.length) return null;
+    return (
+      <section key={section.key} className="project-units-table-section">
+        <div className="container">
+          <div className="project-units-heading">
+            <h2>{section.title}</h2>
+            <p>{rows.length === 1 ? '1 unidad publicada' : `${rows.length} unidades publicadas`}</p>
+          </div>
+          <table className="project-units-table">
+            <thead>
+              <tr>
+                <th scope="col">Unidad</th>
+                <th scope="col">Superficie total</th>
+                <th scope="col">Orientación</th>
+                <th scope="col">Precio</th>
+                <th scope="col">
+                  <span className="sr-only">Ficha</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.propertyId}>
+                  <th scope="row" data-label="Unidad">
+                    {row.label || '—'}
+                  </th>
+                  <td data-label="Superficie total">{row.totalArea || '—'}</td>
+                  <td data-label="Orientación">{row.orientation || '—'}</td>
+                  <td data-label="Precio">{row.price || '—'}</td>
+                  <td className="project-units-link">
+                    <Link href={row.href}>Ver ficha →</Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     );

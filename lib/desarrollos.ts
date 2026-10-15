@@ -1,8 +1,8 @@
 import {
   formatArea,
-  formatCount,
   formatPrice,
   formatPublicDisplayValue,
+  numberValue,
   propertyHref,
 } from '@/lib/2clics/format';
 import type { DevelopmentCuration } from '@/lib/site-curation';
@@ -129,7 +129,20 @@ export type DevelopmentSectionLayout =
   // 2Clics vuelve a ocultar el precio, el bloque entero desaparece solo, sin mostrar un monto
   // stale. El resto (unidad de referencia, calendario de depósitos) son hechos comerciales
   // aprobados, verificados contra la descripción vigente de 2Clics — nunca inferidos por cálculo.
-  | 'commercial-entry';
+  | 'commercial-entry'
+  // Información comercial de cualquier desarrollo, con el mismo tratamiento visual que la
+  // "Estructura de ingreso" de Domus. El precio SIEMPRE se lee en vivo: del registro fuente cuando
+  // representa el "desde" del proyecto (`commercialPriceSource: 'project-range'`, gateado por
+  // `priceRepresentsProjectRange`) o de la unidad de referencia (`'reference-unit'`). Sin precio
+  // publicable, el bloque no se muestra.
+  | 'commercial-summary'
+  // Banda navy de énfasis (etapas, estado de obra, entrega) — `bandItems`. Para pocos datos que
+  // merecen jerarquía propia; no para contenido descriptivo.
+  | 'facts-band'
+  // Galería de imágenes posicionable dentro del relato (mismo tratamiento que "Interiores").
+  | 'gallery'
+  // Tabla de unidades activas del desarrollo (precio/superficie/orientación en vivo).
+  | 'units-table';
 
 // Par label/value editorial para el bloque "Project Snapshot" (decimoctava pasada, FASE 3) — NUNCA
 // un dato dinámico/comercial (precio, disponibilidad, entrega, expensas). Solo P/S verificados.
@@ -142,9 +155,9 @@ export type DevelopmentSnapshotField = { label: string; value: string };
 // desincronizarse del calendario real.
 export type DevelopmentDepositStep = { label: string; percent: number };
 
-// Grupo editorial con subtítulo — SOLO para listas donde el material real YA trae esa estructura
-// (ej. Flow House: la descripción real organiza sus amenidades en "BIENESTAR"/"FLUJO DE TRABAJO"/
-// "EXPERIENCIA"). Nunca se inventan categorías para ordenar una lista plana que no las tenía.
+// Grupo editorial con subtítulo — para dar jerarquía a una lista larga (ej. amenities de Domus o
+// Pacheco Central). Los subtítulos solo agrupan ítems reales con rótulos descriptivos neutros; nunca
+// agregan ítems ni atributos que la fuente no tenga. Listas cortas van planas.
 export type DevelopmentSectionGroup = { title: string; items: string[] };
 
 // Mapa de ubicación (vigesimotercera pasada, FASE 8) — reutiliza el mismo patrón ya aprobado y en
@@ -212,11 +225,21 @@ export type DevelopmentSection = {
   commercialReferenceCurrency?: string;
   commercialSchedule?: DevelopmentDepositStep[];
   commercialBalanceNote?: string;
-  // La lista del bloque se arma EN VIVO con los datos de la unidad fuente (ambientes, superficies,
-  // precio sin "Desde") — para desarrollos cuyo registro de 2Clics es una unidad de referencia
-  // (Pacheco Central). Nunca se guardan esas medidas en la curaduría. `uncoveredLabel` nombra la
-  // superficie descubierta de esa unidad (ej. "balcón").
+  // Solo layout 'commercial-summary' — ver el comentario del layout.
+  commercialEyebrow?: string;
+  commercialTitle?: string;
+  commercialPriceSource?: 'project-range' | 'reference-unit';
+  commercialPriceLead?: string;
+  commercialNotes?: string[];
+  // Datos de la unidad de referencia (ambientes, superficies) leídos EN VIVO del registro fuente
+  // — para desarrollos cuyo registro de 2Clics es una unidad puntual (Pacheco Central). Nunca se
+  // guardan esas medidas en la curaduría. `uncoveredLabel` nombra la superficie descubierta de esa
+  // unidad (ej. "Balcón").
   referenceUnit?: { uncoveredLabel: string };
+  // Solo layout 'facts-band'.
+  bandItems?: DevelopmentSnapshotField[];
+  // Aclaración breve bajo una galería (ej. "Fotografías del avance de obra.").
+  note?: string;
 };
 
 export type DevelopmentEditorialCuration = {
@@ -278,10 +301,9 @@ export type DevelopmentEditorialCuration = {
   // declarar, el modal conserva exactamente su título/mensaje inicial genéricos actuales.
   ctaModalTitle?: string;
   ctaInitialMessage?: string;
-  // Tabla de unidades disponibles (Benavídez Village) — una fila por unidad ACTIVA de
-  // `curation.propertyIds`, con precio/superficie/orientación leídos en vivo. La cantidad que se
-  // muestra es la de unidades que 2Clics devuelve hoy, nunca un número fijo.
-  unitsTable?: { title: string };
+  // `false` = el precio no va en el snapshot porque la ficha lo presenta en su bloque comercial
+  // (evita mostrar el mismo dato dos veces). Default: se muestra cuando corresponde.
+  priceInSnapshot?: boolean;
 };
 
 // Amenities estructuradas de 2Clics que NO aportan al relato editorial de NINGÚN desarrollo,
@@ -324,6 +346,7 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
     heroImageIndex: 0, // exterior nocturno con marquesina FAENA — portada
     cardImageIndex: 0,
     priceRepresentsProjectRange: true, // 1.300.000 U$D coincide con el mínimo real de la tabla de tipologías
+    priceInSnapshot: false, // el "desde" vive en el bloque "Información comercial"
     publicLocation: 'Miami River · Miami · Florida · Estados Unidos',
     introSegment: { type: 'firstParagraphLead' },
     sections: [
@@ -355,18 +378,6 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         layout: 'text-only',
       },
       {
-        key: 'ubicacion',
-        title: 'Miami River y Brickell',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'Faena se ubica sobre el Río Miami, en Brickell, con proximidad a restaurantes, galerías de arte y entretenimiento cerca de Brickell City Centre.',
-        },
-        imageIndexes: [],
-        layout: 'text-only',
-        // Sin mapa: no hay todavía una ubicación del desarrollo verificada para publicar como pin
-        // (la dirección/coordenadas de 236986 en el CRM no se usan para esto).
-      },
-      {
         key: 'edificio',
         title: 'El edificio',
         sourceTextSegment: { type: 'markerBlockItems', blockMarker: 'El edificio', endMarker: 'Residencias' },
@@ -382,6 +393,37 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         layout: 'image-right',
         imageAspect: '3/4', // ratio real ya aprobado — no se toca el crop existente
         imageNarrow: true, // retrato angosto (420px) ya aprobado — mismo tratamiento visual de siempre
+      },
+      {
+        key: 'ubicacion',
+        title: 'Miami River y Brickell',
+        sourceTextSegment: {
+          type: 'curatedText',
+          text: 'Faena se ubica sobre el Río Miami, en Brickell, con proximidad a restaurantes, galerías de arte y entretenimiento cerca de Brickell City Centre.',
+        },
+        // idx11: render de la torre sobre el río (865×1444, sin texto ni marca) — recorte cuadrado
+        // centrado en la torre y su reflejo. Las piezas de brochure con texto (idx8-10, 12) y los
+        // duplicados (idx7, 13) quedan fuera.
+        imageIndexes: [11],
+        layout: 'image-left',
+        imageAspect: '1/1',
+        // Sin mapa: no hay todavía una ubicación del desarrollo verificada para publicar como pin
+        // (la dirección/coordenadas de 236986 en el CRM no se usan para esto).
+      },
+      {
+        // Mismo dato verificado que antes iba en el snapshot ("1 Habitación desde U$D 1.300.000"
+        // en la descripción vigente de 236986), leído en vivo y presentado como bloque comercial.
+        key: 'informacion-comercial',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'commercial-summary',
+        commercialEyebrow: 'Información comercial',
+        commercialPriceSource: 'project-range',
+        commercialPriceLead: 'Residencias desde',
+        commercialNotes: [
+          'Precio de referencia de la tipología de 1 dormitorio.',
+          'Consultá precios vigentes por tipología, disponibilidad y calendario de pagos.',
+        ],
       },
       {
         key: 'reasons',
@@ -446,6 +488,15 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
     // jardín — única toma de fachada horizontal utilizable; idx12 living con ventanal al jardín;
     // idx2 planta baja completa; idx0 cocina; idx10 dormitorio. Excluidas: movimiento de suelo
     // (idx5, idx13), pasillo de obra (idx3), primeros planos de anafe/cajón (idx9, idx15).
+    //
+    // ESPACIOS PARA MATERIAL OFICIAL (todavía no está en el repo ni en 2Clics) — cuando llegue, se
+    // asigna a estas secciones sin cambiar la estructura:
+    // 1 Hero → `heroImageIndex`/`cardImageIndex` (hoy: foto de obra idx7).
+    // 2 Amenities → sección `vida-en-el-conjunto` (hoy sin imagen).
+    // 3 Exterior / conjunto → sección `proyecto` (hoy: interior idx2).
+    // 4 Tipologías / masterplan → sección `residencias` (hoy: idx12).
+    // 5 Estado de obra → galería junto a `estado-entrega` (hoy sin fotos: las de movimiento de
+    //   suelo no alcanzan para una galería).
     heroImageIndex: 7,
     cardImageIndex: 7,
     priceRepresentsProjectRange: false, // cada unidad tiene su precio — se muestran en la tabla
@@ -462,10 +513,8 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         snapshotFields: [
           { label: 'Ubicación', value: 'Benavídez, Tigre' },
           { label: 'Viviendas', value: '25' },
-          { label: 'Tipología', value: 'Dúplex de 3 ambientes con jardín' },
-          // `building_date: "UNDER_CONSTRUCTION"` en las 5 unidades.
-          { label: 'Estado', value: 'En construcción' },
-          { label: 'Entrega estimada', value: 'Primer trimestre de 2027' },
+          { label: 'Tipología', value: 'Dúplex de 3 ambientes' },
+          { label: 'Expansiones', value: 'Jardín privado y cochera' },
         ],
       },
       {
@@ -473,10 +522,10 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         title: 'El proyecto',
         sourceTextSegment: {
           type: 'curatedText',
-          text: 'Benavídez Village reúne 25 viviendas de dos plantas, cada una con jardín privado y cochera. El conjunto suma áreas parquizadas y espacios de uso común con piscina, SUM, parrillas y seguridad 24 hs.',
+          text: 'Benavídez Village reúne 25 viviendas de dos plantas, cada una con jardín privado y cochera, dentro de un conjunto con áreas parquizadas y espacios de uso común.',
         },
-        imageIndexes: [],
-        layout: 'text-only',
+        imageIndexes: [2],
+        layout: 'image-left',
       },
       {
         key: 'residencias',
@@ -487,12 +536,32 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
             '3 ambientes y 2 dormitorios',
             'Living comedor con cocina integrada',
             '1 baño completo y toilette',
-            'Jardín privado y cochera',
+            'Jardín privado',
+            'Cochera',
             'Posibilidad de incorporar pileta propia, con un diferencial sobre el valor final',
           ],
         },
         imageIndexes: [12],
         layout: 'image-right',
+      },
+      {
+        // Dos imágenes y no tres: con fotos de 1024px, la celda alta de la grilla de 3 las agranda
+        // de más y se ven borrosas.
+        key: 'interiores',
+        title: 'Interiores',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [0, 10],
+        layout: 'gallery',
+      },
+      {
+        key: 'vida-en-el-conjunto',
+        title: 'Vida en el conjunto',
+        sourceTextSegment: {
+          type: 'curatedList',
+          items: ['Piscina', 'SUM', 'Parrillas', 'Áreas parquizadas y espacios verdes', 'Seguridad 24 hs'],
+        },
+        imageIndexes: [],
+        layout: 'text-only',
       },
       {
         key: 'ubicacion',
@@ -504,6 +573,26 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         imageIndexes: [],
         layout: 'text-only',
         map: { queryLabel: 'Benavídez, Tigre, Argentina', lat: -34.4171266, long: -58.6954548 },
+      },
+      {
+        // `building_date: "UNDER_CONSTRUCTION"` en las 5 unidades; entrega según la descripción
+        // vigente de 2Clics.
+        key: 'estado-entrega',
+        title: 'Estado y entrega',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'facts-band',
+        bandItems: [
+          { label: 'Estado', value: 'En construcción' },
+          { label: 'Entrega estimada', value: 'Primer trimestre de 2027' },
+        ],
+      },
+      {
+        key: 'disponibilidad',
+        title: 'Disponibilidad actual',
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'units-table',
       },
       {
         key: 'reasons',
@@ -550,12 +639,12 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         layout: 'text-only',
       },
     ],
-    // Dos imágenes y no tres: con fotos de 1024px, la celda alta de la grilla de 3 las agranda de
-    // más y se ven borrosas.
-    interiors: { title: 'Interiores y residencias', imageIndexes: [0, 10] },
-    unitsTable: { title: 'Unidades disponibles' },
   },
   'pacheco-central': {
+    // Las 6 imágenes de 233719 son interiores/balcón de la unidad de referencia — no hay material
+    // de exterior, parque ni masterplan. ESPACIOS PARA MATERIAL OFICIAL (no está en el repo):
+    // hero/master render → `heroImageIndex`; parque/piscina → `momento-visual`; masterplan y
+    // tipologías → `tipologias`; amenities → `amenities` (hoy sin imagen); interiores → galería.
     heroImageIndex: 4, // balcón/parrilla con vista al parque — única imagen horizontal, conecta con "parque central"
     cardImageIndex: 4, // antes la card usaba images[0] (living retrato, no recorta bien en 16:9) — ver auditoría arriba
     priceRepresentsProjectRange: false, // 112.000 U$D es el precio de una unidad puntual, no del desarrollo — ver auditoría arriba
@@ -574,7 +663,6 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
           { label: 'Unidades', value: '260' },
           { label: 'Módulos', value: '8' },
           { label: 'Tipologías', value: '1 a 4 ambientes · planta y dúplex' },
-          { label: 'Entrega estimada', value: 'Etapa 1: dic. 2026 · Etapa 2: dic. 2029' },
           { label: 'Cocheras', value: '272' },
         ],
       },
@@ -589,8 +677,34 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         title: 'El proyecto',
         sourceTextSegment: {
           type: 'curatedText',
-          text: 'Pacheco Central es un desarrollo residencial de 260 unidades, distribuidas en 8 módulos organizados en torno a un parque central con espejo de agua. Ofrece unidades de 1, 2, 3 y 4 ambientes, en una planta y dúplex, con expansiones propias como balcón, terraza o jardín.',
+          text: 'Pacheco Central es un desarrollo residencial de 260 unidades, distribuidas en 8 módulos organizados en torno a un parque central con espejo de agua.',
         },
+        imageIndexes: [],
+        layout: 'text-only',
+      },
+      {
+        key: 'tipologias',
+        title: 'Tipologías',
+        sourceTextSegment: {
+          type: 'curatedList',
+          items: [
+            'Unidades de 1, 2, 3 y 4 ambientes',
+            'En una planta y dúplex',
+            'Expansiones propias según la unidad: balcón, terraza o jardín',
+          ],
+        },
+        imageIndexes: [1], // living con escalera — muestra una unidad dúplex
+        layout: 'image-right',
+      },
+      {
+        key: 'amenities',
+        title: 'Amenities',
+        sourceTextSegment: { type: 'none' },
+        groups: [
+          { title: 'Parque y piscina', items: ['Parque central con espejo de agua', 'Pileta semiolímpica con solarium'] },
+          { title: 'Bienestar y encuentro', items: ['Gimnasio', 'SUM con parrilla'] },
+          { title: 'Servicios', items: ['Coworking', 'Laundry', 'Espacio para bicicletas', 'Seguridad 24 hs'] },
+        ],
         imageIndexes: [],
         layout: 'text-only',
       },
@@ -606,37 +720,33 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         map: { queryLabel: 'General Pacheco, Tigre, Argentina', lat: -34.4536035, long: -58.6276873 },
       },
       {
-        key: 'amenities',
-        title: 'Amenities',
-        sourceTextSegment: {
-          type: 'curatedList',
-          items: [
-            'Parque central con espejo de agua',
-            'Pileta semiolímpica con solarium',
-            'SUM con parrilla',
-            'Gimnasio',
-            'Coworking',
-            'Laundry',
-            'Espacio para bicicletas',
-            'Seguridad 24 hs',
-          ],
-        },
+        key: 'etapas',
+        title: 'Etapas de entrega',
+        sourceTextSegment: { type: 'none' },
         imageIndexes: [],
-        layout: 'text-only',
+        layout: 'facts-band',
+        bandItems: [
+          { label: 'Etapa 1 · entrega estimada', value: 'Diciembre 2026' },
+          { label: 'Etapa 2 · entrega estimada', value: 'Diciembre 2029' },
+        ],
       },
       {
         // Medidas y precio de la unidad publicada en 2Clics (233719), leídos en vivo — el precio
         // es de esta unidad (contado), nunca un "desde" del proyecto. La financiación se informa
-        // en la fuente; acá no se resume ni se recalcula.
+        // en la fuente; acá no se resume ni se recalcula. Sin número de UF.
         key: 'unidad-referencia',
-        title: 'Unidad de referencia',
-        sourceTextSegment: {
-          type: 'curatedText',
-          text: 'Departamento de 2 ambientes con balcón. Las medidas y el precio corresponden a esta unidad, no al conjunto del desarrollo. La unidad cuenta con opciones de financiación vigentes: consultá las condiciones actualizadas.',
-        },
-        imageIndexes: [2], // dormitorio con ventanal a parque/césped
-        layout: 'image-right',
-        referenceUnit: { uncoveredLabel: 'balcón' },
+        sourceTextSegment: { type: 'none' },
+        imageIndexes: [],
+        layout: 'commercial-summary',
+        commercialEyebrow: 'Unidad de referencia',
+        commercialTitle: 'Departamento de 2 ambientes con balcón',
+        commercialPriceSource: 'reference-unit',
+        commercialPriceLead: 'Precio de esta unidad',
+        referenceUnit: { uncoveredLabel: 'Balcón' },
+        commercialNotes: [
+          'Las medidas y el precio corresponden a esta unidad, no al conjunto del desarrollo.',
+          'La unidad cuenta con opciones de financiación vigentes: consultá las condiciones actualizadas.',
+        ],
       },
       {
         key: 'reasons',
@@ -664,12 +774,8 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         layout: 'text-only',
       },
       {
-        // (vigesimoséptima pasada, corregido en la vigesimoctava) — se retiró la mención a
-        // "tipología distinta a 2 ambientes": esa era disponibilidad/inventario de UNA unidad
-        // source (233719) tratada como límite del desarrollo completo — exactamente el error que
-        // ya se evita en el resto de la ficha (ver auditoría de la vigesimosegunda pasada: nunca
-        // asumir que Pacheco Central entero es 2 ambientes/46m² por el único registro cargado).
-        // Queda solo el criterio geográfico, un hecho estable y verificado.
+        // Solo el criterio geográfico: nunca la tipología/disponibilidad de la unidad de
+        // referencia como límite del desarrollo completo.
         key: 'puede-no-tener-sentido',
         title: 'Puede no tener sentido si',
         sourceTextSegment: {
@@ -690,10 +796,9 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         layout: 'text-only',
       },
     ],
-    // idx1 (living, ángulo con biblioteca/escalera), idx3 (baño) e idx5 (dormitorio con 2 camas) —
-    // las 3 interiores reales restantes, sin usar en el resto de la ficha. Todas son interiores de
-    // residencia (nunca espacios comunes), por eso el título completo "Interiores y residencias".
-    interiors: { title: 'Interiores y residencias', imageIndexes: [1, 3, 5] },
+    // idx2 (dormitorio con ventanal al parque), idx3 (baño), idx5 (dormitorio con 2 camas) —
+    // interiores de la unidad, sin usar en el resto de la ficha (idx1 pasó a "Tipologías").
+    interiors: { title: 'Interiores y residencias', imageIndexes: [2, 3, 5] },
   },
   // ── Domus Brickell Center (vigesimocuarta pasada) ──────────────────────────────────────────
   // sourcePropertyId 236682 CONFIRMADO explícitamente por García (nunca 236646 — un segundo
@@ -1147,20 +1252,31 @@ export function sumDepositSchedule(schedule: DevelopmentDepositStep[]): number {
   return schedule.reduce((sum, step) => sum + step.percent, 0);
 }
 
-function withSuffix(value: string, suffix: string): string {
-  return value ? `${value} ${suffix}` : '';
+export function resolveReferenceUnitFacts(unit: PublicProperty | null, uncoveredLabel: string): DevelopmentSnapshotField[] {
+  if (!unit) return [];
+  const rooms = numberValue(unit.amountRoom);
+  return [
+    { label: 'Superficie total', value: formatArea(unit.totalArea) },
+    { label: 'Cubierta', value: formatArea(unit.coveredArea) },
+    { label: uncoveredLabel, value: formatArea(unit.uncoveredArea) },
+    { label: 'Ambientes', value: rooms && rooms > 0 ? String(rooms) : '' },
+  ].filter((fact) => Boolean(fact.value));
 }
 
-export function resolveReferenceUnitFacts(unit: PublicProperty | null, uncoveredLabel: string): string[] {
-  if (!unit) return [];
-  const price = formatCurrencyAmount(unit.price, unit.currency, unit.hidePrice);
-  return [
-    formatCount(unit.amountRoom, 'ambiente', 'ambientes'),
-    withSuffix(formatArea(unit.totalArea), 'totales'),
-    withSuffix(formatArea(unit.coveredArea), 'cubiertos'),
-    withSuffix(formatArea(unit.uncoveredArea), `de ${uncoveredLabel}`),
-    price ? `Precio de esta unidad: ${price}` : '',
-  ].filter(Boolean);
+// Precio del bloque comercial — siempre en vivo, nunca un número guardado en la curaduría.
+export function resolveCommercialPrice(
+  section: DevelopmentSection,
+  editorial: DevelopmentEditorialCuration,
+  source: { price: number | null; currency: string; hidePrice: boolean },
+  referenceUnit: PublicProperty | null,
+): string | null {
+  if (section.commercialPriceSource === 'reference-unit') {
+    return referenceUnit ? formatCurrencyAmount(referenceUnit.price, referenceUnit.currency, referenceUnit.hidePrice) : null;
+  }
+  if (section.commercialPriceSource === 'project-range') {
+    return editorial.priceRepresentsProjectRange ? formatCurrencyAmount(source.price, source.currency, source.hidePrice) : null;
+  }
+  return null;
 }
 
 export type DevelopmentUnitRow = {

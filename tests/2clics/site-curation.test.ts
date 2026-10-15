@@ -945,7 +945,8 @@ describe('Fichas canónicas — Faena e Invertir linkean siempre a /propiedades/
     const html = render(
       React.createElement(CuratedDevelopmentDetailView, { curation: faena, source: toDevSource(source), units: [source] }),
     );
-    expect(html).not.toContain('desde U$D');
+    expect(html).not.toContain('Habitación desde');
+    expect(html).not.toContain('1.900.000');
     expect(html).not.toContain('DEPOSITOS Y FECHAS');
     expect(html).not.toContain('groundbreaking');
     expect(html).not.toContain('at closing');
@@ -1457,7 +1458,8 @@ describe('/desarrollos/faena — landing editorial (decimotercera pasada), sin d
     );
     expect(html).toContain('Tras haber transformado Miami Beach');
     expect(html).toContain('Parque privado');
-    expect(html).not.toContain('desde U$D');
+    expect(html).not.toContain('Habitación desde');
+    expect(html).not.toContain('1.900.000');
     expect(html).not.toContain('DEPOSITOS Y FECHAS');
     expect(html).not.toContain('groundbreaking');
     expect(html).not.toContain('at closing');
@@ -1567,9 +1569,10 @@ describe('Regresión — curaduría aprobada de Faena intacta', () => {
       'snapshot',
       'momento-visual',
       'proyecto',
-      'ubicacion',
       'edificio',
       'residencias',
+      'ubicacion',
+      'informacion-comercial',
       'reasons',
       'para-quien',
       'puede-no-tener-sentido',
@@ -1596,7 +1599,7 @@ describe('/desarrollos — sistema editorial: snapshot, descripción segura, im�
     }
   });
 
-  it('un bloque image-right con párrafo curado renderiza el párrafo, no solo el heading (Pacheco "Unidad de referencia")', () => {
+  it('un bloque image-right con lista curada renderiza su contenido junto a la imagen (Pacheco "Tipologías")', () => {
     const pacheco = getDevelopmentBySlug('pacheco-central')!;
     const fixture = property({
       propertyId: 233719,
@@ -1609,9 +1612,9 @@ describe('/desarrollos — sistema editorial: snapshot, descripción segura, im�
         units: [fixture],
       }),
     );
-    const idx = html.indexOf('<h2>Unidad de referencia</h2>');
+    const idx = html.indexOf('<h2>Tipologías</h2>');
     expect(idx).toBeGreaterThan(-1);
-    expect(html.slice(idx, idx + 400)).toContain('project-block-text');
+    expect(html.slice(idx, idx + 600)).toContain('Unidades de 1, 2, 3 y 4 ambientes');
   });
 
   it('Faena: resolveSafeDescription solo incluye los párrafos que la curaduría necesita — nunca la tabla de precios ni el cronograma de depósitos', () => {
@@ -1840,18 +1843,20 @@ describe('/desarrollos/pacheco-central — primer desarrollo de Argentina (viges
     );
     expect(html).not.toContain('Rango de precio');
     expect(html).not.toContain('Desde U$D 112.000');
-    expect(html).toContain('Precio de esta unidad: U$D 112.000');
+    expect(html).toContain('project-commercial-summary');
+    expect(html).toContain('<span>Precio de esta unidad</span><strong>U$D 112.000</strong>');
   });
 
   it('unidad de referencia: medidas leídas en vivo de 2Clics (46,5 / 42,2 / 4,3 m²), sin número de UF ni medidas hardcodeadas en la curaduría', () => {
     const html = render(
       React.createElement(CuratedDevelopmentDetailView, { curation: pacheco, source: pachecoSource, units: [pachecoFixture] }),
     );
-    expect(html).toContain('<h2>Unidad de referencia</h2>');
-    expect(html).toContain('2 ambientes');
-    expect(html).toContain('46,5 m² totales');
-    expect(html).toContain('42,2 m² cubiertos');
-    expect(html).toContain('4,3 m² de balcón');
+    expect(html).toContain('>Unidad de referencia<');
+    expect(html).toContain('<h2>Departamento de 2 ambientes con balcón</h2>');
+    expect(html).toContain('>46,5 m²</span><span class="project-commercial-schedule-label">Superficie total<');
+    expect(html).toContain('>42,2 m²</span><span class="project-commercial-schedule-label">Cubierta<');
+    expect(html).toContain('>4,3 m²</span><span class="project-commercial-schedule-label">Balcón<');
+    expect(html).toContain('>2</span><span class="project-commercial-schedule-label">Ambientes<');
     expect(html).not.toMatch(/UF/);
     const curationJson = JSON.stringify(pachecoEditorial);
     expect(curationJson).not.toContain('46 m²');
@@ -1861,7 +1866,7 @@ describe('/desarrollos/pacheco-central — primer desarrollo de Argentina (viges
     const updatedHtml = render(
       React.createElement(CuratedDevelopmentDetailView, { curation: pacheco, source: toDevSource(updated, pacheco.publicName), units: [updated] }),
     );
-    expect(updatedHtml).toContain('50,2 m² totales');
+    expect(updatedHtml).toContain('>50,2 m²</span>');
   });
 
   it('precio: el gate respeta la curaduría — si priceRepresentsProjectRange fuera true, sí se mostraría (regresión del mecanismo, no solo de Pacheco Central)', () => {
@@ -1898,7 +1903,7 @@ describe('/desarrollos/pacheco-central — primer desarrollo de Argentina (viges
 
   it('sección "Interiores y residencias" usa solo las imágenes reales seleccionadas en la curaduría (3), sin imágenes de relleno', () => {
     expect(pachecoEditorial?.interiors?.title).toBe('Interiores y residencias');
-    expect(pachecoEditorial?.interiors?.imageIndexes).toEqual([1, 3, 5]);
+    expect(pachecoEditorial?.interiors?.imageIndexes).toEqual([2, 3, 5]);
     const html = render(
       React.createElement(CuratedDevelopmentDetailView, { curation: pacheco, source: pachecoSource, units: [pachecoFixture] }),
     );
@@ -1943,8 +1948,11 @@ describe('/desarrollos/pacheco-central — primer desarrollo de Argentina (viges
   it('snapshot: solo campos confirmados, con tipologías y etapas de entrega de la descripción vigente, nunca placeholders', () => {
     const snapshot = pachecoEditorial?.sections.find((s) => s.layout === 'snapshot');
     const labels = snapshot?.snapshotFields?.map((f) => f.label) || [];
-    expect(labels).toEqual(['Ubicación', 'Unidades', 'Módulos', 'Tipologías', 'Entrega estimada', 'Cocheras']);
-    expect(snapshot?.snapshotFields?.find((f) => f.label === 'Entrega estimada')?.value).toBe('Etapa 1: dic. 2026 · Etapa 2: dic. 2029');
+    expect(labels).toEqual(['Ubicación', 'Unidades', 'Módulos', 'Tipologías', 'Cocheras']);
+    // Las etapas viven en su propia banda (no se repiten en el snapshot).
+    const etapas = pachecoEditorial?.sections.find((s) => s.key === 'etapas');
+    expect(etapas?.layout).toBe('facts-band');
+    expect(etapas?.bandItems?.map((item) => item.value)).toEqual(['Diciembre 2026', 'Diciembre 2029']);
     for (const field of snapshot?.snapshotFields || []) {
       expect(field.value.toLowerCase()).not.toContain('consultar');
     }
@@ -2205,17 +2213,12 @@ describe('/desarrollos/domus-brickell-center — ficha editorial completa (viges
     expect(domusEditorial?.ctaInitialMessage).toContain('Domus Brickell Center');
   });
 
-  it('mapa: usa la dirección curada exacta (sin lat/long, el registro fuente los trae null) con la nota "Dirección confirmada" — nunca "Ubicación aproximada" ni coordenadas inventadas', () => {
-    const ubicacion = domusEditorial?.sections.find((s) => s.key === 'ubicacion');
-    expect(ubicacion?.map?.queryLabel).toBe('1034 SW 2nd Avenue, Miami, FL 33130');
-    expect(ubicacion?.map?.lat).toBeUndefined();
-    expect(ubicacion?.map?.addressIsExact).toBe(true);
-    const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation: domus, source: domusSource, units: [domusRaw] }),
-    );
-    expect(html).toContain('Dirección confirmada');
+  it('mapa: usa la dirección curada exacta y la muestra debajo del mapa — sin "Dirección confirmada" ni "Ubicación aproximada"', () => {
+    const html = render(React.createElement(CuratedDevelopmentDetailView, { curation: domus, source: domusSource, units: [domusRaw] }));
+    expect(html).toContain('<p class="project-location-address">1034 SW 2nd Avenue, Miami, FL 33130</p>');
+    expect(html).toContain('Ver en Google Maps');
+    expect(html).not.toContain('Dirección confirmada');
     expect(html).not.toContain('Ubicación aproximada');
-    expect(html).toContain(encodeURIComponent('1034 SW 2nd Avenue, Miami, FL 33130').replace(/%20/g, '%20'));
   });
 
   it('"Interiores y residencias" usa 4 imágenes reales de la unidad, sin imágenes duplicadas en toda la ficha', () => {
@@ -2365,16 +2368,17 @@ describe('/desarrollos — los 4 desarrollos activos (Faena, Benavídez Village,
   it('semántica de precio: solo Faena muestra "Rango de precio" (Desde U$D 1.300.000, verificado contra 236986); Benavídez/Pacheco/Domus nunca un "desde" inventado', () => {
     expect(getDevelopmentEditorialCuration('faena')?.priceRepresentsProjectRange).toBe(true);
     const faena = renderDev('faena');
-    expect(faena).toContain('Rango de precio');
-    expect(faena).toContain('Desde U$D 1.300.000');
+    // El "desde" verificado vive en el bloque "Información comercial" (no se repite en el snapshot).
+    expect(faena).toContain('<h2>Residencias desde U$D 1.300.000</h2>');
+    expect(faena).not.toContain('Rango de precio');
     for (const slug of ['benavidez-village', 'pacheco-central', 'domus-brickell-center']) {
       expect(getDevelopmentEditorialCuration(slug)?.priceRepresentsProjectRange).toBe(false);
       const html = renderDev(slug);
       expect(html, slug).not.toContain('Rango de precio');
       expect(html, slug).not.toMatch(/Desde U\$D/);
     }
-    // hidePrice: el "desde" de Faena desaparece solo.
-    expect(renderDev('faena', { hidePrice: true })).not.toContain('Rango de precio');
+    // hidePrice: el bloque comercial de Faena desaparece solo.
+    expect(renderDev('faena', { hidePrice: true })).not.toContain('Residencias desde');
   });
 
   it('"Puede no tener sentido si" nunca hardcodea montos, disponibilidad ni tipologías de una unidad', () => {
@@ -2412,7 +2416,9 @@ describe('/desarrollos — los 4 desarrollos activos (Faena, Benavídez Village,
     expect(faena).not.toContain('25.7715038');
     expect(renderDev('benavidez-village')).toContain(encodeURIComponent('-34.4171266,-58.6954548'));
     expect(renderDev('pacheco-central')).toContain(encodeURIComponent('-34.4536035,-58.6276873'));
-    expect(renderDev('domus-brickell-center')).toContain('Dirección confirmada');
+    const domus = renderDev('domus-brickell-center');
+    expect(domus).toContain('project-location-address');
+    expect(domus).not.toContain('Dirección confirmada');
   });
 
   it('ninguna ficha expone la dirección interna del CRM ni el state crudo', () => {
@@ -2431,7 +2437,11 @@ describe('/desarrollos — los 4 desarrollos activos (Faena, Benavídez Village,
         ?.sections.find((s) => s.layout === 'snapshot')
         ?.snapshotFields?.find((f) => f.label === 'Estado')?.value;
     expect(estado('faena')).toBe('A estrenar');
-    expect(estado('benavidez-village')).toBe('En construcción');
+    const benavidezBand = getDevelopmentEditorialCuration('benavidez-village')?.sections.find((s) => s.key === 'estado-entrega');
+    expect(benavidezBand?.bandItems).toEqual([
+      { label: 'Estado', value: 'En construcción' },
+      { label: 'Entrega estimada', value: 'Primer trimestre de 2027' },
+    ]);
     expect(estado('domus-brickell-center')).toBe('En construcción');
     expect(estado('pacheco-central')).toBeUndefined();
   });
@@ -2478,7 +2488,7 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
   it('tabla de unidades: una fila por unidad activa con UF, superficie decimal, orientación, precio y link a su ficha canónica', () => {
     const html = renderWith(units);
     expect(html).toContain('<h1>Benavídez Village</h1>');
-    expect(html).toContain('<h2>Unidades disponibles</h2>');
+    expect(html).toContain('<h2>Disponibilidad actual</h2>');
     expect(html).toContain('5 unidades publicadas');
     for (const label of ['UF 11', 'UF 12', 'UF 15', 'UF 16', 'UF 20']) {
       expect(html).toContain(`>${label}<`);
@@ -2638,5 +2648,80 @@ describe('Catálogo — exclusión por clasificación y estado de 2Clics', () =>
     expect(readFileSync('components/properties/FeaturedProperties.tsx', 'utf8')).toContain(
       'getFeaturedPublicProperties(4, { excludePropertyIds: getExcludedPropertyIds() })',
     );
+  });
+});
+
+describe('/desarrollos — sistema editorial compartido (pulido 2026-10)', () => {
+  function renderSlug(slug: string, overrides: Record<string, unknown> = {}, region: 'AR' | 'US' = 'AR') {
+    const curation = getDevelopmentBySlug(slug)!;
+    const fixture = property(
+      {
+        propertyId: curation.sourcePropertyId,
+        price: 112000,
+        currency: 'U$D',
+        amountRoom: 2,
+        totalArea: 46.5,
+        coveredArea: 42.2,
+        uncoveredArea: 4.3,
+        images: Array.from({ length: 20 }, (_, i) => ({ imageId: `${slug}${i}`, url: `https://cdn.2clics.com/${slug}-${i}.jpg` })),
+        ...overrides,
+      },
+      region,
+    );
+    return render(
+      React.createElement(CuratedDevelopmentDetailView, { curation, source: toDevSource(fixture, curation.publicName), units: [fixture] }),
+    );
+  }
+
+  it('el bloque comercial desaparece solo si no hay precio publicable (hidePrice) — nunca un placeholder', () => {
+    expect(renderSlug('pacheco-central')).toContain('project-commercial-summary');
+    const hidden = renderSlug('pacheco-central', { hidePrice: true });
+    expect(hidden).not.toContain('project-commercial-summary');
+    expect(hidden).not.toContain('112.000');
+  });
+
+  it('banda de énfasis: Pacheco muestra sus dos etapas y Benavídez su estado y entrega, en navy', () => {
+    const pacheco = renderSlug('pacheco-central');
+    expect(pacheco).toContain('<section class="project-facts-band">');
+    expect(pacheco).toContain('<h2>Etapas de entrega</h2>');
+    expect(pacheco).toContain('Diciembre 2026');
+    expect(pacheco).toContain('Diciembre 2029');
+    const benavidez = renderSlug('benavidez-village');
+    expect(benavidez).toContain('<h2>Estado y entrega</h2>');
+    expect(benavidez).toContain('Primer trimestre de 2027');
+  });
+
+  it('Benavídez sigue la progresión editorial: proyecto → viviendas → interiores → conjunto → ubicación → estado → disponibilidad', () => {
+    const keys = getDevelopmentEditorialCuration('benavidez-village')?.sections.map((s) => s.key);
+    expect(keys?.slice(0, 8)).toEqual([
+      'snapshot',
+      'proyecto',
+      'residencias',
+      'interiores',
+      'vida-en-el-conjunto',
+      'ubicacion',
+      'estado-entrega',
+      'disponibilidad',
+    ]);
+    const html = renderSlug('benavidez-village');
+    expect(html.indexOf('<h2>Interiores</h2>')).toBeLessThan(html.indexOf('<h2>Vida en el conjunto</h2>'));
+    expect(html.indexOf('<h2>Estado y entrega</h2>')).toBeLessThan(html.indexOf('<h2>Disponibilidad actual</h2>'));
+  });
+
+  it('ninguna ficha de desarrollo muestra rótulos internos ("Dirección confirmada")', () => {
+    for (const slug of ['faena', 'benavidez-village', 'pacheco-central', 'domus-brickell-center']) {
+      expect(renderSlug(slug, {}, slug === 'faena' || slug === 'domus-brickell-center' ? 'US' : 'AR')).not.toContain(
+        'Dirección confirmada',
+      );
+    }
+    expect(readFileSync('components/properties/CuratedDevelopmentDetailView.tsx', 'utf8')).not.toContain("'Dirección confirmada'");
+  });
+
+  it('los textos de suitability/rol de García no cambiaron en esta pasada', () => {
+    const rol = getDevelopmentEditorialCuration('pacheco-central')?.sections.find((s) => s.key === 'garcia-acompanamiento');
+    expect(rol?.sourceTextSegment).toEqual({
+      type: 'curatedText',
+      text: 'En Pacheco Central, el trabajo de García Inversiones es entender tu objetivo, explicar el proyecto, ayudarte a evaluar si tiene sentido para lo que buscás, y solicitar y contrastar la información vigente antes de avanzar. García Inversiones no administra el desarrollo ni es parte de él, y no reemplaza el asesoramiento legal o fiscal que un proceso de este tipo requiere.',
+    });
   });
 });
