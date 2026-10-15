@@ -2988,3 +2988,135 @@ describe('V2.1 — /invertir', () => {
     expect(curation.conditions.price).toBe('Consultar precio');
   });
 });
+
+// ── V2.2 — /vender editorial ────────────────────────────────────────────────────────────────
+describe('V2.2 — /vender', () => {
+  // La página (app/vender/page.tsx) es Header + <main><SellView assets={resolveSellAssets()} /></main>
+  // + Footer/WhatsApp/Reveal; se renderiza el contenido de <main> con la misma resolución de assets.
+  async function renderVender(): Promise<string> {
+    const { default: SellView } = await import('@/components/sell/SellView');
+    const { resolveSellAssets } = await import('@/lib/sell-assets');
+    return render(React.createElement('main', null, React.createElement(SellView, { assets: resolveSellAssets() })));
+  }
+
+  it('la página monta SellView con los assets locales resueltos y el RevealObserver', () => {
+    const source = readFileSync('app/vender/page.tsx', 'utf8');
+    expect(source).toContain('<SellView assets={resolveSellAssets()} />');
+    expect(source).toContain('<RevealObserver />');
+  });
+
+  function mainOf(html: string): string {
+    return html.slice(html.indexOf('<main>'), html.indexOf('</main>'));
+  }
+
+  it('hero sin eyebrow "Vender", con el H1 nuevo y el CTA inicial al canal de contacto', async () => {
+    const main = mainOf(await renderVender());
+    const hero = main.slice(0, main.indexOf('</section>'));
+    expect(hero).not.toContain('class="eyebrow"');
+    expect(main).not.toMatch(/class="eyebrow"[^>]*>\s*Vender\s*</i);
+    expect(hero).toContain('<h1>Vender una propiedad empieza por entender qué necesitás lograr.</h1>');
+    expect(hero).toContain('href="/contacto"');
+    expect(hero).toContain('Quiero conversar sobre mi propiedad');
+    expect(main).not.toContain('Vender tu propiedad');
+  });
+
+  it('Cómo trabajamos: exactamente las 5 etapas nuevas, en orden (el proceso viejo de 6 pasos no aparece)', async () => {
+    const main = mainOf(await renderVender());
+    const titles = [
+      'Entendemos la propiedad y el objetivo',
+      'Analizamos el mercado y definimos el posicionamiento',
+      'Preparamos la propiedad para comunicarla',
+      'Salimos al mercado y gestionamos el interés',
+      'Negociamos y acompañamos la operación',
+    ];
+    expect((main.match(/class="sell-stage"/g) || []).length).toBe(5);
+    let cursor = 0;
+    titles.forEach((title, index) => {
+      const at = main.indexOf(`<h3>${title}</h3>`, cursor);
+      expect(at, title).toBeGreaterThan(cursor);
+      expect(main.slice(cursor, at)).toContain(`>0${index + 1}<`);
+      cursor = at;
+    });
+    expect(main).not.toContain('Producimos material comercial.');
+    expect(main).not.toContain('Nuestro proceso');
+  });
+
+  it('bloques editoriales: precio/posicionamiento con 4 conceptos, producción, gestión, transparencia y qué incluye (6)', async () => {
+    const main = mainOf(await renderVender());
+    expect(main).toContain('El precio es una parte de la estrategia, no toda la estrategia.');
+    for (const label of ['Propiedad', 'Mercado', 'Objetivo', 'Presentación']) {
+      expect(main).toContain(`<dt>${label}</dt>`);
+    }
+    expect(main).toContain('Mostrar bien una propiedad también forma parte de venderla.');
+    expect(main).toContain('Según el inmueble y la estrategia definida');
+    expect(main).toContain('No producimos contenido para hacer que una propiedad parezca algo que no es. Lo usamos para mostrarla mejor.');
+    expect(main).toContain('Cada consulta necesita seguimiento.');
+    expect(main).toContain('Información clara para tomar decisiones durante todo el proceso.');
+    const included = main.slice(main.indexOf('class="sell-included'), main.indexOf('</ul>', main.indexOf('class="sell-included')));
+    expect((included.match(/<li>/g) || []).length).toBe(6);
+  });
+
+  it('sin los chips viejos ni claims de velocidad, precio o garantía', async () => {
+    const main = mainOf(await renderVender());
+    for (const chip of ['Datos y argumentos antes que adjetivos', 'Transparencia en cada etapa', 'Acompañamiento personalizado']) {
+      expect(main).not.toContain(chip);
+    }
+    expect(main).not.toContain('sell-differential');
+    const text = main.toLowerCase();
+    for (const claim of [
+      'venta rápida',
+      'vendé rápido',
+      'vender rápido',
+      'en tiempo récord',
+      'mejor precio',
+      'precio correcto',
+      'garantiz',
+      'garantía',
+      'resultado asegurado',
+      'quiero vender mi propiedad',
+    ]) {
+      expect(text, claim).not.toContain(claim);
+    }
+  });
+
+  it('cierre: CTA "Hablar con García" al canal de contacto, en el cta-band de los grandes cierres', async () => {
+    const main = mainOf(await renderVender());
+    const closing = main.slice(main.indexOf('project-cta-final'));
+    expect(closing).toContain('class="cta-band"');
+    expect(closing).toContain('¿Estás pensando en vender una propiedad?');
+    expect(closing).toMatch(/href="\/contacto"[^>]*>Hablar con García</);
+  });
+
+  it('sin assets locales no hay imágenes ni contenido externo (mobile no depende de terceros)', async () => {
+    const { resolveSellAssets } = await import('@/lib/sell-assets');
+    expect(resolveSellAssets()).toEqual({});
+    const main = mainOf(await renderVender());
+    expect(main).not.toContain('<img');
+    expect(main).not.toContain('<iframe');
+    expect(main).not.toMatch(/(src|href)="https?:\/\//);
+  });
+
+  it('slots SELL_ASSET_01..04: se activan solo con el archivo en public/vender y renderizan rutas locales', async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const path = await import('node:path');
+    const { SELL_ASSET_SLOTS, resolveSellAssets } = await import('@/lib/sell-assets');
+    const { default: SellView } = await import('@/components/sell/SellView');
+    expect(SELL_ASSET_SLOTS.map((slot) => slot.id)).toEqual(['SELL_ASSET_01', 'SELL_ASSET_02', 'SELL_ASSET_03', 'SELL_ASSET_04']);
+
+    const publicDir = mkdtempSync(path.join(tmpdir(), 'garcia-public-'));
+    mkdirSync(path.join(publicDir, 'vender'), { recursive: true });
+    writeFileSync(path.join(publicDir, 'vender', 'produccion.jpg'), '');
+    const partial = resolveSellAssets(publicDir);
+    expect(Object.keys(partial)).toEqual(['SELL_ASSET_02']);
+    expect(partial.SELL_ASSET_02?.src).toBe('/vender/produccion.jpg');
+
+    for (const slot of SELL_ASSET_SLOTS) writeFileSync(path.join(publicDir, 'vender', slot.file), '');
+    const html = render(React.createElement(SellView, { assets: resolveSellAssets(publicDir) }));
+    expect((html.match(/<img/g) || []).length).toBe(4);
+    for (const slot of SELL_ASSET_SLOTS) {
+      expect(html).toContain(encodeURIComponent(`/vender/${slot.file}`));
+    }
+    expect(html).not.toMatch(/src="https?:\/\//);
+  });
+});
