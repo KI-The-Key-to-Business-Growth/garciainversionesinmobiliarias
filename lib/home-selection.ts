@@ -4,7 +4,7 @@ import { getPublicPropertyById } from '@/lib/2clics/listings';
 import { getDevelopmentEditorialCuration, resolveSafeDescription, resolveSourceTextSegment } from '@/lib/desarrollos';
 import { resolveDevelopmentAssets, resolveDevelopmentCardImage } from '@/lib/development-assets';
 import { getInvestmentEditorialCuration, resolveInvestmentImage } from '@/lib/investments';
-import { getDevelopmentBySlug, getInvestmentOpportunityBySlug } from '@/lib/site-curation';
+import { getDevelopmentBySlug, getInvestmentOpportunityBySlug, isDevelopmentPublic } from '@/lib/site-curation';
 
 // ── "Oportunidades seleccionadas" del Home — curaduría MANUAL de García ─────────────────────────
 //
@@ -48,7 +48,7 @@ function firstText(value: string | string[]): string {
 
 async function loadDevelopmentCard(slug: string): Promise<HomeSelectionCard | null> {
   const curation = getDevelopmentBySlug(slug);
-  if (!curation) return null;
+  if (!curation || !isDevelopmentPublic(curation)) return null;
   const result = await getPublicPropertyById(curation.sourcePropertyId);
   const property = result.property;
   if (!property) return null;

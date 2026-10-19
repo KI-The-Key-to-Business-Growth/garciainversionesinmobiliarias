@@ -811,6 +811,22 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   ficha y ninguna operación se elimina. El estado comercial (disponibilidad incluida) se toma
   siempre de 2Clics — la web no publica fechas ni promesas de disponibilidad.
 
+### Post-lanzamiento (2026-10) — Remeros Beach TEMPORALMENTE OCULTO
+
+- **Estado público: TEMPORALMENTE OCULTO.** Motivo: Dirección quiere revisar y completar la
+  información del desarrollo antes de volver a publicarlo. **No es una baja definitiva.**
+- Implementación: `hidden: true` en su entrada de `DEVELOPMENTS` (lib/site-curation.ts). Las
+  superficies públicas usan `PUBLIC_DEVELOPMENTS` / `isDevelopmentPublic`: fuera del listado
+  `/desarrollos`, del selector de mercado, del sitemap y de la selección del Home.
+  `/desarrollos/remeros-beach` redirige temporalmente (307) a `/comprar`.
+- Todo queda guardado para reactivarlo: definición del desarrollo, curaduría editorial
+  (lib/desarrollos.ts), slots de assets (lib/development-assets.ts) y la documentación de abajo.
+  El contenido del desarrollo (sectores y sus estados, masterplan, laguna, amenities) no se
+  publica hasta su revisión. **Reactivar = quitar `hidden: true`.**
+- Públicas mientras tanto, solo las fichas individuales: **237447 → venta → `/comprar`** ("Volver a
+  Comprar") y **237445 → alquiler → `/alquilar`** ("Volver a Alquilar"). Sus datos siguen viniendo
+  de 2Clics sin cambios.
+
 ### Post-lanzamiento (2026-10) — Benavídez Village: evolución de obra
 
 - La sección de obra pasa a **"Evolución de obra"** (layout `construction-progress`): "Etapa

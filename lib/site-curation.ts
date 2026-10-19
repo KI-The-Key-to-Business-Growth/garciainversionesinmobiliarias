@@ -147,6 +147,11 @@ export type DevelopmentCuration = {
   // Nombre corto para "Volver a …" en las fichas de sus unidades (ej. "Faena"). Sin declarar se
   // usa `publicName`.
   backLabel?: string;
+  // Temporalmente NO publicado (decisión de Dirección): la definición, la curaduría editorial y los
+  // assets se conservan para reactivarlo, pero queda fuera de toda la experiencia pública —
+  // listado /desarrollos, selector de mercado, sitemap, selección del Home y "Volver" de sus
+  // unidades. La URL directa redirige temporalmente a /comprar. Reactivar = quitar este flag.
+  hidden?: boolean;
 };
 
 // La ficha de Faena es el patrón visual/estructural de referencia (apertura editorial, imágenes,
@@ -199,9 +204,14 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     market: 'AR',
   },
   {
-    // Remeros Beach es el masterplan; 237447 (venta) es una unidad de Sky Two, sector entregado.
+    // Remeros Beach — TEMPORALMENTE OCULTO (2026-10): Dirección revisa y completa la información
+    // del desarrollo antes de volver a publicarlo. No es una baja: todo queda guardado (acá, en
+    // lib/desarrollos.ts y lib/development-assets.ts). Mientras tanto solo son públicas las fichas
+    // individuales: 237447 (venta, /comprar) y 237445 (alquiler, /alquilar).
+    // Remeros Beach es el masterplan; 237447 (venta) es una unidad de Sky Two, edificio terminado.
     // 237445 (alquiler del mismo edificio) NO forma parte del desarrollo: sigue en /alquilar.
     slug: 'remeros-beach',
+    hidden: true,
     name: 'Remeros Beach',
     publicName: 'Remeros Beach',
     sourcePropertyId: 237447,
@@ -227,9 +237,19 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
   },
 ];
 
+// Desarrollos visibles públicamente (sin los marcados `hidden`). Toda superficie pública usa esta
+// lista; `DEVELOPMENTS` completo queda como registro interno.
+export const PUBLIC_DEVELOPMENTS: DevelopmentCuration[] = DEVELOPMENTS.filter((entry) => !entry.hidden);
+
+export function isDevelopmentPublic(development: DevelopmentCuration | null | undefined): boolean {
+  return Boolean(development && !development.hidden);
+}
+
+// Desarrollo PÚBLICO al que pertenece una propiedad. Una unidad de un desarrollo oculto no vuelve a
+// él (su "Volver" cae al catálogo de su operación).
 export function getDevelopmentForPropertyId(propertyId: number | null | undefined): DevelopmentCuration | null {
   if (propertyId === null || propertyId === undefined) return null;
-  return DEVELOPMENTS.find((entry) => entry.propertyIds.includes(propertyId)) || null;
+  return PUBLIC_DEVELOPMENTS.find((entry) => entry.propertyIds.includes(propertyId)) || null;
 }
 
 export type PropertyBackLink = { href: string; label: string };
@@ -248,6 +268,8 @@ export function getPropertyBackLink(propertyId: number | null | undefined, opera
   return { href: '/comprar', label: 'Volver a Comprar' };
 }
 
+// Incluye desarrollos ocultos (registro interno): quien lo use en una superficie pública debe
+// chequear `isDevelopmentPublic` (la ficha /desarrollos/[slug] redirige si está oculto).
 export function getDevelopmentBySlug(slug: string): DevelopmentCuration | null {
   const normalized = String(slug || '').trim().toLowerCase();
   if (!normalized) return null;
@@ -255,7 +277,7 @@ export function getDevelopmentBySlug(slug: string): DevelopmentCuration | null {
 }
 
 export function getAllDevelopmentSlugs(): string[] {
-  return DEVELOPMENTS.map((entry) => entry.slug);
+  return PUBLIC_DEVELOPMENTS.map((entry) => entry.slug);
 }
 
 // Driver del selector US/AR de `/desarrollos` (decimonovena pasada) — filtra por el campo
@@ -263,7 +285,7 @@ export function getAllDevelopmentSlugs(): string[] {
 // agregado a `DEVELOPMENTS` con `market: 'AR'` aparece acá automáticamente, sin tocar esta
 // función ni la página.
 export function getDevelopmentsByMarket(market: 'US' | 'AR'): DevelopmentCuration[] {
-  return DEVELOPMENTS.filter((entry) => entry.market === market);
+  return PUBLIC_DEVELOPMENTS.filter((entry) => entry.market === market);
 }
 
 // INVERTIR (/invertir, /invertir/[slug]) — alternativas/estructuras de inversión REALES que

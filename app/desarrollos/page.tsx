@@ -7,7 +7,7 @@ import DesarrollosMarketTabs from '@/components/properties/DesarrollosMarketTabs
 import ListingState from '@/components/properties/ListingState';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
 import { resolveDevelopmentCardImage } from '@/lib/development-assets';
-import { DEVELOPMENTS } from '@/lib/site-curation';
+import { PUBLIC_DEVELOPMENTS } from '@/lib/site-curation';
 import { getDevelopmentEditorialCuration, toDevelopmentCardSource } from '@/lib/desarrollos';
 import type { CuratedEntry } from '@/lib/desarrollos';
 
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 // inventar datos que ya usa el resto del catálogo.
 async function loadCuratedDevelopments(): Promise<CuratedEntry[]> {
   const results = await Promise.all(
-    DEVELOPMENTS.map(async (curation) => {
+    PUBLIC_DEVELOPMENTS.map(async (curation) => {
       const result = await getPublicPropertyById(curation.sourcePropertyId);
       if (!result.property) return null;
       // `cardImageIndex` (vigesimotercera pasada, FASE 3): cada desarrollo con curaduría editorial

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
@@ -11,7 +11,7 @@ import { getPublicDevelopmentById, getPublicPropertyById } from '@/lib/2clics/li
 import { resolveDevelopmentAssets, resolveDevelopmentHeroImage } from '@/lib/development-assets';
 import { buildShareMetadata } from '@/lib/share-metadata';
 import { getDevelopmentEditorialCuration, resolveSafeDescription } from '@/lib/desarrollos';
-import { getDevelopmentBySlug } from '@/lib/site-curation';
+import { getDevelopmentBySlug, isDevelopmentPublic } from '@/lib/site-curation';
 import type { PublicProperty } from '@/lib/2clics/types';
 
 type DevelopmentDetailPageProps = {
@@ -31,10 +31,15 @@ function parseId(id: string): number | null {
 //    intacto por compatibilidad (no se enlaza desde la nueva navegación V2), pero no se borra.
 // No puede haber dos carpetas `[id]`/`[slug]` con el mismo padre en Next.js — de ahí que ambas
 // arquitecturas convivan acá en vez de en rutas separadas.
+// Desarrollo temporalmente oculto (`hidden` en lib/site-curation.ts): la URL directa redirige
+// (307, temporal) a /comprar. La curaduría queda intacta para reactivarlo.
+const HIDDEN_DEVELOPMENT_REDIRECT = '/comprar';
+
 export async function generateMetadata({ params }: DevelopmentDetailPageProps): Promise<Metadata> {
   const { id } = await params;
 
   const curation = getDevelopmentBySlug(id);
+  if (curation && !isDevelopmentPublic(curation)) redirect(HIDDEN_DEVELOPMENT_REDIRECT);
   if (curation) {
     const source = await getPublicPropertyById(curation.sourcePropertyId);
     // Prioridad: nombre público confirmado por curaduría → título real de 2Clics (Faena) →
@@ -84,6 +89,7 @@ export default async function DevelopmentDetailPage({ params }: DevelopmentDetai
   const { id } = await params;
 
   const curation = getDevelopmentBySlug(id);
+  if (curation && !isDevelopmentPublic(curation)) redirect(HIDDEN_DEVELOPMENT_REDIRECT);
   if (curation) {
     const propertyResults = await Promise.all(
       curation.propertyIds.map((propertyId) => getPublicPropertyById(propertyId)),

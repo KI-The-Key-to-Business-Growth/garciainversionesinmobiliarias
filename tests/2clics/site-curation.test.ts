@@ -28,6 +28,7 @@ import {
   CURATED_PROPERTIES,
   DEVELOPMENTS,
   INVESTMENT_OPPORTUNITIES,
+  PUBLIC_DEVELOPMENTS,
   getActiveInvestmentOpportunities,
   getAllDevelopmentSlugs,
   getCurationForPropertyId,
@@ -39,6 +40,7 @@ import {
   getInvestmentOpportunityBySlug,
   getMasterCatalogExcludedPropertyIds,
   getPropertyBackLink,
+  isDevelopmentPublic,
   isExcludedFromStandardCatalog,
 } from '@/lib/site-curation';
 
@@ -177,10 +179,9 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
     }
   });
 
-  it('desarrollos activos: Faena, Benavídez Village, Pacheco Central, Remeros Beach y Domus — nada más', () => {
-    expect(getAllDevelopmentSlugs().sort()).toEqual(
-      ['benavidez-village', 'domus-brickell-center', 'faena', 'pacheco-central', 'remeros-beach'].sort(),
-    );
+  it('desarrollos públicos: Faena, Benavídez Village, Pacheco Central y Domus — Remeros Beach queda guardado pero oculto', () => {
+    expect(getAllDevelopmentSlugs().sort()).toEqual(['benavidez-village', 'domus-brickell-center', 'faena', 'pacheco-central'].sort());
+    expect(DEVELOPMENTS.map((d) => d.slug)).toContain('remeros-beach');
     expect(getDevelopmentBySlug('pacheco-central')?.sourcePropertyId).toBe(233719);
     expect(getDevelopmentBySlug('domus-brickell-center')?.sourcePropertyId).toBe(236682);
     for (const slug of ['icon-beach', 'flow-house-miami-worldcenter', 'one-hollywood']) {
@@ -1666,7 +1667,7 @@ describe('/desarrollos — sistema editorial: snapshot, descripción segura, im�
   it('187694/187684 no se incorporan como desarrollo', () => {
     expect(getDevelopmentBySlug('187694')).toBeNull();
     expect(getDevelopmentBySlug('187684')).toBeNull();
-    expect(getAllDevelopmentSlugs()).toEqual(['faena', 'benavidez-village', 'pacheco-central', 'remeros-beach', 'domus-brickell-center']);
+    expect(getAllDevelopmentSlugs()).toEqual(['faena', 'benavidez-village', 'pacheco-central', 'domus-brickell-center']);
   });
 });
 
@@ -1684,7 +1685,7 @@ describe('/desarrollos (índice) — apertura editorial, selector de mercado y g
 
   it('getDevelopmentsByMarket devuelve los desarrollos activos de cada mercado', () => {
     expect(getDevelopmentsByMarket('US').map((d) => d.slug)).toEqual(['faena', 'domus-brickell-center']);
-    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toEqual(['benavidez-village', 'pacheco-central', 'remeros-beach']);
+    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toEqual(['benavidez-village', 'pacheco-central']);
   });
 
   it('el filtro es por el campo explícito `market`, no por texto de ubicación/título — cambiar el título de la fuente no reclasifica el mercado', () => {
@@ -1968,7 +1969,7 @@ describe('/desarrollos/pacheco-central — primer desarrollo de Argentina (viges
 
   it('regresión: el selector de mercado devuelve Faena/Domus en US y Benavídez/Pacheco en AR', () => {
     expect(getDevelopmentsByMarket('US').map((d) => d.slug)).toEqual(['faena', 'domus-brickell-center']);
-    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toEqual(['benavidez-village', 'pacheco-central', 'remeros-beach']);
+    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toEqual(['benavidez-village', 'pacheco-central']);
   });
 });
 
@@ -2775,7 +2776,8 @@ describe('V2.1 — routing de catálogo, "Volver" contextual y Remeros Beach', (
       href: '/desarrollos/domus-brickell-center',
       label: 'Volver a Domus Brickell Center',
     });
-    expect(getPropertyBackLink(237447, 'Venta')).toEqual({ href: '/desarrollos/remeros-beach', label: 'Volver a Remeros Beach' });
+    // Remeros Beach está oculto: su unidad vuelve al catálogo de su operación.
+    expect(getPropertyBackLink(237447, 'Venta')).toEqual({ href: '/comprar', label: 'Volver a Comprar' });
     expect(getPropertyBackLink(187669, 'Venta')).toEqual({ href: '/comprar', label: 'Volver a Comprar' });
     expect(getPropertyBackLink(237445, 'Alquiler')).toEqual({ href: '/alquilar', label: 'Volver a Alquilar' });
     expect(getPropertyBackLink(236982, 'Alquiler')).toEqual({ href: '/alquilar', label: 'Volver a Alquilar' });
@@ -2785,15 +2787,21 @@ describe('V2.1 — routing de catálogo, "Volver" contextual y Remeros Beach', (
     );
   });
 
-  it('Remeros Beach: desarrollo en Argentina con 237447 como unidad; 237445 (alquiler) queda afuera', () => {
+  it('Remeros Beach: TEMPORALMENTE OCULTO — definición y curaduría guardadas, fuera de toda superficie pública', () => {
     const remeros = getDevelopmentBySlug('remeros-beach');
+    // Guardado (no borrado): misma definición, curaduría editorial y slots de assets.
+    expect(remeros?.hidden).toBe(true);
+    expect(isDevelopmentPublic(remeros)).toBe(false);
     expect(remeros?.propertyIds).toEqual([237447]);
     expect(remeros?.sourcePropertyId).toBe(237447);
     expect(remeros?.market).toBe('AR');
-    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toContain('remeros-beach');
-    // 237447: unidad terminada en venta (confirmado por Fabiana García) — sigue siendo la unidad del
-    // desarrollo y además vive en /comprar.
-    expect(getDevelopmentForPropertyId(237447)?.slug).toBe('remeros-beach');
+    expect(getDevelopmentEditorialCuration('remeros-beach')).not.toBeNull();
+    // Fuera de lo público: listado, selector de mercado, sitemap y "Volver".
+    expect(PUBLIC_DEVELOPMENTS.map((d) => d.slug)).not.toContain('remeros-beach');
+    expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).not.toContain('remeros-beach');
+    expect(getAllDevelopmentSlugs()).not.toContain('remeros-beach');
+    expect(getDevelopmentForPropertyId(237447)).toBeNull();
+    // Las fichas individuales siguen públicas: 237447 en /comprar, 237445 en /alquilar.
     expect(isExcludedFromStandardCatalog(237447)).toBe(false);
     expect(isExcludedFromStandardCatalog(237445)).toBe(false);
     expect(getDevelopmentForPropertyId(237445)).toBeNull();
@@ -3405,5 +3413,59 @@ describe('Pre-launch V2 — selección del Home y Open Graph por ficha', () => {
         expect(imports.filter((imported) => imported.startsWith(mod)), `${file} importa ${mod}`).toEqual([]);
       }
     }
+  });
+});
+
+// ── Remeros Beach temporalmente oculto (2026-10) ────────────────────────────────────────────────
+describe('Desarrollo oculto (Remeros Beach) — guardado, fuera de lo público', () => {
+  // `redirect()` de Next lanza un error especial con el destino en `digest`.
+  async function redirectTarget(run: () => Promise<unknown>): Promise<string | null> {
+    try {
+      await run();
+      return null;
+    } catch (error) {
+      const digest = String((error as { digest?: string }).digest || '');
+      return digest.startsWith('NEXT_REDIRECT') ? digest : `unexpected: ${String(error)}`;
+    }
+  }
+
+  it('/desarrollos/remeros-beach redirige temporalmente a /comprar (página y metadata), sin consultar 2Clics', async () => {
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy as never;
+    await loadListings();
+    const { default: DevelopmentDetailPage, generateMetadata } = await import('@/app/desarrollos/[id]/page');
+    const params = { params: Promise.resolve({ id: 'remeros-beach' }) };
+    for (const target of [await redirectTarget(() => DevelopmentDetailPage(params)), await redirectTarget(() => generateMetadata(params))]) {
+      expect(target).toMatch(/^NEXT_REDIRECT;replace;\/comprar;307;/);
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('un desarrollo público no redirige', async () => {
+    const source = readFileSync('app/desarrollos/[id]/page.tsx', 'utf8');
+    expect(source).toContain('if (curation && !isDevelopmentPublic(curation)) redirect(HIDDEN_DEVELOPMENT_REDIRECT);');
+    expect(isDevelopmentPublic(getDevelopmentBySlug('benavidez-village'))).toBe(true);
+    expect(isDevelopmentPublic(getDevelopmentBySlug('domus-brickell-center'))).toBe(true);
+  });
+
+  it('/desarrollos lista solo PUBLIC_DEVELOPMENTS; el resto de los desarrollos sigue igual', () => {
+    const source = readFileSync('app/desarrollos/page.tsx', 'utf8');
+    expect(source).toContain('PUBLIC_DEVELOPMENTS.map(async (curation) => {');
+    expect(source).not.toMatch(/\bDEVELOPMENTS\.map/);
+    expect(PUBLIC_DEVELOPMENTS.map((d) => d.slug)).toEqual(['faena', 'benavidez-village', 'pacheco-central', 'domus-brickell-center']);
+  });
+
+  it('la selección del Home nunca muestra un desarrollo oculto aunque esté en la lista', async () => {
+    globalThis.fetch = vi.fn(async () => jsonResponse({ status: 'success', count: 0, properties: [] })) as never;
+    await loadListings();
+    const { loadHomeSelection } = await import('@/lib/home-selection');
+    expect(await loadHomeSelection([{ kind: 'development', slug: 'remeros-beach' }])).toEqual([]);
+  });
+
+  it('237447 sigue en /comprar con "Volver a Comprar"; 237445 en /alquilar con "Volver a Alquilar"', () => {
+    expect(isExcludedFromStandardCatalog(237447)).toBe(false);
+    expect(getPropertyBackLink(237447, 'Venta')).toEqual({ href: '/comprar', label: 'Volver a Comprar' });
+    expect(isExcludedFromStandardCatalog(237445)).toBe(false);
+    expect(getPropertyBackLink(237445, 'Alquiler')).toEqual({ href: '/alquilar', label: 'Volver a Alquilar' });
   });
 });
