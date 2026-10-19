@@ -23,7 +23,6 @@ export default function NosotrosPage() {
       <main>
         <section className="twoclics-catalog-hero twoclics-catalog-hero--compact">
           <div className="container">
-            <p className="eyebrow">Nosotros</p>
             <h1>Conocé García</h1>
             <p>Quiénes somos, nuestra forma de trabajar y los mercados en los que operamos hoy.</p>
           </div>

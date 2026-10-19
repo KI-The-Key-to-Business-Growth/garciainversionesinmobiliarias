@@ -8553,12 +8553,12 @@ body[data-page-type='thank_you'] {
    horizontal con la siguiente card asomando (scroll contenido, sin overflow de página). */
 .home-selection {
   background: var(--ivory);
-  padding: 96px 0 80px;
+  padding: 88px 0 72px;
 }
 
 .home-selection-heading {
   max-width: 720px;
-  margin: 0 auto 52px;
+  margin: 0 auto 44px;
   text-align: center;
 }
 
@@ -8581,7 +8581,9 @@ body[data-page-type='thank_you'] {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 28px;
+  gap: 40px;
+  max-width: 1240px;
+  margin-inline: auto;
 }
 
 .home-selection-grid--1 {
@@ -8612,7 +8614,7 @@ body[data-page-type='thank_you'] {
 
 .home-selection-media {
   position: relative;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: 24px;
   background: rgba(12, 41, 72, 0.08);
@@ -8631,7 +8633,7 @@ body[data-page-type='thank_you'] {
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 26px 4px 0;
+  padding: 22px 2px 0;
 }
 
 .home-selection-kicker {
@@ -8640,12 +8642,12 @@ body[data-page-type='thank_you'] {
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--gold);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .home-selection-body h3 {
   font-family: var(--font-cormorant), serif;
-  font-size: 2rem;
+  font-size: 1.85rem;
   font-weight: 600;
   line-height: 1.05;
   color: var(--navy);
@@ -8655,14 +8657,14 @@ body[data-page-type='thank_you'] {
 .home-selection-location {
   color: var(--steel);
   font-size: 0.92rem;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .home-selection-text {
   color: var(--text-soft);
   font-size: 0.96rem;
   line-height: 1.65;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 .home-selection-cta {
@@ -8738,7 +8740,7 @@ body[data-page-type='thank_you'] {
   }
 
   .home-selection-media {
-    aspect-ratio: 4 / 4.4;
+    aspect-ratio: 4 / 3;
   }
 
   .home-selection-body h3 {
