@@ -35,6 +35,12 @@ export const DEVELOPMENT_ASSET_SLOTS: Record<string, DevelopmentAssetSlot[]> = {
     { target: 'interiores', file: 'dormitorio.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — dormitorio' },
     { target: 'vida-en-el-conjunto', file: 'amenities.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — render con piscina + conjunto' },
     { target: 'masterplan', file: 'masterplan.jpg', kind: 'plan', source: 'New Unidades Benavidez Village.pdf — masterplan general' },
+    // Evolución de obra — fotografías reales recientes (Benavidez_Village_Avance_Obra_Actualizado.zip,
+    // carpeta oficial de Drive). La primera es el "Avance actual" principal; el resto, detalles.
+    { target: 'estado-obra', file: 'obra-exterior.jpg', kind: 'photo', source: '01_EXTERIOR_VENTANAS_IMG_1582.JPG — exterior con ventanas colocadas' },
+    { target: 'estado-obra', file: 'obra-interior-living.jpg', kind: 'photo', source: '04_INTERIOR_ABERTURA_IMG_1574.JPG — interior con abertura al jardín' },
+    { target: 'estado-obra', file: 'obra-interior-abertura.jpg', kind: 'photo', source: '03_INTERIOR_ABERTURA_IMG_1575.JPG — interior con abertura corrediza' },
+    { target: 'estado-obra', file: 'obra-interior-terminaciones.jpg', kind: 'photo', source: '05_INTERIOR_AVANCE_IMG_1581.JPG — avance de terminaciones interiores' },
   ],
   'pacheco-central': [
     { target: 'hero', file: 'hero.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 3 (vista aérea general)' },

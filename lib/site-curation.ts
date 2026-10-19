@@ -50,9 +50,12 @@ export const CURATED_PROPERTIES: CuratedPropertyEntry[] = [
   { propertyId: 237472, humanRef: 'GAR-237472', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 233702, humanRef: 'GAR-233702', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 233707, humanRef: 'GAR-233707', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  // Remeros Beach — la unidad en venta de Sky Two vive dentro del desarrollo (no en /comprar).
+  // Remeros Beach — 237447 es una UNIDAD TERMINADA EN VENTA (Sky Two; confirmado por Fabiana García,
+  // 2026-10). Sigue vinculada al desarrollo (/desarrollos/remeros-beach la muestra como unidad
+  // disponible) y además aparece en /comprar: pertenecer a un desarrollo no la excluye del catálogo
+  // de compra. Excepción puntual — las unidades de los demás desarrollos siguen excluidas.
   // 237445 (alquiler) no se clasifica: sigue siendo una propiedad tradicional de /alquilar.
-  { propertyId: 237447, humanRef: 'GAR-237447', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 237447, humanRef: 'GAR-237447', classification: 'desarrollo', excludeFromStandardCatalog: false },
   // Pacheco Central — único registro de la cartera vinculado al proyecto.
   { propertyId: 233719, humanRef: 'GAR-233719', classification: 'desarrollo', excludeFromStandardCatalog: true },
   // Domus Brickell Center — 236682 confirmado por García (nunca 236646).

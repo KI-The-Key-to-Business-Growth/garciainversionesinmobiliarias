@@ -584,6 +584,75 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
     );
   }
 
+  if (section.layout === 'construction-progress') {
+    // Todas fotografías reales: el rótulo de la sección se aplica también a los assets locales
+    // (kind 'photo'), que de otro modo no llevan rótulo.
+    const current = assetImages.map((image) => ({ ...image, tag: section.imageTag }));
+    const earlier = resolveSectionImages(images, section.imageIndexes).map((image) => ({ ...image, tag: section.imageTag }));
+    const labels = section.progressLabels || { earlier: 'Etapa anterior', current: 'Avance actual' };
+    const fallback = resolveSectionImages(images, section.fallbackImageIndexes || section.imageIndexes).map((image) => ({
+      ...image,
+      tag: section.imageTag,
+    }));
+    const media = (image: EditorialImage, sizes: string, key: string) => (
+      <div className="project-interiors-media" key={key}>
+        <Image src={image.displayUrl} alt="" fill sizes={sizes} style={{ objectFit: 'cover', objectPosition: 'center' }} />
+        <MediaTag image={image} />
+      </div>
+    );
+
+    // Sin fotos recientes locales: misma galería de 2Clics que antes, sin comparación.
+    if (!current.length) {
+      if (!fallback.length) return null;
+      return (
+        <section key={section.key} className="project-interiors">
+          <div className="container">
+            {section.title ? (
+              <div className="project-interiors-heading">
+                <h2>{section.title}</h2>
+              </div>
+            ) : null}
+            <div className={`project-interiors-grid project-interiors-grid--${Math.min(fallback.length, 4)} project-interiors-grid--landscape`}>
+              {fallback.slice(0, 4).map((image, index) => media(image, '(max-width: 780px) 100vw, (max-width: 1080px) 50vw, 540px', image.id || String(index)))}
+            </div>
+            {section.note ? <p className="project-interiors-note">{section.note}</p> : null}
+          </div>
+        </section>
+      );
+    }
+
+    const [lead, ...details] = current;
+    return (
+      <section key={section.key} className="project-interiors project-progress">
+        <div className="container">
+          {section.title ? (
+            <div className="project-interiors-heading">
+              <h2>{section.title}</h2>
+            </div>
+          ) : null}
+          <div className={`project-progress-compare${earlier.length ? '' : ' project-progress-compare--single'}`}>
+            {earlier.length ? (
+              <figure className="project-progress-stage">
+                <figcaption className="project-progress-label">{labels.earlier}</figcaption>
+                {media(earlier[0], '(max-width: 780px) 100vw, 600px', `earlier-${earlier[0].id}`)}
+              </figure>
+            ) : null}
+            <figure className="project-progress-stage project-progress-stage--current">
+              <figcaption className="project-progress-label">{labels.current}</figcaption>
+              {media(lead, '(max-width: 780px) 100vw, 600px', `current-${lead.id}`)}
+            </figure>
+          </div>
+          {details.length ? (
+            <div className={`project-progress-details project-progress-details--${Math.min(details.length, 3)}`}>
+              {details.slice(0, 3).map((image) => media(image, '(max-width: 780px) 84vw, 400px', `detail-${image.id}`))}
+            </div>
+          ) : null}
+          {section.note ? <p className="project-interiors-note">{section.note}</p> : null}
+        </div>
+      </section>
+    );
+  }
+
   if (section.layout === 'gallery') {
     if (!hasImage) return null;
     return (

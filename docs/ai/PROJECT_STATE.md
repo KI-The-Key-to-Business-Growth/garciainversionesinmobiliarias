@@ -756,9 +756,9 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   por URL. 206734 sigue redirigiendo a `/invertir/445-n-shore-drive`.
 - **Remeros Beach pasa a Desarrollos** (`/desarrollos/remeros-beach`, mercado AR): masterplan de 17
   ha alrededor de una Crystal Lagoon de ~3,5 ha, sectores Sky Residences (Sky One + Sky Two,
-  entregado), Árboris y Beach. **237447** (venta, Sky Two) deja `/comprar` y es la unidad del
-  desarrollo, con sus datos en vivo. **237445** (alquiler) sigue en `/alquilar` y no forma parte del
-  desarrollo.
+  entregado), Árboris y Beach. **237447** (venta, Sky Two) es la unidad del desarrollo, con sus
+  datos en vivo (en V2.1 dejaba `/comprar` — corregido post-lanzamiento, ver más abajo). **237445**
+  (alquiler) sigue en `/alquilar` y no forma parte del desarrollo.
 - **Assets editoriales locales** (`lib/development-assets.ts`, `public/developments/<slug>/`):
   renders/masterplans oficiales separados de 2Clics. Cada slot se activa solo si el archivo existe;
   los renders y planos llevan el rótulo "Imagen ilustrativa"/"Plano ilustrativo". Hoy no hay
@@ -778,6 +778,50 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   `resolveDevelopmentHeroImage`); 445 → `openingImage` de su landing; propiedades → primera imagen
   pública del DTO; sin imagen segura → imagen institucional. El Home conserva su metadata y es la
   única página con og:url raíz (el layout ya no la declara para todas).
+
+### Post-lanzamiento (2026-10) — Remeros Beach 237447 vuelve a /comprar
+
+- **237447 = Remeros Beach · unidad terminada · venta** (confirmado por Fabiana García; precio
+  publicado USD 270.000, dato vivo de 2Clics). Se muestra en tres lugares sin duplicar datos:
+  - `/comprar`, como propiedad terminada en venta (una sola card);
+  - `/desarrollos/remeros-beach`, como unidad disponible del desarrollo;
+  - `/propiedades/237447`, su ficha individual canónica.
+- Regla: pertenecer a un desarrollo **no** obliga a excluir una unidad terminada y activa en venta
+  de `/comprar`. Se resuelve por item con `excludeFromStandardCatalog: false` en
+  `CURATED_PROPERTIES` (lib/site-curation.ts). Excepción puntual: las unidades de Benavídez,
+  Pacheco, Faena y Domus siguen excluidas (sin revisar todavía caso por caso).
+- No presentar 237447 como en construcción / en obra / preventa / pozo / entrega futura. No
+  afirmar "posesión inmediata" (no confirmado).
+- Remeros Beach sigue siendo un desarrollo. Futuras unidades entran solo cuando García las tenga
+  cargadas, vigentes y autorizadas en 2Clics — no se simula inventario ni se infiere stock del
+  desarrollador.
+- 237445 (alquiler) sin cambios: sigue en `/alquilar`.
+
+### Post-lanzamiento (2026-10) — Remeros Beach: sectores y unidad venta/alquiler
+
+- **Remeros Beach = master development** (`/desarrollos/remeros-beach`), con sectores en etapas
+  distintas (confirmado por Fabiana García): **Árboris = sector en obra**; **Sky Two = edificio
+  terminado**. No presentar Sky Two como en construcción / en obra / preventa / entrega futura, ni
+  todo Remeros como "en obra". Si se menciona un sector en obra, es Árboris.
+- **237447** = Sky Two · unidad terminada · **venta** · aparece en `/comprar` y dentro de Remeros
+  Beach · URL canónica `/propiedades/237447` · "Volver" → Remeros Beach (sin cambios).
+- **237445** = la **misma unidad física** de Sky Two · **alquiler** · permanece en `/alquilar` con
+  su propia ficha. Conceptualmente relacionada con Remeros Beach.
+- Son dos registros/operaciones de 2Clics de la misma unidad: no se fusionan, no hay una tercera
+  ficha y ninguna operación se elimina. El estado comercial (disponibilidad incluida) se toma
+  siempre de 2Clics — la web no publica fechas ni promesas de disponibilidad.
+
+### Post-lanzamiento (2026-10) — Benavídez Village: evolución de obra
+
+- La sección de obra pasa a **"Evolución de obra"** (layout `construction-progress`): "Etapa
+  anterior" (foto histórica de 2Clics, movimiento de suelo) vs. "Avance actual" (exterior reciente
+  con ventanas colocadas) + 3 detalles interiores (aberturas colocadas, terminaciones). Todas
+  rotuladas "Fotografía real".
+- Fotos recientes como assets locales (`public/developments/benavidez-village/obra-*.jpg`, slots
+  `estado-obra` en `lib/development-assets.ts`), sin metadata EXIF/GPS. Sin esos archivos la sección
+  vuelve a la galería histórica de 2Clics.
+- Para actualizar el avance: reemplazar/agregar archivos en esos slots (el primero es el "Avance
+  actual" principal). Hero, renders, masterplan, unidades, precios y entrega no dependen de esto.
 
 ## Pendiente de decisión (no confundir con "roto")
 

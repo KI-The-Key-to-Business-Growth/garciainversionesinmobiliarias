@@ -142,6 +142,10 @@ export type DevelopmentSectionLayout =
   | 'facts-band'
   // Galería de imágenes posicionable dentro del relato (mismo tratamiento que "Interiores").
   | 'gallery'
+  // Evolución de obra: comparación "etapa anterior" (fotos de 2Clics, `imageIndexes`) vs. "avance
+  // actual" (assets locales de la sección, el primero como principal) + hasta 3 detalles. Todas
+  // fotografías reales, con `imageTag`.
+  | 'construction-progress'
   // Tabla de unidades activas del desarrollo (precio/superficie/orientación en vivo).
   | 'units-table';
 
@@ -247,6 +251,10 @@ export type DevelopmentSection = {
   // Rótulo sobre cada imagen de 2Clics de la sección (ej. "Fotografía real" en el avance de
   // obra), para distinguirlas de los renders editoriales.
   imageTag?: string;
+  // Solo layout 'construction-progress'.
+  progressLabels?: { earlier: string; current: string };
+  // Galería de 2Clics a mostrar si todavía no hay fotos locales del avance actual.
+  fallbackImageIndexes?: number[];
 };
 
 export type DevelopmentEditorialCuration = {
@@ -598,13 +606,18 @@ const EDITORIAL_CURATIONS: Record<string, DevelopmentEditorialCuration> = {
         ],
       },
       {
-        // Fotografías reales de 2Clics (no renders): patio/jardín y frente en obra.
+        // Evolución de obra (todas fotografías reales, nunca renders): "Etapa anterior" = foto de
+        // 2Clics del movimiento de suelo (idx5); "Avance actual" = fotos recientes locales
+        // (lib/development-assets.ts, slots 'estado-obra'), con ventanas y aberturas colocadas.
+        // Sin los archivos locales, degrada a la galería de 2Clics (`fallbackImageIndexes`).
         key: 'estado-obra',
-        title: 'Avance de obra',
+        title: 'Evolución de obra',
         sourceTextSegment: { type: 'none' },
-        imageIndexes: [13, 5],
-        layout: 'gallery',
-        note: 'Fotografías reales del avance de obra.',
+        imageIndexes: [5],
+        layout: 'construction-progress',
+        progressLabels: { earlier: 'Etapa anterior', current: 'Avance actual' },
+        fallbackImageIndexes: [13, 5],
+        note: 'Fotografías reales de la obra. Las más recientes ya muestran ventanas y aberturas colocadas.',
         imageTag: 'Fotografía real',
       },
       {

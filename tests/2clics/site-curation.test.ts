@@ -137,11 +137,12 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
     expect(CURATED_PROPERTIES.map((entry) => entry.propertyId).sort((a, b) => a - b)).toEqual(
       [206734, 233702, 233707, 233708, 233719, 236646, 236682, 236986, 237447, 237472, 237474],
     );
+    // Única excepción: 237447 (Remeros, unidad terminada en venta) sigue en /comprar.
     for (const entry of CURATED_PROPERTIES) {
-      expect(entry.excludeFromStandardCatalog).toBe(true);
+      expect(entry.excludeFromStandardCatalog).toBe(entry.propertyId !== 237447);
     }
     expect(getExcludedPropertyIds().sort((a, b) => a - b)).toEqual(
-      [206734, 233702, 233707, 233708, 233719, 236646, 236682, 236986, 237447, 237472, 237474],
+      [206734, 233702, 233707, 233708, 233719, 236646, 236682, 236986, 237472, 237474],
     );
     // /propiedades (maestro) solo excluye lo que no es una propiedad: la oportunidad de inversión y
     // el duplicado fuera de mercado.
@@ -2790,7 +2791,10 @@ describe('V2.1 — routing de catálogo, "Volver" contextual y Remeros Beach', (
     expect(remeros?.sourcePropertyId).toBe(237447);
     expect(remeros?.market).toBe('AR');
     expect(getDevelopmentsByMarket('AR').map((d) => d.slug)).toContain('remeros-beach');
-    expect(isExcludedFromStandardCatalog(237447)).toBe(true);
+    // 237447: unidad terminada en venta (confirmado por Fabiana García) — sigue siendo la unidad del
+    // desarrollo y además vive en /comprar.
+    expect(getDevelopmentForPropertyId(237447)?.slug).toBe('remeros-beach');
+    expect(isExcludedFromStandardCatalog(237447)).toBe(false);
     expect(isExcludedFromStandardCatalog(237445)).toBe(false);
     expect(getDevelopmentForPropertyId(237445)).toBeNull();
   });
@@ -2848,7 +2852,7 @@ describe('V2.1 — routing de catálogo, "Volver" contextual y Remeros Beach', (
     }
   });
 
-  it('/comprar no muestra 237447 (vive en Remeros) y /alquilar sigue mostrando 237445', async () => {
+  it('/comprar muestra 237447 (unidad terminada en venta, también dentro de Remeros), una sola vez; /alquilar sigue mostrando 237445; las unidades de otros desarrollos siguen afuera', async () => {
     const item = (propertyId: number, operationType: string) => ({
       propertyId,
       address: `Propiedad ${propertyId}`,
@@ -2866,24 +2870,39 @@ describe('V2.1 — routing de catálogo, "Volver" contextual y Remeros Beach', (
     });
     globalThis.fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(String(init.body)) : {};
-      const all = [item(237447, 'VENTA'), item(187669, 'VENTA'), item(237445, 'ALQUILER_PERMANENTE')];
+      const all = [
+        item(237447, 'VENTA'),
+        item(187669, 'VENTA'),
+        item(237445, 'ALQUILER_PERMANENTE'),
+        item(233702, 'VENTA'), // Benavídez
+        item(233719, 'VENTA'), // Pacheco
+        item(236682, 'VENTA'), // Domus
+        item(236986, 'VENTA'), // Faena
+      ];
       const wanted = body.filters?.operation_type;
       const properties = wanted ? all.filter((p) => p.operationType === wanted) : all;
       return jsonResponse({ status: 'success', count: properties.length, properties }) as never;
     }) as never;
     const { getPropertyCatalog } = await loadListings();
     const comprar = await getPropertyCatalog({ operacion: 'venta' }, { excludePropertyIds: getExcludedPropertyIds() });
-    expect(comprar.properties.map((p) => p.propertyId)).toEqual([187669]);
+    expect(comprar.properties.map((p) => p.propertyId).sort()).toEqual([187669, 237447]);
     const alquilar = await getPropertyCatalog({ operacion: 'alquiler' }, { excludePropertyIds: getExcludedPropertyIds() });
     expect(alquilar.properties.map((p) => p.propertyId)).toEqual([237445]);
   });
 });
 
 describe('V2.1 — assets editoriales locales (public/developments)', () => {
-  it('assets entregados: Benavídez (4, sin vivienda-interior ni amenities) y Pacheco (9) activos; Remeros sin archivos; nada fuera de los slots', async () => {
+  it('assets entregados: Benavídez (renders + 4 fotos reales de obra, sin vivienda-interior ni amenities) y Pacheco (9) activos; Remeros sin archivos; nada fuera de los slots', async () => {
     const { DEVELOPMENT_ASSET_SLOTS, resolveDevelopmentAssets } = await import('@/lib/development-assets');
     const benavidez = resolveDevelopmentAssets('benavidez-village');
-    expect(Object.keys(benavidez).sort()).toEqual(['hero', 'interiores', 'masterplan', 'proyecto'].sort());
+    expect(Object.keys(benavidez).sort()).toEqual(['estado-obra', 'hero', 'interiores', 'masterplan', 'proyecto'].sort());
+    // Evolución de obra: fotografías reales recientes, en el orden curado (exterior primero).
+    expect(benavidez['estado-obra']).toEqual([
+      { src: '/developments/benavidez-village/obra-exterior.jpg', kind: 'photo' },
+      { src: '/developments/benavidez-village/obra-interior-living.jpg', kind: 'photo' },
+      { src: '/developments/benavidez-village/obra-interior-abertura.jpg', kind: 'photo' },
+      { src: '/developments/benavidez-village/obra-interior-terminaciones.jpg', kind: 'photo' },
+    ]);
     // amenities.jpg duplicaba el render del hero: "Vida en el conjunto" queda sin imagen dedicada (sin fallback).
     expect(benavidez['vida-en-el-conjunto']).toBeUndefined();
     expect(existsSync('public/developments/benavidez-village/amenities.jpg')).toBe(false);
@@ -2913,23 +2932,55 @@ describe('V2.1 — assets editoriales locales (public/developments)', () => {
     }
   });
 
-  it('Benavídez: el avance de obra sigue con fotos reales de 2Clics, rotuladas como tales', () => {
+  it('Benavídez: evolución de obra = etapa anterior (2Clics) vs. avance actual (fotos locales) + 3 detalles, todo "Fotografía real"', async () => {
     const section = getDevelopmentEditorialCuration('benavidez-village')?.sections.find((s) => s.key === 'estado-obra');
-    expect(section?.imageIndexes).toEqual([13, 5]);
+    expect(section?.layout).toBe('construction-progress');
+    expect(section?.imageIndexes).toEqual([5]);
     expect(section?.imageTag).toBe('Fotografía real');
+    const { resolveDevelopmentAssets } = await import('@/lib/development-assets');
     const curation = getDevelopmentBySlug('benavidez-village')!;
     const fixture = property({
       propertyId: 233702,
       images: Array.from({ length: 20 }, (_, i) => ({ imageId: `bv${i}`, url: `https://cdn.2clics.com/bv${i}.jpg` })),
     });
     const html = render(
-      React.createElement(CuratedDevelopmentDetailView, { curation, source: toDevSource(fixture, curation.publicName), units: [fixture] }),
+      React.createElement(CuratedDevelopmentDetailView, {
+        curation,
+        source: toDevSource(fixture, curation.publicName),
+        units: [fixture],
+        assets: resolveDevelopmentAssets('benavidez-village'),
+      }),
     );
-    const idx = html.indexOf('<h2>Avance de obra</h2>');
+    const idx = html.indexOf('<h2>Evolución de obra</h2>');
     expect(idx).toBeGreaterThan(-1);
     const block = html.slice(idx, html.indexOf('</section>', idx));
+    const earlierAt = block.indexOf('>Etapa anterior<');
+    const currentAt = block.indexOf('>Avance actual<');
+    expect(earlierAt).toBeGreaterThan(-1);
+    expect(currentAt).toBeGreaterThan(earlierAt);
+    // Etapa anterior: la foto histórica de 2Clics; avance actual: el exterior reciente primero.
+    expect(block.slice(earlierAt, currentAt)).toContain(encodeURIComponent('https://cdn.2clics.com/bv5.jpg'));
+    expect(block.slice(currentAt)).toContain(encodeURIComponent('/developments/benavidez-village/obra-exterior.jpg'));
+    // 1 anterior + 1 actual + 3 detalles, todas rotuladas como fotografía real.
+    expect((block.match(/<img /g) || []).length).toBe(5);
+    expect((block.match(/>Fotografía real</g) || []).length).toBe(5);
+    expect(block).not.toMatch(/Imagen ilustrativa|Plano ilustrativo/);
+    expect(block).toContain('Las más recientes ya muestran ventanas y aberturas colocadas.');
+  });
+
+  it('Benavídez: sin fotos locales de obra, la sección degrada a la galería histórica de 2Clics (sin comparación vacía)', () => {
+    const curation = getDevelopmentBySlug('benavidez-village')!;
+    const fixture = property({
+      propertyId: 233702,
+      images: Array.from({ length: 20 }, (_, i) => ({ imageId: `bv${i}`, url: `https://cdn.2clics.com/bv${i}.jpg` })),
+    });
+    const html = render(
+      React.createElement(CuratedDevelopmentDetailView, { curation, source: toDevSource(fixture, curation.publicName), units: [fixture], assets: {} }),
+    );
+    const idx = html.indexOf('<h2>Evolución de obra</h2>');
+    const block = html.slice(idx, html.indexOf('</section>', idx));
+    expect(block).not.toContain('Avance actual');
     expect((block.match(/>Fotografía real</g) || []).length).toBe(2);
-    expect(block).not.toContain('Imagen ilustrativa');
   });
 
   it('cuando el archivo existe, el slot se activa y reemplaza la imagen de 2Clics de su sección, con rótulo de imagen ilustrativa', async () => {

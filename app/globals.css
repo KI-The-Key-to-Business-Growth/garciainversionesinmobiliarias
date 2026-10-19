@@ -8757,3 +8757,87 @@ body[data-page-type='thank_you'] {
     padding-top: 48px;
   }
 }
+
+/* Benavídez — "Evolución de obra" (layout 'construction-progress'): comparación etapa anterior /
+   avance actual a dos columnas + hasta 3 detalles del avance. Mismo ancho, radios y rótulos que
+   las galerías editoriales (.project-interiors-*); todas son fotografías reales. */
+.project-progress-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.project-progress-compare--single {
+  grid-template-columns: minmax(0, 620px);
+  justify-content: center;
+}
+
+.project-progress-stage {
+  margin: 0;
+}
+
+.project-progress-label {
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+
+.project-progress-stage--current .project-progress-label {
+  color: var(--gold);
+}
+
+.project-progress .project-interiors-media {
+  aspect-ratio: 4 / 3;
+}
+
+.project-progress-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1080px;
+  margin: 16px auto 0;
+}
+
+.project-progress-details--1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.project-progress-details--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 780px) {
+  .project-progress-compare {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  /* Detalles en carril horizontal: suman información sin alargar la página. */
+  .project-progress-details,
+  .project-progress-details--2 {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 20px;
+    margin: 14px -20px 0;
+    padding: 0 20px 10px;
+    scrollbar-width: thin;
+  }
+
+  .project-progress-details > .project-interiors-media {
+    flex: 0 0 78%;
+    scroll-snap-align: start;
+  }
+
+  .project-progress-details--1 {
+    display: grid;
+    margin-inline: 0;
+    padding: 0;
+  }
+}
