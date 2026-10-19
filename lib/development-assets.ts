@@ -1,6 +1,8 @@
 import 'server-only';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { getDevelopmentEditorialCuration } from '@/lib/desarrollos';
+import type { PublicImage } from '@/lib/2clics/types';
 
 // Assets editoriales de desarrollos (renders, masterplans, fotos propias aprobadas) — separados
 // de 2Clics a propósito: 2Clics es la fuente de inventario/precio/datos vivos; estos archivos son
@@ -67,4 +69,27 @@ export function resolveDevelopmentAssets(slug: string, publicDir = path.join(pro
     (resolved[slot.target] ||= []).push({ src: publicPath, kind: slot.kind });
   }
   return resolved;
+}
+
+// Un asset local presentado con la forma de imagen pública que esperan cards y metadata.
+export function localAssetToPublicImage(src: string): PublicImage {
+  return { id: src, name: '', url: src, thumbnailUrl: src, displayUrl: src, displayThumbnailUrl: src, useVirtualized: false };
+}
+
+// Imagen de apertura de un desarrollo (la misma que muestra el hero de su ficha): render oficial
+// local si existe → imagen de portada curada de 2Clics → primera imagen pública.
+export function resolveDevelopmentHeroImage(slug: string, images: PublicImage[], publicDir?: string): PublicImage | null {
+  const heroAsset = resolveDevelopmentAssets(slug, publicDir).hero?.[0];
+  if (heroAsset) return localAssetToPublicImage(heroAsset.src);
+  const editorial = getDevelopmentEditorialCuration(slug);
+  return (editorial ? images[editorial.heroImageIndex] : undefined) || images[0] || null;
+}
+
+// Imagen de card (índice /desarrollos y selección del Home): render oficial local si existe →
+// `cardImageIndex` curado (pensado para el recorte de card) → primera imagen pública.
+export function resolveDevelopmentCardImage(slug: string, images: PublicImage[], publicDir?: string): PublicImage | null {
+  const heroAsset = resolveDevelopmentAssets(slug, publicDir).hero?.[0];
+  if (heroAsset) return localAssetToPublicImage(heroAsset.src);
+  const editorial = getDevelopmentEditorialCuration(slug);
+  return (editorial ? images[editorial.cardImageIndex] : undefined) || images[0] || null;
 }

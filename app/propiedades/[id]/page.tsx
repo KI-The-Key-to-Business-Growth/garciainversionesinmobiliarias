@@ -6,6 +6,7 @@ import ListingState from '@/components/properties/ListingState';
 import PropertyDetailView from '@/components/properties/PropertyDetailView';
 import { formatPublicLocation } from '@/lib/2clics/format';
 import { getPublicPropertyById, getRelatedPublicProperties } from '@/lib/2clics/listings';
+import { buildShareMetadata } from '@/lib/share-metadata';
 import {
   getInvestmentOpportunityByPropertyId,
   getMasterCatalogExcludedPropertyIds,
@@ -44,16 +45,14 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
 
   const property = result.property;
   const description = property.description || formatPublicLocation(property.location, property.region);
-  return {
-    title: `${property.title} | García Inversiones Inmobiliarias`,
-    description: description || undefined,
-    alternates: { canonical: `/propiedades/${propertyId}` },
-    openGraph: {
-      title: property.title,
-      description: description || undefined,
-      images: property.images[0]?.displayUrl ? [property.images[0].displayUrl] : undefined,
-    },
-  };
+  // Imagen principal = primera imagen pública del DTO sanitizado; sin ninguna, fallback
+  // institucional (buildShareMetadata).
+  return buildShareMetadata({
+    title: property.title,
+    description,
+    path: `/propiedades/${propertyId}`,
+    image: property.images[0]?.displayUrl,
+  });
 }
 
 export default async function PropertyDetailPage({ params }: PropertyDetailPageProps) {

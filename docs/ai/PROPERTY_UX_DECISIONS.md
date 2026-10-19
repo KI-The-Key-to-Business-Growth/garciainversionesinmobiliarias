@@ -9,8 +9,10 @@ Orden: Hero → Oportunidades seleccionadas → Servicios → Nosotros → Merca
 Contacto → Newsletter → Footer.
 
 - Hero: título "Real estate con visión estratégica.", CTA "Ver propiedades" → `/propiedades`.
-- Oportunidades seleccionadas: consume `webListing = DESTACADO` (`FeaturedProperties.tsx` →
-  `getFeaturedPublicProperties`). Snapshot auditado: 3 destacadas. Sección ya optimizada en 1920×800.
+- Oportunidades seleccionadas: **reemplazado en pre-launch V2 (2026-10)** — ahora es una curaduría
+  manual inmediatamente después del Hero (`lib/home-selection.ts` +
+  `components/home/SelectedOpportunities.tsx`), no `webListing = DESTACADO`. Ver `PROJECT_STATE.md`.
+  (Histórico: antes consumía `FeaturedProperties.tsx` → `getFeaturedPublicProperties`.)
 
 ## Catálogo `/propiedades`
 

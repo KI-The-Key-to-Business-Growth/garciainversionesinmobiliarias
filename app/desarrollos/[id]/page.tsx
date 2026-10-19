@@ -8,7 +8,8 @@ import DevelopmentDetailView from '@/components/properties/DevelopmentDetailView
 import ListingState from '@/components/properties/ListingState';
 import { formatLocation } from '@/lib/2clics/format';
 import { getPublicDevelopmentById, getPublicPropertyById } from '@/lib/2clics/listings';
-import { resolveDevelopmentAssets } from '@/lib/development-assets';
+import { resolveDevelopmentAssets, resolveDevelopmentHeroImage } from '@/lib/development-assets';
+import { buildShareMetadata } from '@/lib/share-metadata';
 import { getDevelopmentEditorialCuration, resolveSafeDescription } from '@/lib/desarrollos';
 import { getDevelopmentBySlug } from '@/lib/site-curation';
 import type { PublicProperty } from '@/lib/2clics/types';
@@ -47,16 +48,15 @@ export async function generateMetadata({ params }: DevelopmentDetailPageProps): 
       ? resolveSafeDescription(source.property.description || '', editorial)
       : '';
     const description = safeDescription || (source.property ? formatLocation(source.property.location) : undefined);
-    return {
-      title: `${displayName} | García Inversiones Inmobiliarias`,
+    // Preview social = la misma imagen de apertura que muestra la ficha (render oficial local o
+    // portada curada de 2Clics) — nunca `images[0]` a ciegas (en Benavídez era una foto de obra).
+    const image = resolveDevelopmentHeroImage(curation.slug, source.property?.images || []);
+    return buildShareMetadata({
+      title: displayName,
       description,
-      alternates: { canonical: `/desarrollos/${curation.slug}` },
-      openGraph: {
-        title: displayName,
-        description,
-        images: source.property?.images[0]?.displayUrl ? [source.property.images[0].displayUrl] : undefined,
-      },
-    };
+      path: `/desarrollos/${curation.slug}`,
+      image: image?.displayUrl,
+    });
   }
 
   const developmentId = parseId(id);
@@ -72,16 +72,12 @@ export async function generateMetadata({ params }: DevelopmentDetailPageProps): 
 
   const development = result.development;
   const description = development.description || formatLocation(development.location);
-  return {
-    title: `${development.title} | García Inversiones Inmobiliarias`,
-    description: description || undefined,
-    alternates: { canonical: `/desarrollos/${developmentId}` },
-    openGraph: {
-      title: development.title,
-      description: description || undefined,
-      images: development.images[0]?.displayUrl ? [development.images[0].displayUrl] : undefined,
-    },
-  };
+  return buildShareMetadata({
+    title: development.title,
+    description,
+    path: `/desarrollos/${developmentId}`,
+    image: development.images[0]?.displayUrl,
+  });
 }
 
 export default async function DevelopmentDetailPage({ params }: DevelopmentDetailPageProps) {

@@ -3,6 +3,7 @@ import Script from 'next/script';
 import { Jost, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
 import { CANONICAL_BASE_URL } from '@/lib/env';
+import { INSTITUTIONAL_OPEN_GRAPH, INSTITUTIONAL_TWITTER } from '@/lib/share-metadata';
 import WhatsAppTracking from '@/components/tracking/WhatsAppTracking';
 
 const GTM_ID = 'GTM-MBNKBBSW';
@@ -33,23 +34,10 @@ export const metadata: Metadata = {
     icon: '/assets/logos/isotipo.png',
     apple: '/assets/logos/isotipo.png',
   },
-  openGraph: {
-    type: 'website',
-    siteName: 'García Inversiones Inmobiliarias',
-    locale: 'es_AR',
-    title: 'García Inversiones Inmobiliarias | Real Estate Buenos Aires y Miami',
-    description:
-      'Consultora boutique de real estate en Buenos Aires y Miami, con propiedades seleccionadas y acompañamiento personalizado.',
-    url: '/',
-    images: [{ url: '/assets/propiedades/condor-resort.jpeg', width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'García Inversiones Inmobiliarias | Real Estate Buenos Aires y Miami',
-    description:
-      'Consultora boutique de real estate en Buenos Aires y Miami, con propiedades seleccionadas y acompañamiento personalizado.',
-    images: ['/assets/propiedades/condor-resort.jpeg'],
-  },
+  // Open Graph/Twitter institucionales (lib/share-metadata.ts). Sin og:url acá: una página que no
+  // declara la suya no debe presentarse como el Home. Las fichas usan `buildShareMetadata`.
+  openGraph: INSTITUTIONAL_OPEN_GRAPH,
+  twitter: INSTITUTIONAL_TWITTER,
   formatDetection: { telephone: false },
 };
 

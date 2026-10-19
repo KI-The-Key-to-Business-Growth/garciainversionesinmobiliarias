@@ -8546,3 +8546,212 @@ body[data-page-type='thank_you'] {
 .project-interiors-grid--1.project-interiors-grid--landscape .project-interiors-media:not(.project-interiors-media--plan) {
   aspect-ratio: 16 / 9;
 }
+
+/* Home — "Oportunidades seleccionadas" (pre-launch V2). Selección editorial manual
+   (lib/home-selection.ts), no catálogo: imagen protagonista, rótulo gold, nombre en Cormorant,
+   ubicación, descriptor breve y CTA textual. Desktop: 3 columnas iguales; mobile: carril
+   horizontal con la siguiente card asomando (scroll contenido, sin overflow de página). */
+.home-selection {
+  background: var(--ivory);
+  padding: 96px 0 80px;
+}
+
+.home-selection-heading {
+  max-width: 720px;
+  margin: 0 auto 52px;
+  text-align: center;
+}
+
+.home-selection-heading h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--navy);
+  margin-bottom: 16px;
+}
+
+.home-selection-heading p {
+  color: var(--text-soft);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.home-selection-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.home-selection-grid--1 {
+  grid-template-columns: minmax(0, 520px);
+  justify-content: center;
+}
+
+.home-selection-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-selection-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.home-selection-item {
+  display: flex;
+}
+
+.home-selection-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-selection-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 24px;
+  background: rgba(12, 41, 72, 0.08);
+}
+
+.home-selection-media img {
+  transition: transform 0.8s ease;
+}
+
+.home-selection-card:hover .home-selection-media img,
+.home-selection-card:focus-visible .home-selection-media img {
+  transform: scale(1.03);
+}
+
+.home-selection-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 26px 4px 0;
+}
+
+.home-selection-kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.home-selection-body h3 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+
+.home-selection-location {
+  color: var(--steel);
+  font-size: 0.92rem;
+  margin-bottom: 14px;
+}
+
+.home-selection-text {
+  color: var(--text-soft);
+  font-size: 0.96rem;
+  line-height: 1.65;
+  margin-bottom: 22px;
+}
+
+.home-selection-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gold);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: gap var(--transition);
+}
+
+.home-selection-card:hover .home-selection-cta,
+.home-selection-card:focus-visible .home-selection-cta {
+  gap: 12px;
+}
+
+.home-selection-card:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 6px;
+  border-radius: 24px;
+}
+
+/* La Trayectoria que sigue comparte el fondo ivory: un filete a ancho de contenedor separa. */
+.home-selection + .trayectoria > .container {
+  border-top: 1px solid var(--line);
+  padding-top: 64px;
+}
+
+@media (max-width: 1020px) {
+  .home-selection-grid,
+  .home-selection-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .home-selection {
+    padding: 64px 0 52px;
+  }
+
+  .home-selection-heading {
+    margin-bottom: 32px;
+  }
+
+  .home-selection-grid,
+  .home-selection-grid--2,
+  .home-selection-grid--4 {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 20px;
+    margin-inline: -20px;
+    padding: 4px 20px 16px;
+    scrollbar-width: thin;
+  }
+
+  .home-selection-grid--1 {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .home-selection-grid > .home-selection-item {
+    flex: 0 0 84%;
+    scroll-snap-align: start;
+  }
+
+  .home-selection-media {
+    aspect-ratio: 4 / 4.4;
+  }
+
+  .home-selection-body h3 {
+    font-size: 1.7rem;
+  }
+
+  /* En el carril cada card se lee sola: el CTA sigue al texto en vez de alinearse al fondo de la
+     card más alta (dejaba un hueco grande en las de descriptor corto). */
+  .home-selection-cta {
+    margin-top: 0;
+  }
+
+  .home-selection + .trayectoria > .container {
+    padding-top: 48px;
+  }
+}

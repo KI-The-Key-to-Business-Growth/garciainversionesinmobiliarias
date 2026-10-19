@@ -5,9 +5,11 @@ resumen accionable: **estos bloques están aprobados y no se tocan sin pedido ex
 
 ## Home
 
-- Orden fijo: Hero → Oportunidades seleccionadas (`webListing = DESTACADO`) → Servicios → Nosotros →
-  Mercados → Por qué García → Contacto → Newsletter → Footer.
-- Hero: "Real estate con visión estratégica." CTA "Ver propiedades" → `/propiedades`.
+- Orden (pre-launch V2): Hero → Oportunidades seleccionadas → Trayectoria → Newsletter → Footer.
+- Oportunidades seleccionadas = curaduría manual de García (`HOME_SELECTED_OPPORTUNITIES` en
+  `lib/home-selection.ts`), NO los DESTACADO de 2Clics. Orden: Domus → Benavídez → 445; no inventar
+  una cuarta.
+- Hero: "Real estate con visión estratégica." CTA "Hablar con un asesor" → `/contacto`.
 
 ## Catálogo `/propiedades`
 

@@ -8,6 +8,7 @@ import ListingState from '@/components/properties/ListingState';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
 import { getInvestmentEditorialCuration, resolveInvestmentImage } from '@/lib/investments';
 import { getInvestmentOpportunityBySlug } from '@/lib/site-curation';
+import { buildShareMetadata } from '@/lib/share-metadata';
 
 type InvestmentOpportunityPageProps = {
   params: Promise<{ slug: string }>;
@@ -24,16 +25,13 @@ export async function generateMetadata({ params }: InvestmentOpportunityPageProp
   const curation = getInvestmentEditorialCuration(opportunity.slug);
   const description = curation?.intro;
   const image = curation && source.property ? resolveInvestmentImage(source.property.images, curation.openingImage) : null;
-  return {
-    title: `${opportunity.name} | García Inversiones Inmobiliarias`,
+  // Misma imagen de apertura que muestra la landing (`curation.openingImage`).
+  return buildShareMetadata({
+    title: opportunity.name,
     description,
-    alternates: { canonical: `/invertir/${opportunity.slug}` },
-    openGraph: {
-      title: opportunity.name,
-      description,
-      images: image ? [image.displayUrl] : undefined,
-    },
-  };
+    path: `/invertir/${opportunity.slug}`,
+    image: image?.displayUrl,
+  });
 }
 
 export default async function InvestmentOpportunityPage({ params }: InvestmentOpportunityPageProps) {

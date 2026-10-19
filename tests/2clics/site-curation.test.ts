@@ -721,8 +721,11 @@ describe('Home — live search retirado (WEB GARCÍA V2, cuarta pasada)', () => 
     expect(pageSource).not.toContain("from '@/components/sections/HomeSearch'");
     expect(pageSource).not.toContain("from '@/components/sections/HomeEditorialLinks'");
     expect(pageSource).toContain('Trayectoria');
-    expect(pageSource).toContain('FeaturedProperties');
     expect(pageSource).toContain('Newsletter');
+    // Pre-launch V2: la selección del Home es curaduría manual (SelectedOpportunities), ya no
+    // los DESTACADO de 2Clics (FeaturedProperties).
+    expect(pageSource).toContain('<SelectedOpportunities />');
+    expect(pageSource).not.toContain('<FeaturedProperties');
   });
 
   it('app/page.tsx (quinta pasada) ya no importa ni renderiza Contact — Contacto es /contacto', () => {
@@ -1535,7 +1538,8 @@ describe('/desarrollos/faena — canonical independiente, legacy /api/developmen
   const detailSource = readFileSync('app/desarrollos/[id]/page.tsx', 'utf8');
 
   it('el slug editorial tiene su propio canonical, nunca apunta a /propiedades/187676', () => {
-    expect(detailSource).toContain('alternates: { canonical: `/desarrollos/${curation.slug}` }');
+    // Pre-launch V2: el canonical sale de buildShareMetadata({ path }) (lib/share-metadata.ts).
+    expect(detailSource).toContain('path: `/desarrollos/${curation.slug}`');
     expect(detailSource).not.toContain('canonical: `/propiedades/${curation.sourcePropertyId}`');
   });
 
@@ -3118,5 +3122,237 @@ describe('V2.2 — /vender', () => {
       expect(html).toContain(encodeURIComponent(`/vender/${slot.file}`));
     }
     expect(html).not.toMatch(/src="https?:\/\//);
+  });
+});
+
+// ── Pre-launch V2 — Home "Oportunidades seleccionadas" + metadata social por ficha ─────────────
+describe('Pre-launch V2 — selección del Home y Open Graph por ficha', () => {
+  const BASE = 'https://www.garciainversionesinmobiliarias.com.ar';
+
+  function item(propertyId: number, imageCount = 20, overrides: Record<string, unknown> = {}) {
+    return {
+      propertyId,
+      address: `Propiedad ${propertyId}`,
+      price: 100000,
+      currency: 'U$D',
+      operationType: 'VENTA',
+      status: 'ACTIVE',
+      webListing: 'SIMPLE',
+      propertyType: { typeId: 2, name: 'Casa', appId: '5791' },
+      state: { stateId: 3, name: 'Bs.As. G.B.A. Norte' },
+      city: { cityId: 41, name: 'Tigre' },
+      neighborhood: { neighborhoodId: 601, name: 'Nordelta' },
+      images: Array.from({ length: imageCount }, (_, i) => ({
+        imageId: `${propertyId}-${i}`,
+        url: `https://cdn.2clics.com/${propertyId}/${i}.jpg`,
+      })),
+      meta_data: [{ metaKey: 'description', metaValue: 'Descripción pública de prueba.' }],
+      ...overrides,
+    };
+  }
+
+  function mockInventory(properties: Record<string, unknown>[]) {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/development')) return jsonResponse({ status: 'success', developments: [] }) as never;
+      if (/\/api\/property\/\d+/.test(url)) {
+        const id = Number(url.split('/').pop());
+        const found = properties.find((p) => p.propertyId === id);
+        return jsonResponse(found ? { status: 'success', property: found } : { status: 'fail' }) as never;
+      }
+      return jsonResponse({ status: 'success', count: properties.length, properties }) as never;
+    }) as never;
+  }
+
+  const DOMUS = 236682;
+  const BENAVIDEZ_SOURCE = getDevelopmentBySlug('benavidez-village')!.sourcePropertyId;
+  const N_SHORE = 206734;
+
+  async function loadSelection() {
+    mockInventory([item(DOMUS), item(BENAVIDEZ_SOURCE), item(N_SHORE)]);
+    await loadListings();
+    return import('@/lib/home-selection');
+  }
+
+  it('lista central: Domus → Benavídez → 445, sin cuarta oportunidad inventada', async () => {
+    const { HOME_SELECTED_OPPORTUNITIES, HOME_SELECTION_MAX } = await import('@/lib/home-selection');
+    expect(HOME_SELECTED_OPPORTUNITIES).toEqual([
+      { kind: 'development', slug: 'domus-brickell-center' },
+      { kind: 'development', slug: 'benavidez-village' },
+      { kind: 'investment', slug: '445-n-shore-drive' },
+    ]);
+    expect(HOME_SELECTION_MAX).toBe(4);
+    expect(getDevelopmentBySlug('domus-brickell-center')).not.toBeNull();
+    expect(getInvestmentOpportunityBySlug('445-n-shore-drive')?.active).toBe(true);
+  });
+
+  it('cards: 3, en orden, cada una a su landing; Benavídez usa su render oficial rotulado', async () => {
+    const { loadHomeSelection } = await loadSelection();
+    const cards = await loadHomeSelection();
+    expect(cards.map((card) => card.href)).toEqual([
+      '/desarrollos/domus-brickell-center',
+      '/desarrollos/benavidez-village',
+      '/invertir/445-n-shore-drive',
+    ]);
+    expect(cards.map((card) => card.kicker)).toEqual(['Desarrollo', 'Desarrollo', 'Oportunidad de inversión']);
+    expect(cards[1].image).toEqual({ src: '/developments/benavidez-village/hero.jpg', tag: 'Imagen ilustrativa' });
+    expect(cards[0].image?.src).toMatch(/^https:\/\/cdn\.2clics\.com\/236682\//);
+    expect(cards[2].name).toBe('445 N Shore Drive · Normandy Shores');
+  });
+
+  it('render: título, bajada, 3 cards; 445 como oportunidad de inversión (no compra residencial); sin claims', async () => {
+    const { loadHomeSelection } = await loadSelection();
+    const { SelectedOpportunitiesView } = await import('@/components/home/SelectedOpportunities');
+    const html = render(React.createElement(SelectedOpportunitiesView, { cards: await loadHomeSelection() }));
+    expect(html).toContain('<h2>Oportunidades seleccionadas</h2>');
+    expect(html).toContain('Una selección de propiedades y oportunidades que estamos analizando y trabajando actualmente.');
+    expect((html.match(/class="home-selection-item"/g) || []).length).toBe(3);
+    const hrefs = Array.from(html.matchAll(/class="home-selection-card[^"]*" href="([^"]+)"/g)).map((m) => m[1]);
+    expect(hrefs).toEqual(['/desarrollos/domus-brickell-center', '/desarrollos/benavidez-village', '/invertir/445-n-shore-drive']);
+
+    const nShore = html.slice(html.indexOf('home-selection-card--investment'));
+    expect(nShore).toContain('Oportunidad de inversión');
+    expect(nShore).toContain('Conocer la oportunidad');
+    // Su descriptor validado aclara justamente que NO es comprar una residencia.
+    expect(nShore).toContain('No consiste en comprar la residencia ni una unidad en preventa.');
+    expect(nShore).not.toMatch(/\bventa\b|en venta|U\$D|USD|precio|>Comprar</i);
+    expect(html).not.toContain('/propiedades/206734');
+    expect(html).not.toMatch(/últimas unidades|rentabilidad|mejor oportunidad|urgente|U\$D/i);
+  });
+
+  it('robustez: máximo 4, slugs desconocidos o fuentes caídas se omiten; sin cards no hay sección', async () => {
+    const { loadHomeSelection } = await loadSelection();
+    const cards = await loadHomeSelection([
+      { kind: 'development', slug: 'no-existe' },
+      { kind: 'development', slug: 'domus-brickell-center' },
+      { kind: 'development', slug: 'faena' }, // su fuente no está en el mock → se omite
+      { kind: 'investment', slug: '445-n-shore-drive' },
+      { kind: 'development', slug: 'benavidez-village' }, // quinto: fuera del máximo
+    ]);
+    expect(cards.map((card) => card.href)).toEqual(['/desarrollos/domus-brickell-center', '/invertir/445-n-shore-drive']);
+    const { SelectedOpportunitiesView } = await import('@/components/home/SelectedOpportunities');
+    expect(SelectedOpportunitiesView({ cards: [] })).toBeNull();
+  });
+
+  it('metadata de desarrollo: su propia imagen de apertura (render local en Benavídez, portada curada en Domus); OG y Twitter iguales', async () => {
+    mockInventory([item(DOMUS), item(BENAVIDEZ_SOURCE)]);
+    await loadListings();
+    const { generateMetadata } = await import('@/app/desarrollos/[id]/page');
+    const { getDevelopmentEditorialCuration: editorialOf } = await import('@/lib/desarrollos');
+
+    const benavidez = await generateMetadata({ params: Promise.resolve({ id: 'benavidez-village' }) });
+    const benavidezImage = `${BASE}/developments/benavidez-village/hero.jpg`;
+    expect(benavidez.openGraph).toMatchObject({
+      title: 'Benavídez Village',
+      url: `${BASE}/desarrollos/benavidez-village`,
+      images: [{ url: benavidezImage, alt: 'Benavídez Village' }],
+    });
+    expect(benavidez.twitter).toMatchObject({ card: 'summary_large_image', title: 'Benavídez Village', images: [benavidezImage] });
+    expect(benavidez.alternates?.canonical).toBe('/desarrollos/benavidez-village');
+
+    const domus = await generateMetadata({ params: Promise.resolve({ id: 'domus-brickell-center' }) });
+    const heroIndex = editorialOf('domus-brickell-center')!.heroImageIndex;
+    const domusImage = `https://cdn.2clics.com/${DOMUS}/${heroIndex}.jpg`;
+    expect(domus.openGraph).toMatchObject({ url: `${BASE}/desarrollos/domus-brickell-center`, images: [{ url: domusImage }] });
+    expect(domus.twitter).toMatchObject({ images: [domusImage] });
+    expect(domus.openGraph?.description).toBe(domus.twitter?.description);
+  });
+
+  it('metadata de 445: imagen de apertura de su landing, nunca la del Home', async () => {
+    mockInventory([item(N_SHORE)]);
+    await loadListings();
+    const { generateMetadata } = await import('@/app/invertir/[slug]/page');
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: '445-n-shore-drive' }) });
+    const image = `https://cdn.2clics.com/${N_SHORE}/0.jpg`;
+    expect(meta.openGraph).toMatchObject({
+      title: '445 N Shore Drive · Normandy Shores',
+      url: `${BASE}/invertir/445-n-shore-drive`,
+      images: [{ url: image }],
+    });
+    expect(meta.twitter).toMatchObject({ title: '445 N Shore Drive · Normandy Shores', images: [image] });
+    expect(JSON.stringify(meta)).not.toContain('condor-resort');
+  });
+
+  it('metadata de propiedad: imagen principal pública; sin imágenes, fallback institucional seguro', async () => {
+    mockInventory([item(187683, 3), item(187669, 0)]);
+    await loadListings();
+    const { generateMetadata } = await import('@/app/propiedades/[id]/page');
+
+    const withImage = await generateMetadata({ params: Promise.resolve({ id: '187683' }) });
+    expect(withImage.openGraph).toMatchObject({
+      url: `${BASE}/propiedades/187683`,
+      images: [{ url: 'https://cdn.2clics.com/187683/0.jpg' }],
+    });
+    expect(withImage.twitter).toMatchObject({ images: ['https://cdn.2clics.com/187683/0.jpg'] });
+
+    const withoutImage = await generateMetadata({ params: Promise.resolve({ id: '187669' }) });
+    const fallback = `${BASE}/assets/propiedades/condor-resort.jpeg`;
+    expect(withoutImage.openGraph).toMatchObject({ url: `${BASE}/propiedades/187669`, images: [{ url: fallback }] });
+    expect(withoutImage.twitter).toMatchObject({ images: [fallback] });
+  });
+
+  it('helpers: URLs absolutas https únicamente; descripción en una línea y acotada', async () => {
+    const { absoluteShareUrl, shareDescription } = await import('@/lib/share-metadata');
+    expect(absoluteShareUrl('/developments/x/hero.jpg')).toBe(`${BASE}/developments/x/hero.jpg`);
+    expect(absoluteShareUrl('https://cdn.2clics.com/a.jpg')).toBe('https://cdn.2clics.com/a.jpg');
+    for (const unsafe of ['http://cdn.2clics.com/a.jpg', '//evil.example/a.jpg', 'data:image/png;base64,AAAA', '', null]) {
+      expect(absoluteShareUrl(unsafe)).toBeNull();
+    }
+    const long = shareDescription(`${'palabra '.repeat(60)}\n final`);
+    expect(long!.length).toBeLessThanOrEqual(200);
+    expect(long).toMatch(/…$/);
+    expect(long).not.toContain('\n');
+  });
+
+  it('Home conserva su metadata institucional y es la única con og:url raíz', async () => {
+    const { metadata: homeMetadata } = await import('@/app/page');
+    expect(homeMetadata.openGraph).toMatchObject({ url: '/', images: [{ url: '/assets/propiedades/condor-resort.jpeg' }] });
+    const layoutSource = readFileSync('app/layout.tsx', 'utf8');
+    expect(layoutSource).toContain('openGraph: INSTITUTIONAL_OPEN_GRAPH');
+    expect(layoutSource).toContain('twitter: INSTITUTIONAL_TWITTER');
+    const { INSTITUTIONAL_OPEN_GRAPH } = await import('@/lib/share-metadata');
+    expect(INSTITUTIONAL_OPEN_GRAPH).not.toHaveProperty('url');
+  });
+
+  it('ninguna API key en output cliente: ni en el HTML de la selección ni en la metadata; ningún Client Component importa módulos con credenciales', async () => {
+    const { loadHomeSelection } = await loadSelection();
+    const { SelectedOpportunitiesView } = await import('@/components/home/SelectedOpportunities');
+    const html = render(React.createElement(SelectedOpportunitiesView, { cards: await loadHomeSelection() }));
+    const { generateMetadata } = await import('@/app/desarrollos/[id]/page');
+    const meta = JSON.stringify(await generateMetadata({ params: Promise.resolve({ id: 'domus-brickell-center' }) }));
+    for (const output of [html, meta]) {
+      expect(output).not.toContain('test-key');
+      expect(output).not.toMatch(/api_key|TWOCLICS/i);
+    }
+
+    const { readdirSync, statSync } = await import('node:fs');
+    const path = await import('node:path');
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = path.join(dir, name);
+        if (statSync(full).isDirectory()) walk(full);
+        else if (/\.tsx?$/.test(name)) files.push(full);
+      }
+    };
+    walk('components');
+    walk('app');
+    const forbidden = [
+      '@/lib/env',
+      '@/lib/2clics/',
+      '@/lib/home-selection',
+      '@/lib/share-metadata',
+      '@/lib/development-assets',
+      '@/lib/sell-assets',
+    ];
+    const clientFiles = files.filter((file) => /^\s*['"]use client['"]/.test(readFileSync(file, 'utf8')));
+    expect(clientFiles.length).toBeGreaterThan(0);
+    for (const file of clientFiles) {
+      // `import type` se borra al compilar: solo cuentan imports con valor.
+      const imports = Array.from(readFileSync(file, 'utf8').matchAll(/^import (?!type )[^;]*?from '([^']+)'/gm)).map((m) => m[1]);
+      for (const mod of forbidden) {
+        expect(imports.filter((imported) => imported.startsWith(mod)), `${file} importa ${mod}`).toEqual([]);
+      }
+    }
   });
 });

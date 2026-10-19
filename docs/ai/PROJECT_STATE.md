@@ -764,14 +764,28 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   los renders y planos llevan el rótulo "Imagen ilustrativa"/"Plano ilustrativo". Hoy no hay
   ningún archivo en el repo — las fichas usan las imágenes de 2Clics.
 
+### Pre-launch V2 (2026-10) — selección manual del Home y metadata social por ficha
+
+- **Home**: Header → Hero → **Oportunidades seleccionadas** → Trayectoria → Newsletter → Footer.
+  La sección es una curaduría MANUAL de García (`HOME_SELECTED_OPPORTUNITIES` en
+  `lib/home-selection.ts`), ya no los DESTACADO de 2Clics: orden Domus Brickell Center →
+  Benavídez Village → 445 N Shore Drive; cuarto lugar vacante (no se inventa). Máximo 4 cards; una
+  entrada inexistente/inactiva o sin fuente se omite. `FeaturedProperties.tsx` queda en el repo,
+  fuera del Home.
+- **Open Graph / Twitter por ficha** (`lib/share-metadata.ts`, `buildShareMetadata`): título,
+  descripción (≤200 caracteres), imagen absoluta https, og:url y canonical propios, Twitter igual a
+  OG. Desarrollos → su imagen de apertura (render oficial local o portada curada de 2Clics,
+  `resolveDevelopmentHeroImage`); 445 → `openingImage` de su landing; propiedades → primera imagen
+  pública del DTO; sin imagen segura → imagen institucional. El Home conserva su metadata y es la
+  única página con og:url raíz (el layout ya no la declara para todas).
+
 ## Pendiente de decisión (no confundir con "roto")
 
-- **Assets oficiales de Benavídez, Pacheco y Remeros**: faltan los archivos (ver slots en
-  `lib/development-assets.ts`).
-
-- **Home sin destacadas**: hoy el único registro DESTACADO de 2Clics es 206734 (inversión), así que
-  "Oportunidades seleccionadas" no aparece hasta que García marque propiedades tradicionales como
-  Destacado en el CRM.
+- **Assets oficiales de Remeros Beach** (producción propia): faltan los archivos (ver slots en
+  `lib/development-assets.ts`). Benavídez y Pacheco ya están integrados.
+- **Fotos de /vender** (`SELL_ASSET_01..04`, `lib/sell-assets.ts`, `public/vender/`): sin archivos;
+  la página se arma tipográficamente hasta que haya material propio.
+- **Cuarta oportunidad del Home**: vacante hasta decisión de García.
 - **Material editorial oficial de Benavídez Village / Pacheco Central**: no está en el repo; las
   fichas usan las fotos reales de 2Clics.
 
