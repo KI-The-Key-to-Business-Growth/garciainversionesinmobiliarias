@@ -21,7 +21,7 @@ resumen accionable: **estos bloques están aprobados y no se tocan sin pedido ex
 ## Ficha `/propiedades/[id]`
 
 - Sin Header institucional (sin logo, nav global, hamburguesa, teléfono global).
-- Hero propio: "← Volver a propiedades" (izquierda) · eyebrow operación+tipo · H1 centrado ·
+- Hero propio: "← Volver a …" contextual (`getPropertyBackLink`: al desarrollo público si la unidad pertenece a uno; si no, a Comprar o Alquilar según la operación) (izquierda) · eyebrow operación+tipo · H1 centrado ·
   ubicación · botón Compartir (derecha). Sin precio en el hero.
 - Galería con lightbox, `object-fit: contain`, sin recortar aspect ratio original.
 - Modal "Consultar esta propiedad": queda en la misma ficha (portal a `document.body`), nunca redirige al Home.

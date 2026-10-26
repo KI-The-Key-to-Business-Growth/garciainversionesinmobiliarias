@@ -47,7 +47,7 @@ Se registran y no se corrigen en silencio. Cada una indica quién decide.
 | I-2 | `ROADMAP_CALIDAD.md`, punto 16 y "Pendientes" | Sentry inactivo hasta cargar `SENTRY_DSN` y `NEXT_PUBLIC_SENTRY_DSN` | El código es solo server/edge y no hay SDK de cliente; `.env.example` aclara que `NEXT_PUBLIC_SENTRY_DSN` ya no aplica | Abierta |
 | I-3 | `ROADMAP_CALIDAD.md`, punto 13 y "Pendientes" | "No hay formateador ni `.editorconfig`" | Existen `.prettierrc.json` y `.editorconfig` | Abierta |
 | I-4 | HISTORY › "Pendiente de decisión" | "Material editorial oficial de Benavídez Village / Pacheco Central: no está en el repo" | `public/developments/benavidez-village/` y `public/developments/pacheco-central/` tienen archivos, y la línea anterior de esa misma sección dice que ya están integrados | Abierta. Texto histórico preservado |
-| I-5 | `.claude/rules/property-ux.md`, sección "Ficha" | Botón "← Volver a propiedades" | El "Volver" es contextual (`getPropertyBackLink`) | Abierta. Fuera del alcance del bloque de correcciones |
+| I-5 | `.claude/rules/property-ux.md`, sección "Ficha" | Botón "← Volver a propiedades" | El "Volver" es contextual (`getPropertyBackLink`) | **RESOLVED** (2026-10-26). `getPropertyBackLink` (`lib/site-curation.ts`) define el destino: desarrollo público si la unidad pertenece a uno, si no Comprar o Alquilar según la operación. Regla local corregida en `.claude/rules/property-ux.md` |
 | I-6 | `docs/ai/WEB_GARCIA_V2.md` | Se detiene en la pasada 26 | El detalle de V2.1, Pre-launch y Post-lanzamiento existe solo en este archivo (HISTORY) | Informativa |
 
 ## HISTORY
