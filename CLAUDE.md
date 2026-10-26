@@ -57,6 +57,7 @@ npm run test:e2e      # Playwright
 | Estado actual del proyecto (qué está implementado/aprobado/pendiente) | `docs/ai/PROJECT_STATE.md` |
 | Endpoints, campos, auth, caching de 2Clics | `docs/ai/2CLICS_EXTERNAL_API.md` |
 | Decisiones de UX ya aprobadas (catálogo, fichas, mobile) | `docs/ai/PROPERTY_UX_DECISIONS.md` |
+| Marca: colores, tipografías y logos vigentes | `docs/ai/BRAND.md` |
 | Qué es legacy y por qué sigue ahí | `docs/ai/LEGACY.md` |
 | Historial de decisiones técnicas/UX | `docs/ai/CHANGELOG_AI.md` |
 | Reglas temáticas operativas | `.claude/rules/*.md` |
