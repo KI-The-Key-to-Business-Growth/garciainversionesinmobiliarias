@@ -14,6 +14,8 @@ refactoriza sin pedido explícito del usuario.
 | Tabla `properties` (`supabase-schema.sql`) | Base de datos de propiedades del CRM | Existe, RLS activo, alimentada solo por el webhook | NO | NO confirmado | Auditar antes de retirar |
 | `legacy/server.js`, `legacy/informe_garcia.js`, `legacy/vercel.json.bak` | Monolito original Vanilla JS + Express, pre-Next.js | Código de referencia, ya aislado en `legacy/`, no lo ejecuta Next | NO | Ya está aislado, no requiere acción | Mantener como referencia histórica hasta cerrar validación (ver `README.md`) |
 
+**`del_property` (webhook legacy):** mientras el webhook (`app/api/2clics/webhook/route.ts` y su alias `/property`) siga cableado, una acción `del_property` ejecuta un **DELETE físico** de la fila en la tabla `properties` de Supabase (`dbDeleteProperty` en `lib/db/properties.ts`, llamado desde `lib/crm/handle-webhook.ts`). No hay soft-delete: es irreversible, y la FK `ON DELETE CASCADE` de `property_overrides` borra también sus overrides (`supabase-schema.sql`). Es una diferencia pedida por el cliente respecto del flujo original, y aplica solo a este flujo legacy; no es una política general.
+
 ## Caso especial: formulario de contacto general — NO es legacy muerto
 
 | Componente | Función | Estado actual | ¿Lo usa la nueva UI? | ¿Se puede borrar? | Acción futura |

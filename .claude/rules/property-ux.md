@@ -11,9 +11,9 @@ resumen accionable: **estos bloques están aprobados y no se tocan sin pedido ex
   una cuarta.
 - Hero: "Real estate con visión estratégica." CTA "Hablar con un asesor" → `/contacto`.
 
-## Catálogo `/propiedades`
+## Catálogo: `/comprar` y `/alquilar`
 
-- Hero centrado, H1 dorado "Propiedades seleccionadas", sin eyebrow "PROPIEDADES".
+- `/propiedades` ya no es un catálogo: redirige a `/comprar` (o a `/alquilar` si `operacion` es `alquiler` o `temporario`), conservando los demás filtros (`app/propiedades/page.tsx`). Las entradas de catálogo son `/comprar` y `/alquilar`.
 - Orden de resultados: `DESTACADO` antes que `SIMPLE` (`PUBLIC_CATALOG_WEB_LISTINGS` en `lib/2clics/listings.ts`).
 - Cards: línea superior muestra SOLO el tipo (CASA/DEPARTAMENTO/OFICINA/TERRENO·LOTE), nunca la
   ubicación pegada al tipo. Ubicación va aparte, debajo del título.

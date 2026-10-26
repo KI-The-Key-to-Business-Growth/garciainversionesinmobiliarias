@@ -1,10 +1,68 @@
 # Estado del proyecto — García Inversiones Inmobiliarias
 
+## HEADER
+
+- **Actualizado:** 2026-10-26. Reorganización de estructura (estado vs. historia). Los hechos de CURRENT STATE se verificaron contra el código y los commits hasta 2026-10-19 (`3c7d86d`).
+- **Autoridad:**
+  - Este archivo manda sobre qué está hecho, pendiente, bloqueado o vigente.
+  - El **código** manda sobre cómo funciona.
+  - **2Clics en vivo** manda sobre inventario, precios y disponibilidad. Ninguna cifra de ese tipo se congela acá.
+- **Mantenimiento:** al cerrar cada tarea se actualiza la fila afectada de CURRENT STATE (con su fecha) y se ajustan NEXT ACTIONS / BLOCKERS / KNOWN INCONSISTENCIES. El detalle de lo que pasó se agrega al final de HISTORY, nunca arriba. Si algo de este archivo contradice el código, gana el código y se registra en KNOWN INCONSISTENCIES.
+
+## CURRENT STATE
+
+| Área | Estado | Evidencia | Next action | Updated |
+|---|---|---|---|---|
+| Inventario público | Vigente. 100% desde 2Clics External API, server-side. Solo el estado `ACTIVE` es público. Supabase no es fuente del inventario. Cantidad, precios y disponibilidad: ver 2Clics API en vivo | `docs/ai/ARCHITECTURE.md`; `lib/2clics/*`; HISTORY › Handoff final V2 | — | 2026-10-15 |
+| Comprar / Alquilar | Vigente. Son las entradas del catálogo. `/propiedades` solo redirige: a `/alquilar` si `operacion` es `alquiler` o `temporario`, si no a `/comprar`, conservando los demás filtros | `app/propiedades/page.tsx`; `app/comprar`, `app/alquilar`; HISTORY › V2.1 | — | 2026-10 |
+| Fichas | Vigente. `/propiedades/[id]` es la URL canónica de cada propiedad. "Volver" contextual; sin Header institucional. Bloques UX aprobados: no se tocan sin pedido explícito | `getPropertyBackLink` en `lib/site-curation.ts`; `docs/ai/PROPERTY_UX_DECISIONS.md` | — | 2026-10 |
+| Home | Vigente. Header → Hero → Oportunidades seleccionadas (curaduría manual de García) → Trayectoria → Newsletter → Footer. Orden actual de la selección: Domus Brickell Center, Benavídez Village, 445 N Shore Drive | `app/page.tsx`; `lib/home-selection.ts` | Cuarta oportunidad vacante: decisión de García | 2026-10 |
+| Desarrollos | Vigente. Públicos: Faena, Benavídez Village, Pacheco Central, Domus Brickell Center. Remeros Beach **temporalmente oculto** (`hidden: true`; `/desarrollos/remeros-beach` redirige a `/comprar`). Unidades, precios y disponibilidad: ver 2Clics API en vivo | `lib/site-curation.ts` (`DEVELOPMENTS`, `PUBLIC_DEVELOPMENTS`); commit `3c7d86d`; `lib/development-assets.ts` | Assets oficiales de Remeros Beach (ver NEXT ACTIONS) | 2026-10-19 |
+| Invertir | Vigente. `/invertir` con una landing: `/invertir/445-n-shore-drive`. `/propiedades/206734` redirige a esa landing | `lib/site-curation.ts` (`INVESTMENT_OPPORTUNITIES`); HISTORY › Handoff final V2 | — | 2026-10-15 |
+| Vender | Vigente. `/vender` existe y se arma tipográficamente. Los slots `SELL_ASSET_01..04` no tienen archivos (no existe `public/vender/`) | `app/vender/page.tsx`; `lib/sell-assets.ts`; commit `16dfd98` | Fotos propias (ver NEXT ACTIONS) | 2026-10-15 |
+| Contacto | Vigente. `/contacto` es una landing propia. Su formulario sigue el flujo CRM anterior (`ContactForm` → `actions/contact.ts` → `lib/crm/leads.ts`, host `api.2clics.com.ar`). La consulta de una propiedad usa `POST /api/lead/message`. Migración del contacto: pendiente de revisión arquitectónica, no se toca sin pedido explícito | `app/contacto`; `components/forms/ContactForm.tsx`; `docs/ai/LEGACY.md` | — | 2026-10-26 (verificado en código) |
+| Metadata / social | Vigente. Open Graph y Twitter por ficha vía `buildShareMetadata`. El Home conserva su metadata propia | `lib/share-metadata.ts`; HISTORY › Pre-launch V2 | — | 2026-10 |
+| CI | Vigente. GitHub Actions: `ci.yml` (lint, typecheck, test y build en PR y push) y `e2e.yml` (Playwright nocturno y manual). Las reglas de protección de `main` no son verificables desde el repo | `.github/workflows/ci.yml`, `.github/workflows/e2e.yml` | — | 2026-10-26 (verificado en código) |
+| Observabilidad | Vigente. Sentry solo server/edge, activo cuando existe `SENTRY_DSN`. No hay SDK de cliente. El estado de la variable en producción no es verificable desde el repo | `sentry.server.config.ts`; `sentry.edge.config.ts`; `instrumentation.ts`; `.env.example` | — | 2026-10-26 (verificado en código) |
+
+## NEXT ACTIONS
+
+Solo acciones pendientes reales. Las decisiones resueltas, el legacy y las ideas están en HISTORY y en `docs/ai/LEGACY.md`.
+
+1. **Assets oficiales de Remeros Beach** (producción propia): faltan los archivos de los slots de `lib/development-assets.ts`.
+2. **Fotos propias de `/vender`** (`SELL_ASSET_01..04`, `lib/sell-assets.ts`, `public/vender/`): hasta entonces la página sigue tipográfica.
+3. **Cuarta oportunidad del Home**: vacante hasta decisión de García. No se inventa.
+
+## BLOCKERS
+
+1. **Remeros Beach no se publica** hasta que Dirección termine de revisar y completar su información. No es una baja definitiva. Reactivar = quitar `hidden: true` en su entrada de `DEVELOPMENTS` (`lib/site-curation.ts`).
+
+## KNOWN INCONSISTENCIES
+
+Se registran y no se corrigen en silencio. Cada una indica quién decide.
+
+| # | Dónde | Dice | Realidad verificada | Estado |
+|---|---|---|---|---|
+| I-1 | `ROADMAP_CALIDAD.md`, punto 17 | "No existe `.github/workflows`" | Existen `ci.yml` y `e2e.yml` | Abierta. Archivo sin modificar por decisión |
+| I-2 | `ROADMAP_CALIDAD.md`, punto 16 y "Pendientes" | Sentry inactivo hasta cargar `SENTRY_DSN` y `NEXT_PUBLIC_SENTRY_DSN` | El código es solo server/edge y no hay SDK de cliente; `.env.example` aclara que `NEXT_PUBLIC_SENTRY_DSN` ya no aplica | Abierta |
+| I-3 | `ROADMAP_CALIDAD.md`, punto 13 y "Pendientes" | "No hay formateador ni `.editorconfig`" | Existen `.prettierrc.json` y `.editorconfig` | Abierta |
+| I-4 | HISTORY › "Pendiente de decisión" | "Material editorial oficial de Benavídez Village / Pacheco Central: no está en el repo" | `public/developments/benavidez-village/` y `public/developments/pacheco-central/` tienen archivos, y la línea anterior de esa misma sección dice que ya están integrados | Abierta. Texto histórico preservado |
+| I-5 | `.claude/rules/property-ux.md`, sección "Ficha" | Botón "← Volver a propiedades" | El "Volver" es contextual (`getPropertyBackLink`) | Abierta. Fuera del alcance del bloque de correcciones |
+| I-6 | `docs/ai/WEB_GARCIA_V2.md` | Se detiene en la pasada 26 | El detalle de V2.1, Pre-launch y Post-lanzamiento existe solo en este archivo (HISTORY) | Informativa |
+
+## HISTORY
+
+> Todo lo que sigue es el contenido original de este archivo, conservado sin cambios de texto. Solo se bajó un nivel cada título para colgarlo de esta sección. El orden, la numeración de las pasadas (con huecos) y las fechas originales se conservan por integridad histórica. No se reconstruyeron pasadas inexistentes. Nada de esta sección es estado actual: lo vigente está arriba.
+
+### Apertura original (2026-08-21)
+
 Basado en código real + auditoría read-only del repositorio, 2026-08-21. No es una copia del
 handoff — donde el código demuestra que algo ya está implementado, se documenta como
 IMPLEMENTADO/APROBADO, no como pendiente.
 
-## Qué funciona hoy (IMPLEMENTADO / APROBADO)
+### Qué funciona hoy (IMPLEMENTADO / APROBADO)
+
+_Histórico: no es estado actual. Lo vigente está en CURRENT STATE, NEXT ACTIONS y BLOCKERS._
 
 - **Inventario público de propiedades y desarrollos**: 100% migrado a 2Clics External API
   server-side. Ver `ARCHITECTURE.md`.
@@ -25,7 +83,9 @@ IMPLEMENTADO/APROBADO, no como pendiente.
   propiedades" silencioso).
 - **Newsletter** vía Supabase: vigente, sin cambios.
 
-## Web García V2 — navegación por intención (en curso, segunda pasada)
+### Web García V2 — navegación por intención (en curso, segunda pasada)
+
+_Histórico: no es estado actual. Lo vigente está en CURRENT STATE, NEXT ACTIONS y BLOCKERS._
 
 Segunda pasada tras revisión visual real en localhost — reemplaza decisiones de la primera
 (documentado como actualización de arquitectura, no corrección silenciosa; detalle completo en
@@ -51,7 +111,7 @@ Segunda pasada tras revisión visual real en localhost — reemplaza decisiones 
 El catálogo maestro (`/propiedades`), la ficha canónica (`/propiedades/[id]`) y el flujo legacy de
 desarrollos nativos de 2Clics (`/api/development`) no cambiaron de comportamiento.
 
-### Tercera pasada (2026-09) — sistema coherente, bug de Header, live search
+#### Tercera pasada (2026-09) — sistema coherente, bug de Header, live search
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Resumen:
 
@@ -73,7 +133,7 @@ Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Resumen:
   (ver `WEB_GARCIA_V2.md`) reutilizando siempre datos reales de 2Clics o copy ya aprobado — sin
   inventar developer, retornos, FAQ ni capacidades nuevas.
 
-### Cuarta pasada (2026-09) — Home definitivo (única ruta tocada)
+#### Cuarta pasada (2026-09) — Home definitivo (única ruta tocada)
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Resumen:
 
@@ -94,7 +154,7 @@ Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Resumen:
 - Ninguna otra ruta V2 (`/comprar`, `/alquilar`, `/desarrollos`, `/invertir`, `/vender`,
   `/nosotros`, `/servicios`, fichas) se tocó en esta pasada.
 
-### Quinta pasada (2026-08) — Contacto sale del Home, landing propia `/contacto`
+#### Quinta pasada (2026-08) — Contacto sale del Home, landing propia `/contacto`
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual (no una ronda general V2):
 
@@ -109,7 +169,7 @@ Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual (no una ronda gen
 - Ninguna otra ruta V2 ni el flujo de leads específico de propiedad (`PropertyInquiryPanel.tsx` →
   `POST /api/lead/message`) se tocó en esta pasada.
 
-### Sexta pasada (2026-08) — Comprar/Alquilar cerrados visualmente
+#### Sexta pasada (2026-08) — Comprar/Alquilar cerrados visualmente
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual sobre `/comprar` y `/alquilar`
 únicamente — arquitectura del motor de catálogo sin cambios, `/propiedades` no se tocó:
@@ -124,7 +184,7 @@ Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual sobre `/comprar` 
   (hoy sin inventario real de alquiler en ese mercado).
 - Header, Footer, `PropertyCard`, filtros secundarios y `/propiedades` sin cambios de componente.
 
-### Séptima pasada (2026-08) — Comprar/Alquilar, segunda ronda visual/UX
+#### Séptima pasada (2026-08) — Comprar/Alquilar, segunda ronda visual/UX
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Arquitectura sin cambios; `/propiedades` no se
 tocó.
@@ -140,7 +200,7 @@ tocó.
   (`removeFilterHref()`).
 - `/propiedades`, `PropertyCard`, leads, CRM, Supabase, integración 2Clics: sin cambios.
 
-### Octava pasada (2026-08) — Comprar/Alquilar sin Hero interior
+#### Octava pasada (2026-08) — Comprar/Alquilar sin Hero interior
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Ajuste puntual sobre la séptima pasada (todo lo
 demás de esa ronda —LocationPicker, filtros, Precio, CTA, chips— quedó aprobado sin cambios).
@@ -153,7 +213,7 @@ demás de esa ronda —LocationPicker, filtros, Precio, CTA, chips— quedó apr
 - CSS de "docking" (margin-top negativo del panel contra el Hero) retirado por completo, sin
   reglas muertas — el panel ahora es el primer bloque bajo el Header con aire fijo.
 
-### Novena pasada (2026-08) — Desarrollos/Faena, cierre visual y funcional
+#### Novena pasada (2026-08) — Desarrollos/Faena, cierre visual y funcional
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Trabajo exclusivo sobre `/desarrollos` y
 `/desarrollos/faena` — arquitectura sin cambios (curaduría editorial sobre propertyIds reales,
@@ -168,7 +228,7 @@ sin `/api/development`, `/propiedades/[id]` sigue siendo la ficha canónica).
 - **Limitación real encontrada y reportada en esta pasada** (`[FABIANAGA-456]`): **corregida en la
   décima pasada**, ver abajo.
 
-### Décima pasada (2026-08) — `/desarrollos` sin Hero, catálogo visual + saneamiento del tag interno
+#### Décima pasada (2026-08) — `/desarrollos` sin Hero, catálogo visual + saneamiento del tag interno
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Corrección puntual sobre `/desarrollos` y el
 saneamiento público de descripción; `/desarrollos/faena` no se rediseñó (solo se benefició del
@@ -191,7 +251,7 @@ saneamiento compartido).
   Verificado en build de producción real (no solo dev) que no queda ningún rastro del tag ni de
   `meta_data` crudo en las tres superficies públicas.
 
-### Undécima pasada (2026-08) — /desarrollos y /desarrollos/faena, landing editorial compacta
+#### Undécima pasada (2026-08) — /desarrollos y /desarrollos/faena, landing editorial compacta
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md`. Corrección sobre la décima pasada: la card de
 Faena en el índice era demasiado grande y la landing seguía sintiéndose como una ficha
@@ -209,7 +269,7 @@ inmobiliaria fragmentada. Fuente de datos sin cambios (187676, sin `/api/develop
 - Sin cambios: `PropertyCard`, `PropertyDetailView`, saneamiento de `[FABIANAGA-*]`, integración
   2Clics, mapas de fichas.
 
-### Duodécima pasada (2026-08) — /desarrollos y /desarrollos/faena, landing 100% editorial
+#### Duodécima pasada (2026-08) — /desarrollos y /desarrollos/faena, landing 100% editorial
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Reescritura
 sobre la undécima pasada: la introducción-en-caja + galería/descripción tipo ficha seguía sin
@@ -249,7 +309,7 @@ inmobiliaria ni inventan estructura inmobiliaria que la fuente no provea.**
 - Sin cambios: `PropertyCard`, `PropertyDetailView`, `PropertyInquiryPanel` (reutilizado, no
   modificado), saneamiento de `[FABIANAGA-*]`, integración 2Clics, `/comprar`/`/alquilar`.
 
-### Decimocuarta pasada (2026-08) — /invertir y /invertir/proyecto-especial-miami, capa de curaduría propia
+#### Decimocuarta pasada (2026-08) — /invertir y /invertir/proyecto-especial-miami, capa de curaduría propia
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Reescritura
 completa sobre la tercera pasada: la landing de la oportunidad reutilizaba el layout de ficha
@@ -282,7 +342,7 @@ tipo "Casa", 1000 m2, U$D 100.000) como si fueran las características de la inv
 - Sin cambios: `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
   no modificado), integración 2Clics, `/desarrollos`/`/desarrollos/faena`.
 
-### Decimoquinta pasada (2026-08) — /invertir y /invertir/proyecto-especial-miami, refuerzo educativo
+#### Decimoquinta pasada (2026-08) — /invertir y /invertir/proyecto-especial-miami, refuerzo educativo
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Refinamiento
 sobre la decimocuarta pasada (dirección visual aprobada, se refuerza educación y se compacta).
@@ -308,7 +368,7 @@ sobre la decimocuarta pasada (dirección visual aprobada, se refuerza educación
 - Sin cambios: `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
   no modificado), `/desarrollos`, `/desarrollos/faena`, integración base 2Clics.
 
-### Decimosexta pasada (2026-08) — clasificación editorial "desarrollo" ampliada a 4 property_app_id
+#### Decimosexta pasada (2026-08) — clasificación editorial "desarrollo" ampliada a 4 property_app_id
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Decisión de
 negocio confirmada (captura de CRM): además de Faena (187676), se clasificaron como "desarrollo"
@@ -346,7 +406,7 @@ clasificar** hasta confirmación explícita — no se resuelve por inferencia.
 - Sin cambios: `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
   no modificado), ficha/contenido editorial de Faena, `/invertir`, integración base 2Clics.
 
-### Decimoséptima pasada (2026-09) — ficha editorial completa de Icon Beach (187677)
+#### Decimoséptima pasada (2026-09) — ficha editorial completa de Icon Beach (187677)
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Icon Beach
 pasó del fallback genérico (apertura + CTA) a una ficha editorial propia, con la misma calidad y
@@ -404,7 +464,7 @@ jerarquía que Faena pero sin copiar mecánicamente sus secciones — arquitectu
   modificado), ficha de Faena, `/invertir`, `/comprar`, `/alquilar`, Flow House, One Hollywood (no
   avanzados esta pasada, por pedido explícito).
 
-### Decimoctava pasada (2026-09) — sistema editorial definitivo de Desarrollos (4 fichas)
+#### Decimoctava pasada (2026-09) — sistema editorial definitivo de Desarrollos (4 fichas)
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Auditoría
 transversal de Faena + Icon Beach y curaduría editorial completa nueva para Flow House Miami
@@ -450,7 +510,7 @@ con la promesa de renta garantizada impresa en los píxeles).
 - Sin cambios: `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
   no modificado), `/invertir`, `/comprar`, `/alquilar` (salvo la exclusión de datos ya vigente).
 
-### Vigésima pasada (2026-09) — Developer fuera de lo público, rango de precio real, "Interiores"
+#### Vigésima pasada (2026-09) — Developer fuera de lo público, rango de precio real, "Interiores"
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Pasada
 transversal sobre las 4 fichas curadas (Faena, Icon Beach, Flow House, One Hollywood).
@@ -476,7 +536,7 @@ transversal sobre las 4 fichas curadas (Faena, Icon Beach, Flow House, One Holly
 - Sin cambios: `PropertyCard`, `PropertyDetailView.tsx`, `PropertyInquiryPanel.tsx` (reutilizado,
   no modificado), `/invertir`, `/comprar`, `/alquilar`, Home.
 
-### Vigesimosegunda pasada (2026-09) — Pacheco Central, primer desarrollo de Argentina
+#### Vigesimosegunda pasada (2026-09) — Pacheco Central, primer desarrollo de Argentina
 
 Detalle completo en `docs/ai/WEB_GARCIA_V2.md` y `docs/ai/PROPERTY_UX_DECISIONS.md`. Primer
 desarrollo con `market: 'AR'` — aparece automáticamente en `/desarrollos` → Argentina, el selector
@@ -509,7 +569,7 @@ US/AR no se tocó (ya soportaba esto desde la decimonovena pasada).
   el campo `priceRepresentsProjectRange: true`), `/invertir`, `/comprar` (mecanismo de exclusión
   sin cambios), `PropertyCard`, `PropertyDetailView.tsx`.
 
-### Vigesimotercera pasada (2026-09) — estándar editorial nuevo para las 5 fichas de Desarrollos
+#### Vigesimotercera pasada (2026-09) — estándar editorial nuevo para las 5 fichas de Desarrollos
 
 Pasada integral y profunda sobre las 5 fichas vigentes (`pacheco-central`, `faena`, `icon-beach`,
 `flow-house-miami-worldcenter`, `one-hollywood`) — mismo objetivo en las 5, sin forzar la misma
@@ -556,7 +616,7 @@ cantidad de secciones en cada una (calidad pareja, no longitud idéntica). Detal
 - Sin cambios: `/invertir`, `/comprar` (las 5 siguen excluidas), `lib/site-curation.ts`
   (clasificación AR/US intacta), `PropertyCard`, `PropertyDetailView.tsx`, `PropertyMap.tsx`.
 
-### Vigesimocuarta pasada (2026-10) — Domus Brickell Center, sexto desarrollo (Estados Unidos)
+#### Vigesimocuarta pasada (2026-10) — Domus Brickell Center, sexto desarrollo (Estados Unidos)
 
 Integración completa como ficha editorial dentro del sistema de Desarrollos ya existente — sin
 landing propia, sin segunda URL, sin micrositio. Canonical única: `/desarrollos/domus-brickell-center`.
@@ -612,7 +672,7 @@ landing propia, sin segunda URL, sin micrositio. Canonical única: `/desarrollos
   intactos), `/invertir`, `/comprar` (mecanismo de exclusión sin cambios), `PropertyCard`,
   `PropertyDetailView.tsx`, `PropertyMap.tsx`.
 
-### Vigesimosexta pasada (2026-10) — Domus Brickell Center, estructura de ingreso comercial
+#### Vigesimosexta pasada (2026-10) — Domus Brickell Center, estructura de ingreso comercial
 
 **SUPERA explícitamente la decisión de la vigesimocuarta pasada** sobre esta misma ficha. Antes:
 `hidePrice` real en 2Clics (true) → "Precio: consultar." como única información comercial,
@@ -670,7 +730,7 @@ actual — no inferido por cálculo.
   Qué conviene evaluar, Interiores, García Inversiones, CTA final, formulario, imágenes,
   responsive, las 5 fichas anteriores.
 
-### Vigesimoséptima pasada (2026-10) — Domus como referencia de calidad, mejoras en las 5 fichas anteriores
+#### Vigesimoséptima pasada (2026-10) — Domus como referencia de calidad, mejoras en las 5 fichas anteriores
 
 Pasada de calidad transversal sobre Pacheco Central/Faena/Icon Beach/Flow House/One Hollywood,
 usando Domus Brickell Center como referencia de nivel editorial (no como plantilla a copiar —
@@ -710,7 +770,7 @@ el fix sistémico de `image-right` de la vigesimoquinta pasada (sin regresión, 
   `/invertir`, `/comprar`, mapas (cada uno sigue usando su propia fuente vigente, sin trasladar
   automáticamente el comportamiento de Domus), `priceRepresentsProjectRange` de cada desarrollo.
 
-### Handoff final V2 (2026-10-15) — sincronización con el estado real de 2Clics
+#### Handoff final V2 (2026-10-15) — sincronización con el estado real de 2Clics
 
 2Clics fue auditado y corregido por García: 23 registros activos (verificado en vivo contra la
 External API). La V2 se sincronizó con ese inventario — cualquier dato posterior manda la API.
@@ -743,7 +803,7 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   aunque esté DESTACADO en 2Clics; sin destacadas tradicionales la sección no se renderiza (vuelve
   sola cuando haya al menos una).
 
-### V2.1 (2026-10) — routing de catálogo, Remeros Beach y assets editoriales
+#### V2.1 (2026-10) — routing de catálogo, Remeros Beach y assets editoriales
 
 - **`/propiedades` deja de ser catálogo público**: redirige a `/comprar` (o a `/alquilar` si el link
   traía `operacion=alquiler`, conservando los demás filtros). No queda navegación pública hacia
@@ -764,7 +824,7 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   los renders y planos llevan el rótulo "Imagen ilustrativa"/"Plano ilustrativo". Hoy no hay
   ningún archivo en el repo — las fichas usan las imágenes de 2Clics.
 
-### Pre-launch V2 (2026-10) — selección manual del Home y metadata social por ficha
+#### Pre-launch V2 (2026-10) — selección manual del Home y metadata social por ficha
 
 - **Home**: Header → Hero → **Oportunidades seleccionadas** → Trayectoria → Newsletter → Footer.
   La sección es una curaduría MANUAL de García (`HOME_SELECTED_OPPORTUNITIES` en
@@ -779,7 +839,7 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   pública del DTO; sin imagen segura → imagen institucional. El Home conserva su metadata y es la
   única página con og:url raíz (el layout ya no la declara para todas).
 
-### Post-lanzamiento (2026-10) — Remeros Beach 237447 vuelve a /comprar
+#### Post-lanzamiento (2026-10) — Remeros Beach 237447 vuelve a /comprar
 
 - **237447 = Remeros Beach · unidad terminada · venta** (confirmado por Fabiana García; precio
   publicado USD 270.000, dato vivo de 2Clics). Se muestra en tres lugares sin duplicar datos:
@@ -797,7 +857,7 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   desarrollador.
 - 237445 (alquiler) sin cambios: sigue en `/alquilar`.
 
-### Post-lanzamiento (2026-10) — Remeros Beach: sectores y unidad venta/alquiler
+#### Post-lanzamiento (2026-10) — Remeros Beach: sectores y unidad venta/alquiler
 
 - **Remeros Beach = master development** (`/desarrollos/remeros-beach`), con sectores en etapas
   distintas (confirmado por Fabiana García): **Árboris = sector en obra**; **Sky Two = edificio
@@ -811,7 +871,7 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   ficha y ninguna operación se elimina. El estado comercial (disponibilidad incluida) se toma
   siempre de 2Clics — la web no publica fechas ni promesas de disponibilidad.
 
-### Post-lanzamiento (2026-10) — Remeros Beach TEMPORALMENTE OCULTO
+#### Post-lanzamiento (2026-10) — Remeros Beach TEMPORALMENTE OCULTO
 
 - **Estado público: TEMPORALMENTE OCULTO.** Motivo: Dirección quiere revisar y completar la
   información del desarrollo antes de volver a publicarlo. **No es una baja definitiva.**
@@ -827,7 +887,7 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   Comprar") y **237445 → alquiler → `/alquilar`** ("Volver a Alquilar"). Sus datos siguen viniendo
   de 2Clics sin cambios.
 
-### Post-lanzamiento (2026-10) — Benavídez Village: evolución de obra
+#### Post-lanzamiento (2026-10) — Benavídez Village: evolución de obra
 
 - La sección de obra pasa a **"Evolución de obra"** (layout `construction-progress`): "Etapa
   anterior" (foto histórica de 2Clics, movimiento de suelo) vs. "Avance actual" (exterior reciente
@@ -839,7 +899,9 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
 - Para actualizar el avance: reemplazar/agregar archivos en esos slots (el primero es el "Avance
   actual" principal). Hero, renders, masterplan, unidades, precios y entrega no dependen de esto.
 
-## Pendiente de decisión (no confundir con "roto")
+### Pendiente de decisión (no confundir con "roto")
+
+_Histórico: no es estado actual. Lo vigente está en CURRENT STATE, NEXT ACTIONS y BLOCKERS._
 
 - **Assets oficiales de Remeros Beach** (producción propia): faltan los archivos (ver slots en
   `lib/development-assets.ts`). Benavídez y Pacheco ya están integrados.
@@ -861,12 +923,16 @@ External API). La V2 se sincronizó con ese inventario — cualquier dato poster
   distinta al embed simple de ficha (Google Maps JS API / Mapbox / Leaflet).
 - **`tour_url`**: 0/21 propiedades auditadas tienen tour usable — no implementar todavía.
 
-## No confirmado / requiere verificación en otra etapa
+### No confirmado / requiere verificación en otra etapa
+
+_Histórico: no es estado actual. Lo vigente está en CURRENT STATE, NEXT ACTIONS y BLOCKERS._
 
 - Si 2Clics todavía llama activamente al webhook legacy en producción.
 - Si conviene migrar el formulario de contacto general al mismo flujo que la consulta de propiedad.
 
-## Snapshot de inventario auditado (2026-08-21 — no es dato en vivo)
+### Snapshot de inventario auditado (2026-08-21 — no es dato en vivo)
+
+_Histórico: no es estado actual. Lo vigente está en CURRENT STATE, NEXT ACTIONS y BLOCKERS._
 
 21 propiedades (AR 11 / US 10), 0 desarrollos. Detalle completo de campos y cobertura en
 `2CLICS_EXTERNAL_API.md`. Para el estado real y actualizado, consultar la API, no este documento.

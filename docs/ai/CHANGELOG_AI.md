@@ -3,6 +3,8 @@
 Registro de decisiones, no de conversaciones completas. Formato: fecha · área · decisión ·
 motivo · estado.
 
+> **Nota de corte:** El registro cronológico detallado de este archivo se detiene el 2026-09-03. Para estado y cambios posteriores consultar `PROJECT_STATE.md` y las fuentes específicas correspondientes.
+
 ---
 
 **2026-08-21 · Documentación** · Se crea la capa de memoria/documentación de Claude para el

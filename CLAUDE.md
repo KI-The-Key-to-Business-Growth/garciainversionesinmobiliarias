@@ -17,7 +17,7 @@ Browser → Next.js Server → 2Clics External API (https://api.ext.2clics.com.a
 - **Consulta de una propiedad puntual** (modal en la ficha): Server Action → `POST /api/lead/message` de la misma External API.
 - **Supabase**: NO es la fuente del inventario público. Sigue vigente solo para newsletter (`lib/db/newsletter.ts`) y logs.
 - **Legacy todavía cableado pero fuera del path de la nueva UI**: webhook `/api/2clics/webhook` (+ alias `/property`) → Supabase como mirror de propiedades. Ver [`docs/ai/LEGACY.md`](docs/ai/LEGACY.md).
-- **Formulario de contacto general** (Home): usa un flujo de leads CRM distinto y anterior (`lib/crm/leads.ts`, host `api.2clics.com.ar`). Sigue activo, pendiente de revisión arquitectónica — no tocar sin pedido explícito. Detalle en `docs/ai/LEGACY.md`.
+- **Formulario de contacto general** (`/contacto`): usa un flujo de leads CRM distinto y anterior (`lib/crm/leads.ts`, host `api.2clics.com.ar`). Sigue activo, pendiente de revisión arquitectónica — no tocar sin pedido explícito. Detalle en `docs/ai/LEGACY.md`.
 
 Detalle completo: [`.claude/rules/architecture.md`](.claude/rules/architecture.md), [`docs/ai/ARCHITECTURE.md`](docs/ai/ARCHITECTURE.md).
 
