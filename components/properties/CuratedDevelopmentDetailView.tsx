@@ -11,6 +11,7 @@ import {
   formatDevelopmentPriceRange,
   getDevelopmentEditorialCuration,
   resolveCommercialPrice,
+  formatUnitsCount,
   resolveDevelopmentUnitRows,
   resolveReferenceUnitFacts,
   resolveSectionImages,
@@ -692,11 +693,11 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
     const rows = ctx.unitRows;
     if (!rows.length) return null;
     return (
-      <section key={section.key} className="project-units-table-section">
+      <section key={section.key} id={section.key} className="project-units-table-section">
         <div className="container">
           <div className="project-units-heading">
             <h2>{section.title}</h2>
-            <p>{rows.length === 1 ? '1 unidad publicada' : `${rows.length} unidades publicadas`}</p>
+            <p>{formatUnitsCount(rows)}</p>
           </div>
           <table className="project-units-table">
             <thead>
@@ -712,15 +713,16 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.propertyId}>
+                <tr key={row.propertyId} className={row.reserved ? 'is-reserved' : undefined}>
                   <th scope="row" data-label="Unidad">
                     {row.label || '—'}
+                    {row.reserved ? <span className="project-unit-badge-reserved">Reservada</span> : null}
                   </th>
                   <td data-label="Superficie total">{row.totalArea || '—'}</td>
                   <td data-label="Orientación">{row.orientation || '—'}</td>
                   <td data-label="Precio">{row.price || '—'}</td>
                   <td className="project-units-link">
-                    <Link href={row.href}>Ver ficha →</Link>
+                    <Link href={row.href}>{row.reserved ? 'Ver unidad →' : 'Ver ficha →'}</Link>
                   </td>
                 </tr>
               ))}

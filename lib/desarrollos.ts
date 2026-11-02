@@ -1482,19 +1482,39 @@ export type DevelopmentUnitRow = {
   orientation: string;
   price: string;
   href: string;
+  // Reservada por curación de García (`reservedUnitIds`): el precio se reemplaza por "Reservada".
+  reserved: boolean;
 };
+
+// Contador de la tabla de disponibilidad, calculado desde las filas y su estado `reserved`. Sin
+// reservadas conserva el texto de siempre ("N unidades publicadas").
+export function formatUnitsCount(rows: Pick<DevelopmentUnitRow, 'reserved'>[]): string {
+  const reserved = rows.filter((row) => row.reserved).length;
+  if (!reserved) return rows.length === 1 ? '1 unidad publicada' : `${rows.length} unidades publicadas`;
+  const available = rows.length - reserved;
+  const availableText = !available
+    ? 'Sin unidades disponibles'
+    : available === 1
+      ? '1 unidad disponible'
+      : `${available} unidades disponibles`;
+  return `${availableText} · ${reserved} ${reserved === 1 ? 'reservada' : 'reservadas'}`;
+}
 
 // `units` llega en el orden de `curation.propertyIds` y ya filtrado a lo que 2Clics devuelve como
 // activo — una unidad dada de baja desaparece sola de la tabla y del conteo.
 export function resolveDevelopmentUnitRows(curation: DevelopmentCuration, units: PublicProperty[]): DevelopmentUnitRow[] {
   return units
     .filter((unit): unit is PublicProperty & { propertyId: number } => unit.propertyId !== null)
-    .map((unit) => ({
-      propertyId: unit.propertyId,
-      label: curation.unitLabels?.[unit.propertyId] || '',
-      totalArea: formatArea(unit.totalArea),
-      orientation: formatPublicDisplayValue(unit.metadata.orientation),
-      price: formatPrice(unit.price, unit.currency, unit.hidePrice),
-      href: propertyHref(unit),
-    }));
+    .map((unit) => {
+      const reserved = Boolean(curation.reservedUnitIds?.includes(unit.propertyId));
+      return {
+        propertyId: unit.propertyId,
+        label: curation.unitLabels?.[unit.propertyId] || '',
+        totalArea: formatArea(unit.totalArea),
+        orientation: formatPublicDisplayValue(unit.metadata.orientation),
+        price: reserved ? 'Reservada' : formatPrice(unit.price, unit.currency, unit.hidePrice),
+        href: propertyHref(unit),
+        reserved,
+      };
+    });
 }

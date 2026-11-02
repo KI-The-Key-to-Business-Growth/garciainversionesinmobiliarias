@@ -28,6 +28,9 @@ type PropertyDetailViewProps = {
   // Destino de "Volver" según el activo (desarrollo, Comprar o Alquilar) — ver
   // `getPropertyBackLink` en lib/site-curation.ts.
   backLink?: { href: string; label: string };
+  // Unidad RESERVADA por curación de García (`reservedUnitIds`, ver `isReservedPropertyId`): se
+  // comunica como reservada y su CTA deja de sugerir que puede comprarse.
+  reserved?: boolean;
 };
 
 type DetailItem = {
@@ -107,9 +110,10 @@ export default function PropertyDetailView({
   property,
   relatedProperties = [],
   backLink,
+  reserved = false,
 }: PropertyDetailViewProps) {
   const location = formatPublicLocation(property.location, property.region);
-  const price = formatPrice(property.price, property.currency, property.hidePrice);
+  const price = reserved ? 'Reservada' : formatPrice(property.price, property.currency, property.hidePrice);
   const operation = formatOperation(property.operationType);
   const back =
     backLink ||
@@ -190,6 +194,7 @@ export default function PropertyDetailView({
               </p>
               <h1>{property.title}</h1>
               {location ? <p className="twoclics-detail-location">{location}</p> : null}
+              {reserved ? <p className="twoclics-reserved-badge">Reservada</p> : null}
             </div>
             <div className="twoclics-detail-hero-action">
               <PropertyShareButton title={property.title} variant="icon" label="Compartir propiedad" />
@@ -205,12 +210,18 @@ export default function PropertyDetailView({
 
             <div className="twoclics-mobile-actions" aria-label="Acciones de propiedad">
               <PropertyShareButton title={property.title} variant="icon" label="Compartir propiedad" />
-              <PropertyInquiryPanel
-                propertyId={property.propertyId}
-                propertyTitle={property.title}
-                propertyRegion={property.region}
-                label="Solicitar asesoramiento"
-              />
+              {reserved ? (
+                <Link className="btn btn-primary twoclics-detail-cta" href={`${back.href}#disponibilidad`}>
+                  Consultar otras unidades
+                </Link>
+              ) : (
+                <PropertyInquiryPanel
+                  propertyId={property.propertyId}
+                  propertyTitle={property.title}
+                  propertyRegion={property.region}
+                  label="Solicitar asesoramiento"
+                />
+              )}
               <a className="twoclics-mobile-call" href={GARCIA_PHONE_HREF} aria-label="Llamar a García">
                 <PhoneIcon />
               </a>
@@ -321,13 +332,24 @@ export default function PropertyDetailView({
                   <PhoneIcon />
                 </a>
               </div>
-              <p>Consultá disponibilidad, información actualizada y próximos pasos.</p>
-              <PropertyInquiryPanel
-                propertyId={property.propertyId}
-                propertyTitle={property.title}
-                propertyRegion={property.region}
-                label="Consultar esta propiedad"
-              />
+              {reserved ? (
+                <>
+                  <p>Esta unidad se encuentra reservada. Consultá las unidades disponibles del proyecto.</p>
+                  <Link className="btn btn-primary twoclics-detail-cta" href={`${back.href}#disponibilidad`}>
+                    Consultar otras unidades
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p>Consultá disponibilidad, información actualizada y próximos pasos.</p>
+                  <PropertyInquiryPanel
+                    propertyId={property.propertyId}
+                    propertyTitle={property.title}
+                    propertyRegion={property.region}
+                    label="Consultar esta propiedad"
+                  />
+                </>
+              )}
             </div>
 
             {property.developmentParent?.developmentId ? (

@@ -11,6 +11,7 @@ import {
   getInvestmentOpportunityByPropertyId,
   getMasterCatalogExcludedPropertyIds,
   getPropertyBackLink,
+  isReservedPropertyId,
 } from '@/lib/site-curation';
 
 type PropertyDetailPageProps = {
@@ -78,6 +79,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
             property={property}
             relatedProperties={relatedProperties}
             backLink={getPropertyBackLink(property.propertyId, property.operationType)}
+            reserved={isReservedPropertyId(property.propertyId)}
           />
         ) : result.status === 'not-found' ? (
           notFound()

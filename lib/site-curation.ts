@@ -144,6 +144,12 @@ export type DevelopmentCuration = {
   // Identificador público de cada unidad (ej. "UF 16") — dato permanente de la unidad, declarado
   // por curaduría. Precio, superficie y orientación de cada unidad se leen en vivo de 2Clics.
   unitLabels?: Record<number, string>;
+  // Unidades RESERVADAS — curación comercial propia de García (no viene de 2Clics): la unidad sigue
+  // visible como señal de movimiento del proyecto pero se comunica como "Reservada", no como
+  // disponible. Declarar acá el `propertyId` alcanza; tabla de disponibilidad y ficha lo resuelven
+  // solos (`isReservedPropertyId`). Quitar el id la devuelve a disponible. Superficie, orientación
+  // y demás datos siguen leyéndose en vivo de 2Clics.
+  reservedUnitIds?: number[];
   // Nombre corto para "Volver a …" en las fichas de sus unidades (ej. "Faena"). Sin declarar se
   // usa `publicName`.
   backLabel?: string;
@@ -192,6 +198,8 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
       233702: 'UF 16',
       233707: 'UF 20',
     },
+    // UF 15 reservada (confirmado por García).
+    reservedUnitIds: [237472],
   },
   {
     slug: 'pacheco-central',
@@ -252,7 +260,13 @@ export function getDevelopmentForPropertyId(propertyId: number | null | undefine
   return PUBLIC_DEVELOPMENTS.find((entry) => entry.propertyIds.includes(propertyId)) || null;
 }
 
-export type PropertyBackLink = { href: string; label: string };
+// ¿La unidad está marcada como RESERVADA en la curación de su desarrollo público?
+export function isReservedPropertyId(propertyId: number | null | undefined): boolean {
+  const development = getDevelopmentForPropertyId(propertyId);
+  return Boolean(development?.reservedUnitIds?.includes(propertyId as number));
+}
+
+export type PropertyBackLink ={ href: string; label: string };
 
 // "Volver" de una ficha /propiedades/[id] — depende del activo, no del historial del navegador
 // (tiene que funcionar entrando directo por URL): la unidad de un desarrollo curado vuelve a su

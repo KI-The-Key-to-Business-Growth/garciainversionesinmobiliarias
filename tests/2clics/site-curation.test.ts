@@ -16,9 +16,12 @@ import InvestmentOpportunityDetailView from '@/components/properties/InvestmentO
 import LocationPicker, { groupOptions } from '@/components/properties/LocationPicker';
 import { adaptPublicProperty } from '@/lib/2clics/adapters';
 import { getInvestmentEditorialCuration } from '@/lib/investments';
+import PropertyDetailView from '@/components/properties/PropertyDetailView';
 import {
   formatDevelopmentPriceRange,
+  formatUnitsCount,
   getDevelopmentEditorialCuration,
+  resolveDevelopmentUnitRows,
   resolveSafeDescription,
   toDevelopmentCardSource,
 } from '@/lib/desarrollos';
@@ -42,6 +45,7 @@ import {
   getPropertyBackLink,
   isDevelopmentPublic,
   isExcludedFromStandardCatalog,
+  isReservedPropertyId,
 } from '@/lib/site-curation';
 
 function render(element: React.ReactElement): string {
@@ -2498,7 +2502,8 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
     const html = renderWith(units);
     expect(html).toContain('<h1>Benavídez Village</h1>');
     expect(html).toContain('<h2>Disponibilidad actual</h2>');
-    expect(html).toContain('5 unidades publicadas');
+    // 4 disponibles + UF 15 reservada (ver bloque "UF 15 reservada").
+    expect(html).toContain('4 unidades disponibles · 1 reservada');
     for (const label of ['UF 11', 'UF 12', 'UF 15', 'UF 16', 'UF 20']) {
       expect(html).toContain(`>${label}<`);
     }
@@ -2516,10 +2521,102 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
 
   it('la cantidad de unidades es dinámica: si 2Clics deja de devolver una, la tabla y el conteo bajan solos', () => {
     const html = renderWith(units.filter((u) => u.propertyId !== 233708));
-    expect(html).toContain('4 unidades publicadas');
+    expect(html).toContain('3 unidades disponibles · 1 reservada');
     expect(html).not.toContain('>UF 11<');
     const curationJson = JSON.stringify(getDevelopmentEditorialCuration('benavidez-village'));
     expect(curationJson).not.toMatch(/5 unidades|cinco unidades/i);
+  });
+
+  describe('UF 15 reservada (curación comercial de García, reservedUnitIds)', () => {
+    it('Benavídez declara únicamente 237472 como reservada', () => {
+      expect(curation.reservedUnitIds).toEqual([237472]);
+      expect(isReservedPropertyId(237472)).toBe(true);
+      for (const id of [233708, 237474, 233702, 233707]) {
+        expect(isReservedPropertyId(id)).toBe(false);
+      }
+    });
+
+    it('resolveDevelopmentUnitRows marca UF 15 como reserved y las demás no; superficie y orientación siguen en vivo', () => {
+      const rows = resolveDevelopmentUnitRows(curation, units);
+      const reserved = rows.filter((row) => row.reserved);
+      expect(reserved.map((row) => row.propertyId)).toEqual([237472]);
+      expect(reserved[0].label).toBe('UF 15');
+      expect(reserved[0].price).toBe('Reservada');
+      expect(reserved[0].totalArea).toBe('125,7 m²');
+      expect(reserved[0].orientation).toBe('Sureste');
+      expect(reserved[0].href).toBe('/propiedades/237472');
+      const available = rows.filter((row) => !row.reserved);
+      expect(available.map((row) => row.price)).toEqual(['U$D 144.000', 'U$D 146.000', 'U$D 138.000', 'U$D 140.000']);
+    });
+
+    it('la tabla mantiene UF 15 visible con badge "Reservada" y no muestra su precio; las otras 4 filas no cambian', () => {
+      const html = renderWith(units);
+      expect(html).toContain('4 unidades disponibles · 1 reservada');
+      expect(html).not.toContain('unidades publicadas');
+      expect(html).toContain('>UF 15<span class="project-unit-badge-reserved">Reservada</span>');
+      expect(html).toContain('<tr class="is-reserved">');
+      expect(html.match(/is-reserved/g)).toHaveLength(1);
+      expect(html.match(/project-unit-badge-reserved/g)).toHaveLength(1);
+      expect(html).toContain('Ver unidad →');
+      expect(html.match(/Ver ficha →/g)).toHaveLength(4);
+      // UF 15 cotiza U$D 138.000 igual que UF 16: solo debe quedar el de UF 16.
+      expect(html.match(/U\$D 138\.000/g)).toHaveLength(1);
+      expect(html).toContain('id="disponibilidad"');
+    });
+
+    it('una unidad sin reserva en la curación no muestra ningún estado reservado', () => {
+      const noReserved = { ...curation, reservedUnitIds: undefined };
+      const html = render(
+        React.createElement(CuratedDevelopmentDetailView, {
+          curation: noReserved,
+          source: toDevSource(source, curation.publicName),
+          units,
+        }),
+      );
+      expect(html).not.toContain('is-reserved');
+      expect(html).toContain('5 unidades publicadas');
+      expect(html.match(/U\$D 138\.000/g)).toHaveLength(2);
+    });
+
+    it('el contador se calcula desde las filas: singular/plural, sin reservadas y sin disponibles', () => {
+      const rows = (flags: boolean[]) => flags.map((reserved) => ({ reserved }));
+      expect(formatUnitsCount(rows([false]))).toBe('1 unidad publicada');
+      expect(formatUnitsCount(rows([false, false, false]))).toBe('3 unidades publicadas');
+      expect(formatUnitsCount(rows([false, true]))).toBe('1 unidad disponible · 1 reservada');
+      expect(formatUnitsCount(rows([false, false, true, true]))).toBe('2 unidades disponibles · 2 reservadas');
+      expect(formatUnitsCount(rows([true]))).toBe('Sin unidades disponibles · 1 reservada');
+    });
+
+    it('ficha /propiedades/237472: badge Reservada, sin precio ni CTA de consulta de la unidad, vuelve al desarrollo', () => {
+      const uf15 = units.find((u) => u.propertyId === 237472)!;
+      const back = getPropertyBackLink(237472, uf15.operationType);
+      const html = render(
+        React.createElement(PropertyDetailView, { property: uf15, backLink: back, reserved: isReservedPropertyId(237472) }),
+      );
+      expect(html).toContain('twoclics-reserved-badge">Reservada<');
+      expect(html).not.toContain('138.000');
+      expect(html).toContain('<strong>Reservada</strong>');
+      expect(html).not.toContain('Consultar esta propiedad');
+      expect(html).not.toContain('Solicitar asesoramiento');
+      expect(html).toContain('Consultar otras unidades');
+      expect(html).toContain('href="/desarrollos/benavidez-village#disponibilidad"');
+      expect(html).toContain('Volver a Benavídez Village');
+    });
+
+    it('otras fichas (UF 16 y una propiedad ajena) no se ven afectadas', () => {
+      for (const id of [233702, 1001]) {
+        const other = units.find((u) => u.propertyId === id) || property({ propertyId: id, price: 250000, currency: 'U$D' });
+        const html = render(
+          React.createElement(PropertyDetailView, { property: other, reserved: isReservedPropertyId(id) }),
+        );
+        expect(html).not.toContain('Reservada');
+        expect(html).not.toContain('Consultar otras unidades');
+        expect(html).toContain('Consultar esta propiedad');
+        expect(html).toContain('Solicitar asesoramiento');
+      }
+      expect(isReservedPropertyId(1001)).toBe(false);
+      expect(isReservedPropertyId(null)).toBe(false);
+    });
   });
 
   it('sin urgencia artificial ni financiación: nunca "quedan pocas"/"no pierdas"/"financiación"', () => {

@@ -8264,6 +8264,56 @@ body[data-page-type='thank_you'] {
   white-space: nowrap;
 }
 
+/* Unidad reservada (curación `reservedUnitIds`): visible pero con menos énfasis que las disponibles. */
+.project-units-table tr.is-reserved td,
+.project-units-table tr.is-reserved th {
+  background: var(--ivory);
+}
+
+.project-units-table tr.is-reserved td {
+  color: var(--text-soft);
+  opacity: 0.8;
+}
+
+.project-units-table tr.is-reserved td[data-label='Precio'] {
+  font-style: italic;
+}
+
+.project-unit-badge-reserved {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  color: var(--navy);
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.project-units-table tr.is-reserved .project-units-link a {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* Misma señal en la ficha individual (/propiedades/[id]); vive sobre el hero navy → dorado. */
+.twoclics-reserved-badge {
+  display: inline-block;
+  margin: 10px 0 0;
+  padding: 4px 12px;
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  color: var(--gold);
+  font-family: var(--font-jost), sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .project-units-link a {
   color: var(--navy);
   font-weight: 600;
