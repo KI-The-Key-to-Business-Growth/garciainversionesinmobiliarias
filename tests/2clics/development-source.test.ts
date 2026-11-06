@@ -86,7 +86,7 @@ function renderDetail(curation: DevelopmentCuration, loaded: Awaited<ReturnType<
 }
 
 const benavidez = getDevelopmentBySlug('benavidez-village')!;
-const BENAVIDEZ_IDS = benavidez.propertyIds; // [233708, 237474, 237472, 233702, 233707]
+const BENAVIDEZ_IDS = benavidez.propertyIds; // [237474, 233702, 240587, 240588] (activas); UF 11 y UF 20 son reservas curadas offline
 
 beforeEach(() => lookups.results.clear());
 
@@ -102,8 +102,8 @@ describe('pickDevelopmentSource — una única regla de fuente', () => {
   it('2) sourcePropertyId en 404 + otra unidad activa → la primera activa de propertyIds, y el desarrollo sigue', async () => {
     setActive(BENAVIDEZ_IDS.filter((id) => id !== benavidez.sourcePropertyId));
     const loaded = await loadDevelopment(benavidez, fetcher);
-    expect(loaded.sourceProperty?.propertyId).toBe(233708); // primera de propertyIds
-    expect(loaded.units).toHaveLength(4);
+    expect(loaded.sourceProperty?.propertyId).toBe(237474); // primera de propertyIds
+    expect(loaded.units).toHaveLength(3);
     expect(loaded.availabilityKnown).toBe(true);
     const entry = await loadCuratedEntry(benavidez, fetcher);
     expect(entry.curation.slug).toBe('benavidez-village');
@@ -123,7 +123,7 @@ describe('pickDevelopmentSource — una única regla de fuente', () => {
   });
 
   it('pickDevelopmentSource es pura: fuente → primera activa en orden de curaduría → null', () => {
-    const [a, b, c] = [233708, 237474, 233707].map((id) => liveProperty(id));
+    const [a, b, c] = [237474, 240587, 240588].map((id) => liveProperty(id));
     expect(pickDevelopmentSource(benavidez, [a, b, c])).toBe(a);
     expect(pickDevelopmentSource(benavidez, [c, liveProperty(233702)])?.propertyId).toBe(233702);
     expect(pickDevelopmentSource(benavidez, [])).toBeNull();
@@ -138,7 +138,7 @@ describe('Benavídez Village — unidades vendidas (404) no afectan al desarroll
       expect(loaded.units.map((u) => u.propertyId)).toEqual(BENAVIDEZ_IDS.filter((id) => id !== sold));
       const html = renderDetail(benavidez, loaded);
       expect(html).toContain('<h1>Benavídez Village</h1>');
-      expect(html).toContain('4 unidades publicadas');
+      expect(html).toContain('3 unidades disponibles · 2 reservadas');
       expect(html).not.toContain(`href="/propiedades/${sold}"`);
     }
   });
@@ -148,34 +148,34 @@ describe('Benavídez Village — unidades vendidas (404) no afectan al desarroll
     const loaded = await loadDevelopment(benavidez, fetcher);
     const html = renderDetail(benavidez, loaded);
     expect(html).toContain('<h1>Benavídez Village</h1>');
-    expect(html).toContain('Sin unidades disponibles actualmente');
+    // Sin unidades activas, las reservas curadas siguen visibles (no dependen de 2Clics).
+    expect(html).toContain('Sin unidades disponibles · 2 reservadas');
     expect(html).toContain('Benavídez, Tigre'); // ubicación curada, no de 2Clics
     expect(html).not.toMatch(/U\$D \d/);
-    expect(html).not.toContain('project-units-table"');
+    expect(html).not.toContain('Ver ficha');
     expect(html).toContain('href="/contacto"'); // sin propiedad viva no hay consulta atada a una unidad
     expect(html).not.toContain('data-property-app-id');
   });
 
-  it('13/14) UF 15 (237472) desaparece de activas: no figura, las demás unidades siguen normales y sin "Reservada"', async () => {
-    setActive(BENAVIDEZ_IDS.filter((id) => id !== 237472));
+  it('13/14) UF 15 (237472), 233707 y 240593 nunca figuran, aunque 2Clics los devuelva como activos', async () => {
+    setActive([...BENAVIDEZ_IDS, 237472, 233707, 240593]);
     const loaded = await loadDevelopment(benavidez, fetcher);
+    expect(loaded.units.map((u) => u.propertyId)).toEqual(BENAVIDEZ_IDS);
     const html = renderDetail(benavidez, loaded);
-    expect(html).toContain('4 unidades publicadas');
-    expect(html).not.toContain('>UF 15<');
-    expect(html).not.toContain('Reservada');
-    for (const label of ['UF 11', 'UF 12', 'UF 16', 'UF 20']) expect(html).toContain(`>${label}<`);
+    expect(html).toContain('4 unidades disponibles · 2 reservadas');
+    for (const text of ['>UF 15<', 'UF 16 D', '237472', '233707', '240593']) expect(html).not.toContain(text);
     const rows = resolveDevelopmentUnitRows(benavidez, loaded.units);
-    expect(rows.map((r) => r.label)).toEqual(['UF 11', 'UF 12', 'UF 16', 'UF 20']);
-    expect(rows.every((r) => !r.reserved)).toBe(true);
+    expect(rows.map((r) => r.label)).toEqual(['UF 11', 'UF 12', 'UF 16', 'UF 20', 'UF 21', 'UF 23']);
+    expect(rows.filter((r) => r.reserved).map((r) => r.label)).toEqual(['UF 11', 'UF 20']);
   });
 
-  it('11) reservedUnitIds sigue funcionando para otras reservas reales', async () => {
+  it('11) reservedUnitIds sigue funcionando para reservas sobre propiedades activas', async () => {
     setActive(BENAVIDEZ_IDS);
     const loaded = await loadDevelopment(benavidez, fetcher);
-    const withReservation = { ...benavidez, reservedUnitIds: [233707] };
+    const withReservation = { ...benavidez, reservedUnits: undefined, reservedUnitIds: [240588] };
     const html = renderDetail(withReservation, loaded);
-    expect(html).toContain('4 unidades disponibles · 1 reservada');
-    expect(html).toContain('>UF 20<span class="project-unit-badge-reserved">Reservada</span>');
+    expect(html).toContain('3 unidades disponibles · 1 reservada');
+    expect(html).toContain('>UF 23<span class="project-unit-badge-reserved">Reservada</span>');
   });
 
   it('12) UF 15 ya NO está configurada como reservada (está vendida en 2Clics)', () => {
@@ -259,7 +259,7 @@ describe('9) índice y ficha usan exactamente la misma resolución de fuente', (
     const cardImage = entry.source.image?.displayUrl || '';
     const fromSource = loaded.sourceProperty!.images.map((i) => i.displayUrl);
     expect(cardImage.startsWith('/developments/') || fromSource.includes(cardImage)).toBe(true);
-    expect(loaded.sourceProperty?.propertyId).toBe(233708);
+    expect(loaded.sourceProperty?.propertyId).toBe(237474);
   });
 });
 
@@ -286,10 +286,10 @@ describe('10) errores temporales del proveedor', () => {
   it('un throw inesperado del fetch se trata como falla del proveedor, no como baja ni como crash', async () => {
     setActive(BENAVIDEZ_IDS);
     const throwing = (id: number): Promise<SinglePropertyResult> =>
-      id === 233708 ? Promise.reject(new Error('boom')) : fetcher(id);
+      id === 237474 ? Promise.reject(new Error('boom')) : fetcher(id);
     const loaded = await loadDevelopment(benavidez, throwing);
     expect(loaded.availabilityKnown).toBe(false);
-    expect(loaded.units.map((u) => u.propertyId)).not.toContain(233708);
+    expect(loaded.units.map((u) => u.propertyId)).not.toContain(237474);
     expect(loaded.sourceProperty).not.toBeNull();
   });
 
@@ -298,7 +298,8 @@ describe('10) errores temporales del proveedor', () => {
     const loaded = await loadDevelopment(benavidez, erroring([237474]));
     const html = renderDetail(benavidez, loaded);
     expect(html).toContain('<h1>Benavídez Village</h1>');
-    expect(html).toContain('>UF 11<');
+    expect(html).toContain('>UF 16<');
     expect(html).not.toContain('unidades publicadas');
+    expect(html).not.toContain('unidades disponibles ·');
   });
 });

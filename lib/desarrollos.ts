@@ -1527,15 +1527,26 @@ export function resolveCommercialPrice(
 }
 
 export type DevelopmentUnitRow = {
-  propertyId: number;
+  // Clave estable de React: el propertyId, o `reserved:<label>` para una reserva sin propiedad activa.
+  key: string;
+  // `null` = reserva curada sin propiedad activa en 2Clics (`reservedUnits`).
+  propertyId: number | null;
   label: string;
   totalArea: string;
   orientation: string;
   price: string;
-  href: string;
-  // Reservada por curación de García (`reservedUnitIds`): el precio se reemplaza por "Reservada".
+  // `null` = sin ficha (no hay propiedad activa a la que enlazar).
+  href: string | null;
+  // Reservada por curación de García (`reservedUnitIds` / `reservedUnits`): el precio se reemplaza
+  // por "Reservada".
   reserved: boolean;
 };
+
+// Número de UF de una etiqueta ("UF 12" → 12) para ordenar la tabla; sin número va al final.
+function unitNumber(label: string): number {
+  const match = /\d+/.exec(label);
+  return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
+}
 
 // Contador de la tabla de disponibilidad, calculado desde las filas y su estado `reserved`. Sin
 // reservadas conserva el texto de siempre ("N unidades publicadas").
@@ -1553,12 +1564,23 @@ export function formatUnitsCount(rows: Pick<DevelopmentUnitRow, 'reserved'>[]): 
 
 // `units` llega en el orden de `curation.propertyIds` y ya filtrado a lo que 2Clics devuelve como
 // activo — una unidad dada de baja desaparece sola de la tabla y del conteo.
+//
+// Las reservas curadas SIN propiedad activa (`curation.reservedUnits`) se suman como filas mínimas
+// (solo etiqueta + "Reservada": sin precio, superficie, orientación ni ficha, porque no hay fuente
+// vigente). Una reserva cuyo `propertyId` coincide con una unidad activa ya resuelta, o cuya
+// etiqueta ya está en la tabla, no se duplica. El resultado queda ordenado por número de UF.
 export function resolveDevelopmentUnitRows(curation: DevelopmentCuration, units: PublicProperty[]): DevelopmentUnitRow[] {
-  return units
+  const reservedByCuration = new Set<number>(curation.reservedUnitIds ?? []);
+  for (const entry of curation.reservedUnits ?? []) {
+    if (entry.propertyId !== undefined) reservedByCuration.add(entry.propertyId);
+  }
+
+  const activeRows: DevelopmentUnitRow[] = units
     .filter((unit): unit is PublicProperty & { propertyId: number } => unit.propertyId !== null)
     .map((unit) => {
-      const reserved = Boolean(curation.reservedUnitIds?.includes(unit.propertyId));
+      const reserved = reservedByCuration.has(unit.propertyId);
       return {
+        key: String(unit.propertyId),
         propertyId: unit.propertyId,
         label: curation.unitLabels?.[unit.propertyId] || '',
         totalArea: formatArea(unit.totalArea),
@@ -1568,4 +1590,26 @@ export function resolveDevelopmentUnitRows(curation: DevelopmentCuration, units:
         reserved,
       };
     });
+
+  const shownIds = new Set(activeRows.map((row) => row.propertyId));
+  const shownLabels = new Set(activeRows.map((row) => row.label).filter(Boolean));
+  const offlineRows: DevelopmentUnitRow[] = (curation.reservedUnits ?? [])
+    .filter((entry) => !(entry.propertyId !== undefined && shownIds.has(entry.propertyId)) && !shownLabels.has(entry.unitLabel))
+    .map((entry) => ({
+      key: `reserved:${entry.unitLabel}`,
+      propertyId: null,
+      label: entry.unitLabel,
+      totalArea: '',
+      orientation: '',
+      price: 'Reservada',
+      href: null,
+      reserved: true,
+    }));
+
+  // `sort` es estable: las filas sin número de UF conservan su orden relativo, al final.
+  return [...activeRows, ...offlineRows].sort((a, b) => {
+    const na = unitNumber(a.label);
+    const nb = unitNumber(b.label);
+    return na === nb ? 0 : na < nb ? -1 : 1;
+  });
 }

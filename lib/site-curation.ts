@@ -44,12 +44,19 @@ export type CuratedPropertyEntry = {
 export const CURATED_PROPERTIES: CuratedPropertyEntry[] = [
   // Faena Residences Miami — registro activo vigente (reemplaza al 187676, fuera de mercado).
   { propertyId: 236986, humanRef: 'GAR-236986', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  // Benavídez Village — 5 unidades activas agrupadas en UN solo desarrollo público.
+  // Benavídez Village — unidades agrupadas en UN solo desarrollo público (las no activas se
+  // conservan acá solo para excluirlas defensivamente de /comprar).
   { propertyId: 233708, humanRef: 'GAR-233708', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 237474, humanRef: 'GAR-237474', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 237472, humanRef: 'GAR-237472', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 233702, humanRef: 'GAR-233702', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 233707, humanRef: 'GAR-233707', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // UF 21 y UF 23 (activas desde 2026-11-06) — unidades públicas del desarrollo.
+  { propertyId: 240587, humanRef: 'GAR-240587', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  { propertyId: 240588, humanRef: 'GAR-240588', classification: 'desarrollo', excludeFromStandardCatalog: true },
+  // 240593 ("UF 16 D") — ACTIVA en 2Clics pero fuera de la curación pública hasta nueva decisión:
+  // se excluye de /comprar para que no aparezca como propiedad suelta. No se modifica en 2Clics.
+  { propertyId: 240593, humanRef: 'GAR-240593', classification: 'desarrollo', excludeFromStandardCatalog: true },
   // Remeros Beach — 237447 es una UNIDAD TERMINADA EN VENTA (Sky Two; confirmado por Fabiana García,
   // 2026-10). Sigue vinculada al desarrollo (/desarrollos/remeros-beach la muestra como unidad
   // disponible) y además aparece en /comprar: pertenecer a un desarrollo no la excluye del catálogo
@@ -111,6 +118,13 @@ export function getCurationForPropertyId(propertyId: number | null | undefined):
 // normales. Deliberadamente NO usa el módulo pago `/api/development` de 2Clics (ver
 // docs/ai/WEB_GARCIA_V2.md). Cada propertyId sigue siendo una propiedad real e independiente en
 // 2Clics — esto solo declara que un grupo de propertyIds pertenece al mismo proyecto editorial.
+export type CuratedReservedUnit = {
+  // Identificador público de la unidad (ej. "UF 11"). Obligatorio: es lo único que se muestra.
+  unitLabel: string;
+  // Referencia opcional a una property de 2Clics. Omitir si no hay una asociación verificada.
+  propertyId?: number;
+};
+
 export type DevelopmentCuration = {
   slug: string;
   // Nombre editorial INTERNO de referencia (administrativo, tipo `humanRef`) — nunca se muestra
@@ -158,6 +172,14 @@ export type DevelopmentCuration = {
   // solos (`isReservedPropertyId`). Quitar el id la devuelve a disponible. Superficie, orientación
   // y demás datos siguen leyéndose en vivo de 2Clics.
   reservedUnitIds?: number[];
+  // Unidades RESERVADAS curadas por García que 2Clics NO devuelve como propiedad activa (fuera de
+  // mercado, sin registro confiable). `reservedUnitIds` no alcanza para ellas: solo marca filas ya
+  // resueltas desde una propiedad activa. Cada entrada genera una fila mínima "UF n · Reservada" en
+  // la tabla de disponibilidad, SIN precio, superficie, orientación ni link de ficha (no hay fuente
+  // vigente de la que tomarlos). `propertyId` es opcional y solo referencial: nunca se usa para
+  // construir un link; si coincide con una unidad activa ya resuelta, esa fila se marca reservada y
+  // no se duplica. Ciclo: disponible → reservada (acá) → vendida (se quita de acá; sale de la tabla).
+  reservedUnits?: CuratedReservedUnit[];
   // Nombre corto para "Volver a …" en las fichas de sus unidades (ej. "Faena"). Sin declarar se
   // usa `publicName`.
   backLabel?: string;
@@ -199,18 +221,21 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     // comparten el mismo texto). `propertyIds` en orden de UF.
     sourcePropertyId: 233702,
     humanRef: 'GAR-233702',
-    propertyIds: [233708, 237474, 237472, 233702, 233707],
+    // Unidades ACTIVAS que se resuelven desde 2Clics, en orden de UF. Fuera a propósito:
+    // 237472 (UF 15, VENDIDA), 233708 (UF 11, fuera de mercado → reserva curada), 233707 (2Clics hoy
+    // lo identifica como UF 16, no se asume que sea UF 20) y 240593 ("UF 16 D", sin decisión pública).
+    propertyIds: [237474, 233702, 240587, 240588],
     market: 'AR',
     unitLabels: {
-      233708: 'UF 11',
       237474: 'UF 12',
-      237472: 'UF 15',
       233702: 'UF 16',
-      233707: 'UF 20',
+      240587: 'UF 21',
+      240588: 'UF 23',
     },
-    // Sin unidades reservadas hoy. UF 15 (237472) está VENDIDA en 2Clics y dejó de devolverse como
-    // activa: sale sola de la tabla de disponibilidad. `reservedUnitIds` sigue disponible en el tipo
-    // para futuras reservas reales.
+    // Reservas comerciales de García que 2Clics no devuelve como activas: fila mínima, sin datos.
+    // UF 20 no tiene propertyId confiable asociado. Al venderse una reserva: registrar la venta en
+    // 2Clics y quitarla de esta lista.
+    reservedUnits: [{ unitLabel: 'UF 11', propertyId: 233708 }, { unitLabel: 'UF 20' }],
   },
   {
     slug: 'pacheco-central',

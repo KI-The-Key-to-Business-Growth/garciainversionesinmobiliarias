@@ -721,8 +721,12 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
     const rows = ctx.unitRows;
     // Sin unidades activas: el desarrollo sigue publicado y la sección lo dice sin inventar stock.
     // Si la disponibilidad no se pudo confirmar (falla del proveedor), no se afirma nada.
+    // Las reservas curadas no dependen de 2Clics, pero mostrarlas SIN las unidades activas daría una
+    // imagen falsa del stock: si no hay ninguna activa y la disponibilidad no se pudo confirmar,
+    // la tabla no se muestra.
+    const hasActiveRows = rows.some((row) => row.propertyId !== null);
+    if (!hasActiveRows && !ctx.availabilityKnown) return null;
     if (!rows.length) {
-      if (!ctx.availabilityKnown) return null;
       return (
         <section key={section.key} id={section.key} className="project-units-table-section">
           <div className="container">
@@ -755,7 +759,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.propertyId} className={row.reserved ? 'is-reserved' : undefined}>
+                <tr key={row.key} className={row.reserved ? 'is-reserved' : undefined}>
                   <th scope="row" data-label="Unidad">
                     {row.label || '—'}
                     {row.reserved ? <span className="project-unit-badge-reserved">Reservada</span> : null}
@@ -764,7 +768,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
                   <td data-label="Orientación">{row.orientation || '—'}</td>
                   <td data-label="Precio">{row.price || '—'}</td>
                   <td className="project-units-link">
-                    <Link href={row.href}>{row.reserved ? 'Ver unidad →' : 'Ver ficha →'}</Link>
+                    {row.href ? <Link href={row.href}>{row.reserved ? 'Ver unidad →' : 'Ver ficha →'}</Link> : null}
                   </td>
                 </tr>
               ))}
