@@ -1,7 +1,14 @@
 import 'server-only';
 import { formatPublicLocation } from '@/lib/2clics/format';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
-import { getDevelopmentEditorialCuration, resolveSafeDescription, resolveSourceTextSegment } from '@/lib/desarrollos';
+import {
+  getDevelopmentEditorialCuration,
+  getDevelopmentFallbackLocation,
+  getDevelopmentOfflineName,
+  resolveSafeDescription,
+  resolveSourceTextSegment,
+} from '@/lib/desarrollos';
+import { loadDevelopment } from '@/lib/development-source';
 import { resolveDevelopmentAssets, resolveDevelopmentCardImage } from '@/lib/development-assets';
 import { getInvestmentEditorialCuration, resolveInvestmentImage } from '@/lib/investments';
 import { getDevelopmentBySlug, getInvestmentOpportunityBySlug, isDevelopmentPublic } from '@/lib/site-curation';
@@ -13,8 +20,9 @@ import { getDevelopmentBySlug, getInvestmentOpportunityBySlug, isDevelopmentPubl
 // ubicación de cada ficha ya curada). Cada entrada apunta a una landing existente:
 //   - 'development' → slug de DEVELOPMENTS (lib/site-curation.ts) → /desarrollos/<slug>
 //   - 'investment'  → slug de INVESTMENT_OPPORTUNITIES (lib/site-curation.ts) → /invertir/<slug>
-// Una entrada cuyo slug no existe, está inactiva o cuya fuente no responde se omite en silencio
-// (nunca una card rota ni un placeholder). Máximo HOME_SELECTION_MAX cards.
+// Una entrada cuyo slug no existe o está inactiva se omite en silencio (nunca una card rota ni un
+// placeholder). Un desarrollo curado NO se omite porque sus unidades salgan de 2Clics: se muestra
+// con lo curado (oportunidades de inversión sí dependen de su fuente viva). Máximo HOME_SELECTION_MAX cards.
 //
 // Orden confirmado por García (pre-launch V2). Cuarto lugar VACANTE hasta nueva decisión: no
 // agregar una cuarta oportunidad sin confirmación.
@@ -49,24 +57,25 @@ function firstText(value: string | string[]): string {
 async function loadDevelopmentCard(slug: string): Promise<HomeSelectionCard | null> {
   const curation = getDevelopmentBySlug(slug);
   if (!curation || !isDevelopmentPublic(curation)) return null;
-  const result = await getPublicPropertyById(curation.sourcePropertyId);
-  const property = result.property;
-  if (!property) return null;
+  // El desarrollo existe por curaduría: sin propiedad fuente viva igual se muestra, con lo curado.
+  const { sourceProperty: property } = await loadDevelopment(curation);
 
   const editorial = getDevelopmentEditorialCuration(curation.slug);
-  const image = resolveDevelopmentCardImage(curation.slug, property.images);
+  const image = resolveDevelopmentCardImage(curation.slug, property?.images ?? []);
   const heroAsset = resolveDevelopmentAssets(curation.slug).hero?.[0];
   // Mismo intro que abre la ficha del desarrollo (CuratedDevelopmentDetailView).
   const descriptor = editorial
-    ? firstText(resolveSourceTextSegment(resolveSafeDescription(property.description || '', editorial), editorial.introSegment))
+    ? firstText(resolveSourceTextSegment(resolveSafeDescription(property?.description || '', editorial), editorial.introSegment))
     : '';
 
   return {
     key: `development:${curation.slug}`,
     kind: 'development',
     kicker: 'Desarrollo',
-    name: curation.publicName || property.title || curation.name,
-    location: editorial?.publicLocation || formatPublicLocation(property.location, property.region),
+    name: curation.publicName || property?.title || getDevelopmentOfflineName(curation),
+    location:
+      editorial?.publicLocation ||
+      (property ? formatPublicLocation(property.location, property.region) : getDevelopmentFallbackLocation(curation.slug)),
     descriptor: descriptor || null,
     href: `/desarrollos/${curation.slug}`,
     ctaLabel: 'Conocer el desarrollo',

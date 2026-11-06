@@ -129,6 +129,14 @@ export type DevelopmentCuration = {
   // más abajo) o el `title` real de 2Clics ya es válido como nombre público (Faena) — en ambos
   // casos el consumidor decide el fallback correcto, nunca acá.
   publicName: string | null;
+  // Nombre público de respaldo, SOLO para cuando el desarrollo no tiene ninguna propiedad fuente viva
+  // y `publicName` es `null` (el nombre público sale hoy del título de 2Clics). Evita caer al nombre
+  // interno `name`, que nunca se publica. Debe ser el título público ya verificado, no uno nuevo.
+  fallbackPublicName?: string;
+  // Unidad PREFERIDA como fuente de datos vivos (imágenes, descripción, ubicación de 2Clics). NO
+  // controla la existencia del desarrollo: si deja de estar activa, `loadDevelopment`
+  // (lib/development-source.ts) cae a la primera unidad activa de `propertyIds`, y si no hay
+  // ninguna, el desarrollo se publica igual solo con su curaduría editorial.
   sourcePropertyId: number;
   humanRef: string;
   // Todas las unidades reales que se muestran en "Propiedades disponibles". Hoy puede ser un
@@ -175,6 +183,8 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     name: 'Proyecto Faena',
     // El título vigente de 236986 en 2Clics ya es el nombre público ("Faena Residences Miami").
     publicName: null,
+    // Título público vigente de 236986 en 2Clics (verificado en la auditoría de Faena).
+    fallbackPublicName: 'Faena Residences Miami',
     sourcePropertyId: 236986,
     humanRef: 'GAR-236986',
     propertyIds: [236986],
@@ -198,7 +208,10 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
       233702: 'UF 16',
       233707: 'UF 20',
     },
-    // UF 15 reservada (confirmado por García).
+    // UF 15 (237472): comercialmente VENDIDA. PROTECCIÓN TRANSITORIA de publicación: mientras 2Clics
+    // siga devolviéndola como ACTIVE se muestra "Reservada" (nunca disponible con precio/CTA). Una
+    // vez que 2Clics la marque VENDIDA y deje de devolverla, sale sola de la tabla y este id se
+    // retira en un commit de limpieza. El desarrollo no depende de ella.
     reservedUnitIds: [237472],
   },
   {

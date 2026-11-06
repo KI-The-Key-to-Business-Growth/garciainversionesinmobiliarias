@@ -22,12 +22,63 @@ import type { PublicImage, PublicLocation, PublicProperty, TwoclicsAmenity, Twoc
 // en el payload RSC/"ver código fuente", aunque el JSX nunca las pinte).
 export type DevelopmentCardSource = {
   title: string;
-  location: PublicLocation;
-  region: TwoclicsRegion;
+  // `null` cuando el desarrollo no tiene hoy ninguna propiedad fuente viva (todas las unidades
+  // salieron del listado activo): la card se arma entonces solo con curaduría (`locationText`).
+  location: PublicLocation | null;
+  region: TwoclicsRegion | null;
   image: PublicImage | null;
+  // Ubicación pública ya curada, usada solo cuando no hay `location` viva.
+  locationText?: string;
 };
 
 export type CuratedEntry = { curation: DevelopmentCuration; source: DevelopmentCardSource };
+
+// REGLA DE EXISTENCIA: un desarrollo publicado por García (en PUBLIC_DEVELOPMENTS) existe aunque
+// ninguna de sus unidades esté activa en 2Clics. Las unidades vendidas/reservadas/dadas de baja
+// salen del listado público de 2Clics (el detalle responde 404): eso afecta la disponibilidad, no
+// la ficha madre.
+//
+// Fuente de datos vivos del desarrollo, en este orden: (1) `sourcePropertyId` si está activa;
+// (2) la primera `propertyIds` activa, en el orden de la curaduría; (3) ninguna (`null`). `units` ya
+// debe venir filtrado a lo que 2Clics devolvió como activo y en el orden de `curation.propertyIds`.
+// Índice, ficha, metadata y Home usan esta MISMA función vía `loadDevelopment`.
+export function pickDevelopmentSource(curation: DevelopmentCuration, units: PublicProperty[]): PublicProperty | null {
+  return (
+    units.find((unit) => unit.propertyId === curation.sourcePropertyId) ||
+    units.find((unit) => unit.propertyId !== null && curation.propertyIds.includes(unit.propertyId)) ||
+    null
+  );
+}
+
+// Ubicación pública SOLO de curaduría, para cuando no hay propiedad fuente viva: la ubicación
+// pública editorial si existe, o el campo "Ubicación" del snapshot ya aprobado. Sin ninguno, vacío —
+// nunca se completa de memoria.
+export function getDevelopmentFallbackLocation(slug: string): string {
+  const editorial = getDevelopmentEditorialCuration(slug);
+  if (!editorial) return '';
+  if (editorial.publicLocation) return editorial.publicLocation;
+  for (const section of editorial.sections) {
+    const field = section.snapshotFields?.find((item) => item.label === 'Ubicación');
+    if (field?.value) return field.value;
+  }
+  return '';
+}
+
+// Card del índice sin propiedad fuente viva: solo nombre público/interno curado, ubicación curada y
+// el hero/card image local si existe (la asigna quien la llama). Nada de 2Clics.
+export function getDevelopmentOfflineName(curation: DevelopmentCuration): string {
+  return curation.publicName || curation.fallbackPublicName || curation.name;
+}
+
+export function toDevelopmentCardSourceFromCuration(curation: DevelopmentCuration): DevelopmentCardSource {
+  return {
+    title: getDevelopmentOfflineName(curation),
+    location: null,
+    region: null,
+    image: null,
+    locationText: getDevelopmentFallbackLocation(curation.slug),
+  };
+}
 
 // Reduce un `PublicProperty` completo al vínculo mínimo que necesita la card del índice — único
 // punto donde `app/desarrollos/page.tsx` toca el objeto completo, para no repetir esta reducción

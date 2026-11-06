@@ -5,10 +5,8 @@ import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import CuratedDevelopmentCard from '@/components/properties/CuratedDevelopmentCard';
 import DesarrollosMarketTabs from '@/components/properties/DesarrollosMarketTabs';
 import ListingState from '@/components/properties/ListingState';
-import { getPublicPropertyById } from '@/lib/2clics/listings';
-import { resolveDevelopmentCardImage } from '@/lib/development-assets';
+import { loadCuratedEntry } from '@/lib/development-source';
 import { PUBLIC_DEVELOPMENTS } from '@/lib/site-curation';
-import { getDevelopmentEditorialCuration, toDevelopmentCardSource } from '@/lib/desarrollos';
 import type { CuratedEntry } from '@/lib/desarrollos';
 
 export const metadata: Metadata = {
@@ -17,25 +15,11 @@ export const metadata: Metadata = {
   alternates: { canonical: '/desarrollos' },
 };
 
-// Si la propiedad fuente de un proyecto no está disponible (error/no configurado), ese proyecto
-// se omite en silencio de la grilla en vez de mostrar una card rota — misma postura de no
-// inventar datos que ya usa el resto del catálogo.
+// La existencia de cada proyecto la decide la curaduría (PUBLIC_DEVELOPMENTS), nunca el estado de
+// una unidad del inventario: `loadCuratedEntry` siempre devuelve una entrada, con la fuente viva si hay
+// alguna unidad activa o solo con curaduría si no la hay.
 async function loadCuratedDevelopments(): Promise<CuratedEntry[]> {
-  const results = await Promise.all(
-    PUBLIC_DEVELOPMENTS.map(async (curation) => {
-      const result = await getPublicPropertyById(curation.sourcePropertyId);
-      if (!result.property) return null;
-      // `cardImageIndex` (vigesimotercera pasada, FASE 3): cada desarrollo con curaduría editorial
-      // propia decide qué imagen real cumple la función de portada del índice — nunca
-      // `images[0]` a ciegas. Sin curaduría editorial, degrada al mismo fallback de siempre.
-      const editorial = getDevelopmentEditorialCuration(curation.slug);
-      const source = toDevelopmentCardSource(result.property, curation.publicName, editorial?.cardImageIndex);
-      // Un hero editorial local (render oficial), cuando existe, también es la portada de la card.
-      source.image = resolveDevelopmentCardImage(curation.slug, result.property.images);
-      return { curation, source };
-    }),
-  );
-  return results.filter((entry): entry is CuratedEntry => entry !== null);
+  return Promise.all(PUBLIC_DEVELOPMENTS.map((curation) => loadCuratedEntry(curation)));
 }
 
 // Grilla compacta de un mercado — extraída para no repetir el condicional grilla/empty-state entre

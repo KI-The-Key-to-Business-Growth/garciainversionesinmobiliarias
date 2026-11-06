@@ -163,6 +163,7 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
       slug: 'faena',
       name: 'Proyecto Faena',
       publicName: null,
+      fallbackPublicName: 'Faena Residences Miami',
       sourcePropertyId: 236986,
       humanRef: 'GAR-236986',
       propertyIds: [236986],
@@ -2527,8 +2528,8 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
     expect(curationJson).not.toMatch(/5 unidades|cinco unidades/i);
   });
 
-  describe('UF 15 reservada (curación comercial de García, reservedUnitIds)', () => {
-    it('Benavídez declara únicamente 237472 como reservada', () => {
+  describe('UF 15 reservada (protección transitoria de publicación, reservedUnitIds)', () => {
+    it('Benavídez declara únicamente 237472 como reservada (hasta que 2Clics la marque VENDIDA)', () => {
       expect(curation.reservedUnitIds).toEqual([237472]);
       expect(isReservedPropertyId(237472)).toBe(true);
       for (const id of [233708, 237474, 233702, 233707]) {
@@ -2576,6 +2577,20 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
       expect(html).not.toContain('is-reserved');
       expect(html).toContain('5 unidades publicadas');
       expect(html.match(/U\$D 138\.000/g)).toHaveLength(2);
+    });
+
+    it('si 237472 desaparece de las propiedades activas (vendida): no aparece en disponibilidad y el conteo baja solo', () => {
+      const withoutUf15 = units.filter((u) => u.propertyId !== 237472);
+      const html = renderWith(withoutUf15);
+      expect(html).toContain('<h1>Benavídez Village</h1>');
+      expect(html).toContain('4 unidades publicadas');
+      expect(html).not.toContain('>UF 15<');
+      expect(html).not.toContain('href="/propiedades/237472"');
+      expect(html).not.toContain('Reservada');
+      expect(html).not.toContain('Vendida');
+      for (const label of ['UF 11', 'UF 12', 'UF 16', 'UF 20']) {
+        expect(html).toContain(`>${label}<`);
+      }
     });
 
     it('el contador se calcula desde las filas: singular/plural, sin reservadas y sin disponibles', () => {
@@ -3376,16 +3391,20 @@ describe('Pre-launch V2 — selección del Home y Open Graph por ficha', () => {
     expect(html).not.toMatch(/últimas unidades|rentabilidad|mejor oportunidad|urgente|U\$D/i);
   });
 
-  it('robustez: máximo 4, slugs desconocidos o fuentes caídas se omiten; sin cards no hay sección', async () => {
+  it('robustez: máximo 4; slugs desconocidos se omiten, pero un desarrollo curado sin fuente viva NO se omite; sin cards no hay sección', async () => {
     const { loadHomeSelection } = await loadSelection();
     const cards = await loadHomeSelection([
       { kind: 'development', slug: 'no-existe' },
       { kind: 'development', slug: 'domus-brickell-center' },
-      { kind: 'development', slug: 'faena' }, // su fuente no está en el mock → se omite
+      { kind: 'development', slug: 'faena' }, // su fuente no está en el mock → igual se muestra (existe por curaduría)
       { kind: 'investment', slug: '445-n-shore-drive' },
       { kind: 'development', slug: 'benavidez-village' }, // quinto: fuera del máximo
     ]);
-    expect(cards.map((card) => card.href)).toEqual(['/desarrollos/domus-brickell-center', '/invertir/445-n-shore-drive']);
+    expect(cards.map((card) => card.href)).toEqual([
+      '/desarrollos/domus-brickell-center',
+      '/desarrollos/faena',
+      '/invertir/445-n-shore-drive',
+    ]);
     const { SelectedOpportunitiesView } = await import('@/components/home/SelectedOpportunities');
     expect(SelectedOpportunitiesView({ cards: [] })).toBeNull();
   });
@@ -3547,7 +3566,7 @@ describe('Desarrollo oculto (Remeros Beach) — guardado, fuera de lo público',
 
   it('/desarrollos lista solo PUBLIC_DEVELOPMENTS; el resto de los desarrollos sigue igual', () => {
     const source = readFileSync('app/desarrollos/page.tsx', 'utf8');
-    expect(source).toContain('PUBLIC_DEVELOPMENTS.map(async (curation) => {');
+    expect(source).toContain('PUBLIC_DEVELOPMENTS.map((curation) => loadCuratedEntry(curation))');
     expect(source).not.toMatch(/\bDEVELOPMENTS\.map/);
     expect(PUBLIC_DEVELOPMENTS.map((d) => d.slug)).toEqual(['faena', 'benavidez-village', 'pacheco-central', 'domus-brickell-center']);
   });

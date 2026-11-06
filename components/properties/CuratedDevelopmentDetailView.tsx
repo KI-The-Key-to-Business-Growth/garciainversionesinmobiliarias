@@ -7,6 +7,8 @@ import { googleMapsEmbedUrl, googleMapsSearchUrl } from '@/components/properties
 import { formatPublicLocation, propertyHref } from '@/lib/2clics/format';
 import {
   filterEditorialAmenities,
+  getDevelopmentFallbackLocation,
+  getDevelopmentOfflineName,
   formatCurrencyAmount,
   formatDevelopmentPriceRange,
   getDevelopmentEditorialCuration,
@@ -75,8 +77,14 @@ type DevelopmentSource = {
 
 type CuratedDevelopmentDetailViewProps = {
   curation: DevelopmentCuration;
-  source: DevelopmentSource;
+  // `null` = el desarrollo no tiene hoy ninguna propiedad fuente viva (todas sus unidades salieron
+  // del listado activo). La ficha se publica igual, solo con curaduría editorial: nunca se
+  // inventan datos que hoy solo existen dentro de una unidad de 2Clics.
+  source: DevelopmentSource | null;
   units: PublicProperty[];
+  // `false` si no se pudo confirmar la disponibilidad (falla del proveedor): la tabla no debe
+  // afirmar "sin unidades" ni mostrar un conteo que podría ser parcial.
+  availabilityKnown?: boolean;
   // Assets editoriales locales que existen físicamente (lib/development-assets.ts), por destino.
   assets?: ResolvedEditorialAssets;
 };
@@ -120,27 +128,37 @@ export default function CuratedDevelopmentDetailView({
   curation,
   source,
   units,
+  availabilityKnown = true,
   assets = {},
 }: CuratedDevelopmentDetailViewProps) {
   // `source.title` ya viene resuelto de forma segura por quien arma este prop (publicName
   // confirmado por curaduría → título real de la fuente, como Faena) — `curation.name` queda
   // solo como último fallback defensivo si ni siquiera eso resolvió.
-  const displayName = source.title || curation.name;
-  const description = source.description || '';
+  const displayName = source?.title || getDevelopmentOfflineName(curation);
+  const description = source?.description || '';
   const editorial = getDevelopmentEditorialCuration(curation.slug);
-  const location = editorial?.publicLocation || formatPublicLocation(source.location, source.region);
+  const region: TwoclicsRegion = source?.region ?? (curation.market === 'US' ? 'US' : 'AR');
+  const sourceImages: PublicImage[] = source?.images ?? [];
+  const sourceAmenities: TwoclicsAmenity[] = source?.amenities ?? [];
+  const sourcePrice = source?.price ?? null;
+  const sourceCurrency = source?.currency ?? '';
+  const sourceHidePrice = source?.hidePrice ?? false;
+  const sourcePropertyId = source?.propertyId ?? null;
+  const location =
+    editorial?.publicLocation ||
+    (source ? formatPublicLocation(source.location, source.region) : getDevelopmentFallbackLocation(curation.slug));
 
   // Sin curaduría editorial declarada para este desarrollo: degrada con gracia a apertura + CTA
   // de cierre, sin inventar secciones ni intentar adivinar bloques de una descripción no curada.
   const heroImage: EditorialImage | undefined = assets.hero?.length
     ? assetToImage(assets.hero[0], 0)
     : editorial
-      ? source.images[editorial.heroImageIndex]
-      : source.images[0];
+      ? sourceImages[editorial.heroImageIndex]
+      : sourceImages[0];
   const introSegment = editorial ? editorial.introSegment : ({ type: 'firstParagraphLead' } as const);
   const introText = resolveSourceTextSegment(description, introSegment);
 
-  const sourceUnit = units.find((unit) => unit.propertyId === source.propertyId) || null;
+  const sourceUnit = units.find((unit) => unit.propertyId === sourcePropertyId) || null;
   const hasUnitsTable = Boolean(editorial?.sections.some((section) => section.layout === 'units-table'));
   const unitRows = hasUnitsTable ? resolveDevelopmentUnitRows(curation, units) : [];
   const hasIndependentUnits = !hasUnitsTable && units.length > 1;
@@ -151,13 +169,13 @@ export default function CuratedDevelopmentDetailView({
   // Flow House y One Hollywood no la activan (cada uno por su propio motivo, ver auditoría en
   // lib/desarrollos.ts) — sin cambios de comportamiento para Faena.
   const amenityNames = editorial?.amenities
-    ? filterEditorialAmenities(source.amenities)
+    ? filterEditorialAmenities(sourceAmenities)
         .map((amenity) => amenity.name)
         .filter((name): name is string => Boolean(name))
     : [];
   const showAmenitiesSection = Boolean(editorial?.amenities) && amenityNames.length >= 2;
   const amenitiesImage =
-    editorial?.amenities?.imageIndex !== undefined ? source.images[editorial.amenities.imageIndex] : undefined;
+    editorial?.amenities?.imageIndex !== undefined ? sourceImages[editorial.amenities.imageIndex] : undefined;
   const amenitiesModifier = editorial?.amenities?.layout === 'image-right' ? 'right' : 'left';
 
   // "Rango de precio" (vigésima pasada; gate `priceRepresentsProjectRange` agregado en la
@@ -170,7 +188,7 @@ export default function CuratedDevelopmentDetailView({
   // (nunca un placeholder). Ver `formatDevelopmentPriceRange()` en lib/desarrollos.ts.
   const priceRangeValue =
     editorial?.priceRepresentsProjectRange && editorial.priceInSnapshot !== false
-      ? formatDevelopmentPriceRange(source.price, source.currency, source.hidePrice)
+      ? formatDevelopmentPriceRange(sourcePrice, sourceCurrency, sourceHidePrice)
       : null;
   const priceRangeField: DevelopmentSnapshotField | null = priceRangeValue
     ? { label: 'Rango de precio', value: priceRangeValue }
@@ -179,7 +197,7 @@ export default function CuratedDevelopmentDetailView({
   // "Interiores"/"Interiores y residencias" (FASE 4, vigésima pasada) — opt-in por desarrollo,
   // mismo patrón que `amenities`. Se renderiza DESPUÉS del bloque de amenities (cuando ambos están
   // activos) para respetar la secuencia editorial pedida: Amenities → Interiores → CTA.
-  const interiorsImages = editorial?.interiors ? resolveSectionImages(source.images, editorial.interiors.imageIndexes) : [];
+  const interiorsImages = editorial?.interiors ? resolveSectionImages(sourceImages, editorial.interiors.imageIndexes) : [];
   const showInteriorsSection = Boolean(editorial?.interiors) && interiorsImages.length > 0;
 
   return (
@@ -216,14 +234,15 @@ export default function CuratedDevelopmentDetailView({
               editorial,
               unitRows,
               assets,
-              images: source.images,
+              images: sourceImages,
               description,
               priceRangeField,
               displayName,
-              sourcePrice: source.price,
-              sourceCurrency: source.currency,
-              sourceHidePrice: source.hidePrice,
+              sourcePrice,
+              sourceCurrency,
+              sourceHidePrice,
               referenceUnit: sourceUnit,
+              availabilityKnown,
             }),
           )
         : null}
@@ -318,14 +337,22 @@ export default function CuratedDevelopmentDetailView({
                   `Consultanos para conocer unidades disponibles, precios y condiciones vigentes de ${displayName}.`}
               </p>
             </div>
-            <PropertyInquiryPanel
-              propertyId={source.propertyId}
-              propertyTitle={displayName}
-              propertyRegion={source.region}
-              label={editorial?.ctaLabel || 'Consultar disponibilidad'}
-              modalTitle={editorial?.ctaModalTitle}
-              initialMessage={editorial?.ctaInitialMessage}
-            />
+            {sourcePropertyId ? (
+              <PropertyInquiryPanel
+                propertyId={sourcePropertyId}
+                propertyTitle={displayName}
+                propertyRegion={region}
+                label={editorial?.ctaLabel || 'Consultar disponibilidad'}
+                modalTitle={editorial?.ctaModalTitle}
+                initialMessage={editorial?.ctaInitialMessage}
+              />
+            ) : (
+              // Sin propiedad viva no hay a qué unidad atar la consulta específica: se deriva al
+              // contacto general (no se envía un lead contra una propiedad inactiva).
+              <Link className="btn btn-primary" href="/contacto">
+                {editorial?.ctaLabel || 'Consultar disponibilidad'}
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -408,6 +435,7 @@ type SectionContext = {
   sourceCurrency: string;
   sourceHidePrice: boolean;
   referenceUnit: PublicProperty | null;
+  availabilityKnown: boolean;
 };
 
 function renderSection(section: DevelopmentSection, ctx: SectionContext) {
@@ -691,13 +719,27 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
 
   if (section.layout === 'units-table') {
     const rows = ctx.unitRows;
-    if (!rows.length) return null;
+    // Sin unidades activas: el desarrollo sigue publicado y la sección lo dice sin inventar stock.
+    // Si la disponibilidad no se pudo confirmar (falla del proveedor), no se afirma nada.
+    if (!rows.length) {
+      if (!ctx.availabilityKnown) return null;
+      return (
+        <section key={section.key} id={section.key} className="project-units-table-section">
+          <div className="container">
+            <div className="project-units-heading">
+              <h2>{section.title}</h2>
+              <p>Sin unidades disponibles actualmente</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
     return (
       <section key={section.key} id={section.key} className="project-units-table-section">
         <div className="container">
           <div className="project-units-heading">
             <h2>{section.title}</h2>
-            <p>{formatUnitsCount(rows)}</p>
+            {ctx.availabilityKnown ? <p>{formatUnitsCount(rows)}</p> : null}
           </div>
           <table className="project-units-table">
             <thead>

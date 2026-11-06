@@ -34,7 +34,9 @@ type CuratedDevelopmentCardProps = {
 // (developers/brokers) sí los muestren.
 export default function CuratedDevelopmentCard({ curation, source, variant = 'default' }: CuratedDevelopmentCardProps) {
   const href = `/desarrollos/${curation.slug}`;
-  const location = formatPublicLocation(source.location, source.region);
+  // Sin propiedad fuente viva (`location` null) se usa la ubicación ya curada, nunca nada inventado.
+  const location =
+    source.location && source.region ? formatPublicLocation(source.location, source.region) : source.locationText || '';
   // `source.title` ya viene resuelto de forma segura desde `toDevelopmentCardSource()`
   // (publicName confirmado por curaduría cuando el título real de 2Clics es deficiente/genérico
   // → título real de la fuente cuando es válido, como Faena) — `curation.name` queda solo como

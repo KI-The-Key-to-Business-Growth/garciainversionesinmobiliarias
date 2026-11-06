@@ -7,12 +7,12 @@ import CuratedDevelopmentDetailView from '@/components/properties/CuratedDevelop
 import DevelopmentDetailView from '@/components/properties/DevelopmentDetailView';
 import ListingState from '@/components/properties/ListingState';
 import { formatLocation } from '@/lib/2clics/format';
-import { getPublicDevelopmentById, getPublicPropertyById } from '@/lib/2clics/listings';
+import { getPublicDevelopmentById } from '@/lib/2clics/listings';
+import { loadDevelopment } from '@/lib/development-source';
 import { resolveDevelopmentAssets, resolveDevelopmentHeroImage } from '@/lib/development-assets';
 import { buildShareMetadata } from '@/lib/share-metadata';
-import { getDevelopmentEditorialCuration, resolveSafeDescription } from '@/lib/desarrollos';
+import { getDevelopmentEditorialCuration, getDevelopmentFallbackLocation, getDevelopmentOfflineName, resolveSafeDescription } from '@/lib/desarrollos';
 import { getDevelopmentBySlug, isDevelopmentPublic } from '@/lib/site-curation';
-import type { PublicProperty } from '@/lib/2clics/types';
 
 type DevelopmentDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -41,21 +41,23 @@ export async function generateMetadata({ params }: DevelopmentDetailPageProps): 
   const curation = getDevelopmentBySlug(id);
   if (curation && !isDevelopmentPublic(curation)) redirect(HIDDEN_DEVELOPMENT_REDIRECT);
   if (curation) {
-    const source = await getPublicPropertyById(curation.sourcePropertyId);
+    const { sourceProperty } = await loadDevelopment(curation);
     // Prioridad: nombre público confirmado por curaduría → título real de 2Clics (Faena) →
     // nombre editorial interno como último fallback defensivo (decimosexta pasada).
-    const displayName = curation.publicName || source.property?.title || curation.name;
+    const displayName = curation.publicName || sourceProperty?.title || getDevelopmentOfflineName(curation);
     // Nunca la descripción comercial cruda completa como meta description/OG (puede traer precios,
     // cronogramas o claims no publicables) salvo que haya curaduría editorial propia que ya la usa
     // completa y aprobada (Faena) — ver `resolveSafeDescription` en lib/desarrollos.ts.
     const editorial = getDevelopmentEditorialCuration(curation.slug);
-    const safeDescription = source.property
-      ? resolveSafeDescription(source.property.description || '', editorial)
+    const safeDescription = sourceProperty
+      ? resolveSafeDescription(sourceProperty.description || '', editorial)
       : '';
-    const description = safeDescription || (source.property ? formatLocation(source.property.location) : undefined);
+    const description =
+      safeDescription ||
+      (sourceProperty ? formatLocation(sourceProperty.location) : getDevelopmentFallbackLocation(curation.slug) || undefined);
     // Preview social = la misma imagen de apertura que muestra la ficha (render oficial local o
     // portada curada de 2Clics) — nunca `images[0]` a ciegas (en Benavídez era una foto de obra).
-    const image = resolveDevelopmentHeroImage(curation.slug, source.property?.images || []);
+    const image = resolveDevelopmentHeroImage(curation.slug, sourceProperty?.images || []);
     return buildShareMetadata({
       title: displayName,
       description,
@@ -91,52 +93,42 @@ export default async function DevelopmentDetailPage({ params }: DevelopmentDetai
   const curation = getDevelopmentBySlug(id);
   if (curation && !isDevelopmentPublic(curation)) redirect(HIDDEN_DEVELOPMENT_REDIRECT);
   if (curation) {
-    const propertyResults = await Promise.all(
-      curation.propertyIds.map((propertyId) => getPublicPropertyById(propertyId)),
-    );
-    const units = propertyResults
-      .map((result) => result.property)
-      .filter((property): property is PublicProperty => property !== null);
-    const sourceProperty =
-      units.find((unit) => unit.propertyId === curation.sourcePropertyId) || units[0] || null;
-    const editorial = sourceProperty ? getDevelopmentEditorialCuration(curation.slug) : null;
+    // Misma resolución de fuente que el índice y la metadata (`loadDevelopment`). El desarrollo NO
+    // depende de ninguna unidad: sin fuente viva (`sourceProperty` null) se publica igual con la
+    // curaduría editorial.
+    const { sourceProperty, units, availabilityKnown } = await loadDevelopment(curation);
+    const editorial = getDevelopmentEditorialCuration(curation.slug);
 
     return (
       <>
         <Header />
         <main>
-          {sourceProperty ? (
-            <CuratedDevelopmentDetailView
-              curation={curation}
-              source={{
-                propertyId: sourceProperty.propertyId,
-                region: sourceProperty.region,
-                title: curation.publicName || sourceProperty.title,
-                location: sourceProperty.location,
-                description: resolveSafeDescription(sourceProperty.description || '', editorial),
-                images: sourceProperty.images,
-                amenities: sourceProperty.amenities,
-                // Con `hidePrice` true, 2Clics marca el precio como no publicable — no alcanza con
-                // que el JSX nunca lo renderice (ya era así antes de esta pasada): el número crudo
-                // seguía viajando en el payload RSC/"ver código fuente" igual, visible aunque la UI
-                // nunca lo pintara. Encontrado auditando Domus Brickell Center (vigesimocuarta
-                // pasada, hidePrice real true) — se corrige acá, en el único punto donde `source` se
-                // arma para CUALQUIER desarrollo, no solo para Domus. Sin cambio de comportamiento
-                // para los 5 desarrollos anteriores (ninguno tiene hidePrice true hoy).
-                price: sourceProperty.hidePrice ? null : sourceProperty.price,
-                currency: sourceProperty.currency,
-                hidePrice: sourceProperty.hidePrice,
-              }}
-              units={units}
-              assets={resolveDevelopmentAssets(curation.slug)}
-            />
-          ) : (
-            <section className="twoclics-detail-section">
-              <div className="container">
-                <ListingState status="error" kind="development" />
-              </div>
-            </section>
-          )}
+          <CuratedDevelopmentDetailView
+            curation={curation}
+            source={
+              sourceProperty
+                ? {
+                    propertyId: sourceProperty.propertyId,
+                    region: sourceProperty.region,
+                    title: curation.publicName || sourceProperty.title,
+                    location: sourceProperty.location,
+                    description: resolveSafeDescription(sourceProperty.description || '', editorial),
+                    images: sourceProperty.images,
+                    amenities: sourceProperty.amenities,
+                    // Con `hidePrice` true, 2Clics marca el precio como no publicable — no alcanza con
+                    // que el JSX nunca lo renderice: el número crudo seguía viajando en el payload
+                    // RSC/"ver código fuente" (encontrado auditando Domus Brickell Center). Se corrige
+                    // acá, en el único punto donde `source` se arma para CUALQUIER desarrollo.
+                    price: sourceProperty.hidePrice ? null : sourceProperty.price,
+                    currency: sourceProperty.currency,
+                    hidePrice: sourceProperty.hidePrice,
+                  }
+                : null
+            }
+            units={units}
+            availabilityKnown={availabilityKnown}
+            assets={resolveDevelopmentAssets(curation.slug)}
+          />
         </main>
         <Footer />
         <WhatsAppFloat />
