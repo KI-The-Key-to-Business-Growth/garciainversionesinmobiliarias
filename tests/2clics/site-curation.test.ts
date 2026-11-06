@@ -2503,8 +2503,8 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
     const html = renderWith(units);
     expect(html).toContain('<h1>Benavídez Village</h1>');
     expect(html).toContain('<h2>Disponibilidad actual</h2>');
-    // 4 disponibles + UF 15 reservada (ver bloque "UF 15 reservada").
-    expect(html).toContain('4 unidades disponibles · 1 reservada');
+    // Sin reservadas en la curación: conteo normal (ver bloque "reservedUnitIds").
+    expect(html).toContain('5 unidades publicadas');
     for (const label of ['UF 11', 'UF 12', 'UF 15', 'UF 16', 'UF 20']) {
       expect(html).toContain(`>${label}<`);
     }
@@ -2522,23 +2522,26 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
 
   it('la cantidad de unidades es dinámica: si 2Clics deja de devolver una, la tabla y el conteo bajan solos', () => {
     const html = renderWith(units.filter((u) => u.propertyId !== 233708));
-    expect(html).toContain('3 unidades disponibles · 1 reservada');
+    expect(html).toContain('4 unidades publicadas');
     expect(html).not.toContain('>UF 11<');
     const curationJson = JSON.stringify(getDevelopmentEditorialCuration('benavidez-village'));
     expect(curationJson).not.toMatch(/5 unidades|cinco unidades/i);
   });
 
-  describe('UF 15 reservada (protección transitoria de publicación, reservedUnitIds)', () => {
-    it('Benavídez declara únicamente 237472 como reservada (hasta que 2Clics la marque VENDIDA)', () => {
-      expect(curation.reservedUnitIds).toEqual([237472]);
-      expect(isReservedPropertyId(237472)).toBe(true);
-      for (const id of [233708, 237474, 233702, 233707]) {
+  describe('UF 15 vendida y reservedUnitIds (curación comercial de García)', () => {
+    // Para probar la funcionalidad general de reservas se usa una curación con una reserva
+    // simulada; la curación real de Benavídez ya no tiene ninguna.
+    const withReserved = { ...curation, reservedUnitIds: [237472] };
+
+    it('UF 15 (237472) YA NO está configurada como reservada; Benavídez no declara reservas hoy', () => {
+      expect(curation.reservedUnitIds ?? []).toEqual([]);
+      for (const id of [233708, 237474, 237472, 233702, 233707]) {
         expect(isReservedPropertyId(id)).toBe(false);
       }
     });
 
-    it('resolveDevelopmentUnitRows marca UF 15 como reserved y las demás no; superficie y orientación siguen en vivo', () => {
-      const rows = resolveDevelopmentUnitRows(curation, units);
+    it('reservedUnitIds sigue funcionando para futuras reservas: resolveDevelopmentUnitRows marca la reservada y las demás no', () => {
+      const rows = resolveDevelopmentUnitRows(withReserved, units);
       const reserved = rows.filter((row) => row.reserved);
       expect(reserved.map((row) => row.propertyId)).toEqual([237472]);
       expect(reserved[0].label).toBe('UF 15');
@@ -2550,8 +2553,14 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
       expect(available.map((row) => row.price)).toEqual(['U$D 144.000', 'U$D 146.000', 'U$D 138.000', 'U$D 140.000']);
     });
 
-    it('la tabla mantiene UF 15 visible con badge "Reservada" y no muestra su precio; las otras 4 filas no cambian', () => {
-      const html = renderWith(units);
+    it('con una reserva simulada la tabla muestra el badge y no el precio; las otras 4 filas no cambian', () => {
+      const html = render(
+        React.createElement(CuratedDevelopmentDetailView, {
+          curation: withReserved,
+          source: toDevSource(source, curation.publicName),
+          units,
+        }),
+      );
       expect(html).toContain('4 unidades disponibles · 1 reservada');
       expect(html).not.toContain('unidades publicadas');
       expect(html).toContain('>UF 15<span class="project-unit-badge-reserved">Reservada</span>');
@@ -2565,21 +2574,15 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
       expect(html).toContain('id="disponibilidad"');
     });
 
-    it('una unidad sin reserva en la curación no muestra ningún estado reservado', () => {
-      const noReserved = { ...curation, reservedUnitIds: undefined };
-      const html = render(
-        React.createElement(CuratedDevelopmentDetailView, {
-          curation: noReserved,
-          source: toDevSource(source, curation.publicName),
-          units,
-        }),
-      );
+    it('sin reservas (curación real) la tabla no muestra ningún estado reservado', () => {
+      const html = renderWith(units);
       expect(html).not.toContain('is-reserved');
+      expect(html).not.toContain('project-unit-badge-reserved');
       expect(html).toContain('5 unidades publicadas');
       expect(html.match(/U\$D 138\.000/g)).toHaveLength(2);
     });
 
-    it('si 237472 desaparece de las propiedades activas (vendida): no aparece en disponibilidad y el conteo baja solo', () => {
+    it('si 237472 desaparece de las propiedades activas (vendida): no aparece en disponibilidad y quedan las 4 unidades activas', () => {
       const withoutUf15 = units.filter((u) => u.propertyId !== 237472);
       const html = renderWith(withoutUf15);
       expect(html).toContain('<h1>Benavídez Village</h1>');
@@ -2591,6 +2594,9 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
       for (const label of ['UF 11', 'UF 12', 'UF 16', 'UF 20']) {
         expect(html).toContain(`>${label}<`);
       }
+      const rows = resolveDevelopmentUnitRows(curation, withoutUf15);
+      expect(rows.map((row) => row.label)).toEqual(['UF 11', 'UF 12', 'UF 16', 'UF 20']);
+      expect(rows.every((row) => !row.reserved)).toBe(true);
     });
 
     it('el contador se calcula desde las filas: singular/plural, sin reservadas y sin disponibles', () => {
@@ -2602,11 +2608,11 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
       expect(formatUnitsCount(rows([true]))).toBe('Sin unidades disponibles · 1 reservada');
     });
 
-    it('ficha /propiedades/237472: badge Reservada, sin precio ni CTA de consulta de la unidad, vuelve al desarrollo', () => {
+    it('ficha de una unidad reservada (PropertyDetailView reserved): badge Reservada, sin precio ni CTA de consulta de la unidad, vuelve al desarrollo', () => {
       const uf15 = units.find((u) => u.propertyId === 237472)!;
       const back = getPropertyBackLink(237472, uf15.operationType);
       const html = render(
-        React.createElement(PropertyDetailView, { property: uf15, backLink: back, reserved: isReservedPropertyId(237472) }),
+        React.createElement(PropertyDetailView, { property: uf15, backLink: back, reserved: true }),
       );
       expect(html).toContain('twoclics-reserved-badge">Reservada<');
       expect(html).not.toContain('138.000');

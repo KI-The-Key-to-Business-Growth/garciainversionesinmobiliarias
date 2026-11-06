@@ -208,11 +208,9 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
       233702: 'UF 16',
       233707: 'UF 20',
     },
-    // UF 15 (237472): comercialmente VENDIDA. PROTECCIÓN TRANSITORIA de publicación: mientras 2Clics
-    // siga devolviéndola como ACTIVE se muestra "Reservada" (nunca disponible con precio/CTA). Una
-    // vez que 2Clics la marque VENDIDA y deje de devolverla, sale sola de la tabla y este id se
-    // retira en un commit de limpieza. El desarrollo no depende de ella.
-    reservedUnitIds: [237472],
+    // Sin unidades reservadas hoy. UF 15 (237472) está VENDIDA en 2Clics y dejó de devolverse como
+    // activa: sale sola de la tabla de disponibilidad. `reservedUnitIds` sigue disponible en el tipo
+    // para futuras reservas reales.
   },
   {
     slug: 'pacheco-central',

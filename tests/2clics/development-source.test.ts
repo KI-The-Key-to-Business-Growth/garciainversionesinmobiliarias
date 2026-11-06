@@ -138,8 +138,7 @@ describe('Benavídez Village — unidades vendidas (404) no afectan al desarroll
       expect(loaded.units.map((u) => u.propertyId)).toEqual(BENAVIDEZ_IDS.filter((id) => id !== sold));
       const html = renderDetail(benavidez, loaded);
       expect(html).toContain('<h1>Benavídez Village</h1>');
-      // UF 15 sigue en reservedUnitIds (protección transitoria): si está presente cuenta como reservada.
-      expect(html).toContain(sold === 237472 ? '4 unidades publicadas' : '3 unidades disponibles · 1 reservada');
+      expect(html).toContain('4 unidades publicadas');
       expect(html).not.toContain(`href="/propiedades/${sold}"`);
     }
   });
@@ -179,13 +178,9 @@ describe('Benavídez Village — unidades vendidas (404) no afectan al desarroll
     expect(html).toContain('>UF 20<span class="project-unit-badge-reserved">Reservada</span>');
   });
 
-  it('12) UF 15 sigue en reservedUnitIds como protección transitoria hasta que 2Clics la marque VENDIDA; mientras 2Clics la devuelve ACTIVE se ve Reservada, nunca disponible', async () => {
-    expect(benavidez.reservedUnitIds).toEqual([237472]);
-    setActive(BENAVIDEZ_IDS);
-    const html = renderDetail(benavidez, await loadDevelopment(benavidez, fetcher));
-    expect(html).toContain('4 unidades disponibles · 1 reservada');
-    expect(html).toContain('>UF 15<span class="project-unit-badge-reserved">Reservada</span>');
-    expect(html.match(/Ver ficha →/g)).toHaveLength(4);
+  it('12) UF 15 ya NO está configurada como reservada (está vendida en 2Clics)', () => {
+    expect(benavidez.reservedUnitIds ?? []).not.toContain(237472);
+    expect(benavidez.reservedUnitIds ?? []).toEqual([]);
   });
 });
 
