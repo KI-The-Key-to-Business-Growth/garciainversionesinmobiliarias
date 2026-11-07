@@ -136,7 +136,7 @@ afterEach(() => {
 
 // ── 1. Curaduría — clasificación + exclusión por item ───────────────────────────────────────
 describe('lib/site-curation — clasificación y exclusión del catálogo estándar', () => {
-  const BENAVIDEZ_IDS = [237474, 233702, 240587, 240588];
+  const BENAVIDEZ_IDS = [237474, 240593, 240587, 240588];
   const OUT_OF_MARKET_IDS = [187676, 187677, 187681, 187682, 187684, 187687, 187719, 201007, 201001, 201063];
 
   it('sincronización 2026-10-15: curaduría = desarrollos activos + 445 N Shore + duplicado Domus defensivo', () => {
@@ -203,19 +203,24 @@ describe('lib/site-curation — clasificación y exclusión del catálogo están
     expect(benavidez?.propertyIds).toContain(benavidez?.sourcePropertyId);
     expect(benavidez?.unitLabels).toEqual({
       237474: 'UF 12',
-      233702: 'UF 16',
+      240593: 'UF 16',
       240587: 'UF 21',
       240588: 'UF 23',
     });
+    expect(benavidez?.sourcePropertyId).toBe(240593);
     expect(benavidez?.reservedUnits).toEqual([{ unitLabel: 'UF 11', propertyId: 233708 }, { unitLabel: 'UF 20' }]);
-    // Fuera de las unidades activas públicas: UF 15 vendida, UF 11 offline, 233707 (2Clics lo
-    // identifica como UF 16) y 240593 (UF 16 D).
-    for (const id of [237472, 233708, 233707, 240593]) {
+    // Fuera de las unidades activas públicas: UF 15 vendida, UF 11 offline, 233702 (UF 16 anterior,
+    // fuera de mercado) y 233707 (fuera de mercado).
+    for (const id of [237472, 233708, 233702, 233707]) {
       expect(benavidez?.propertyIds).not.toContain(id);
     }
     // Un solo desarrollo, no cinco.
     expect(DEVELOPMENTS.filter((d) => d.propertyIds.some((id) => BENAVIDEZ_IDS.includes(id)))).toHaveLength(1);
+    // Todas las unidades del desarrollo, incluida 240593 (UF 16 vigente), quedan fuera de /comprar.
     for (const id of BENAVIDEZ_IDS) {
+      expect(isExcludedFromStandardCatalog(id)).toBe(true);
+    }
+    for (const id of [233702, 233707, 237472, 233708]) {
       expect(isExcludedFromStandardCatalog(id)).toBe(true);
     }
   });
@@ -1651,7 +1656,7 @@ describe('/desarrollos — sistema editorial: snapshot, descripción segura, im�
 
   it('las imágenes elegidas no se repiten entre bloques (Benavídez Village y Pacheco Central)', () => {
     for (const [slug, propertyId, count] of [
-      ['benavidez-village', 233702, 20],
+      ['benavidez-village', 240593, 18],
       ['pacheco-central', 233719, 6],
     ] as const) {
       const curation = getDevelopmentBySlug(slug)!;
@@ -2324,7 +2329,7 @@ describe('/desarrollos — los 4 desarrollos activos (Faena, Benavídez Village,
         ],
       },
     },
-    'benavidez-village': { propertyId: 233702, imageCount: 20, region: 'AR', extra: { price: 138000 } },
+    'benavidez-village': { propertyId: 240593, imageCount: 18, region: 'AR', extra: { price: 138000 } },
     'pacheco-central': { propertyId: 233719, imageCount: 6, region: 'AR', extra: { price: 112000 } },
     'domus-brickell-center': { propertyId: 236682, imageCount: 17, region: 'US', extra: { price: 157500 } },
   };
@@ -2470,7 +2475,7 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
   const curation = getDevelopmentBySlug('benavidez-village')!;
   const unitData: Array<[number, number, number, string]> = [
     [237474, 146000, 125.1, 'NOROESTE'],
-    [233702, 138000, 124, 'SURESTE'],
+    [240593, 138000, 124, 'SURESTE'],
     [240587, 144000, 126.7, 'SURESTE'],
     [240588, 148000, 130.1, 'SURESTE'],
   ];
@@ -2516,7 +2521,7 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
     for (const text of ['U$D 146.000', 'U$D 138.000', 'U$D 144.000', 'U$D 148.000', '126,7 m²', '130,1 m²', '125,1 m²', 'Sureste', 'Noroeste']) {
       expect(html).toContain(text);
     }
-    for (const id of [237474, 233702, 240587, 240588]) {
+    for (const id of [237474, 240593, 240587, 240588]) {
       expect(html).toContain(`href="/propiedades/${id}"`);
     }
     expect(html.match(/Ver ficha →/g)).toHaveLength(4);
@@ -2567,12 +2572,12 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
       expect(html).not.toContain('Ver unidad →');
     });
 
-    it('UF 15 vendida, 240593 (UF 16 D) y 233707 no aparecen en la curación ni en la tabla', () => {
+    it('UF 15 vendida, 233702 (UF 16 anterior) y 233707 no aparecen en la curación ni en la tabla', () => {
       expect(curation.propertyIds).not.toContain(237472);
-      expect(curation.propertyIds).not.toContain(240593);
+      expect(curation.propertyIds).not.toContain(233702);
       expect(curation.propertyIds).not.toContain(233707);
       const html = renderWith(units);
-      for (const text of ['UF 15', 'UF 16 D', '237472', '240593', '233707']) {
+      for (const text of ['UF 15', '237472', '233702', '233707']) {
         expect(html).not.toContain(text);
       }
     });
@@ -2640,10 +2645,10 @@ describe('/desarrollos/benavidez-village — un solo desarrollo con sus unidades
 
     it('la curación real de Benavídez no usa reservedUnitIds (las reservas son offline); las fichas activas no se ven reservadas', () => {
       expect(curation.reservedUnitIds ?? []).toEqual([]);
-      for (const id of [237474, 233702, 240587, 240588, 237472, 233707]) {
+      for (const id of [237474, 240593, 240587, 240588, 237472, 233707, 233702]) {
         expect(isReservedPropertyId(id)).toBe(false);
       }
-      for (const id of [233702, 1001]) {
+      for (const id of [240593, 1001]) {
         const other = units.find((u) => u.propertyId === id) || property({ propertyId: id, price: 250000, currency: 'U$D' });
         const html = render(React.createElement(PropertyDetailView, { property: other, reserved: isReservedPropertyId(id) }));
         expect(html).not.toContain('Reservada');
@@ -2909,7 +2914,7 @@ describe('V2.1 — routing de catálogo, "Volver" contextual y Remeros Beach', (
   });
 
   it('"Volver" depende del activo: desarrollo de la unidad, o Comprar/Alquilar por operación', () => {
-    for (const id of [233702, 237474, 240587, 240588]) {
+    for (const id of [240593, 237474, 240587, 240588]) {
       expect(getPropertyBackLink(id, 'Venta')).toEqual({ href: '/desarrollos/benavidez-village', label: 'Volver a Benavídez Village' });
     }
     expect(getPropertyBackLink(233719, 'Venta')).toEqual({ href: '/desarrollos/pacheco-central', label: 'Volver a Pacheco Central' });

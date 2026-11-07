@@ -54,8 +54,8 @@ export const CURATED_PROPERTIES: CuratedPropertyEntry[] = [
   // UF 21 y UF 23 (activas desde 2026-11-06) — unidades públicas del desarrollo.
   { propertyId: 240587, humanRef: 'GAR-240587', classification: 'desarrollo', excludeFromStandardCatalog: true },
   { propertyId: 240588, humanRef: 'GAR-240588', classification: 'desarrollo', excludeFromStandardCatalog: true },
-  // 240593 ("UF 16 D") — ACTIVA en 2Clics pero fuera de la curación pública hasta nueva decisión:
-  // se excluye de /comprar para que no aparezca como propiedad suelta. No se modifica en 2Clics.
+  // 240593 es hoy la UF 16 activa y publicada (2026-11-06) y reemplaza a 233702: unidad pública del
+  // desarrollo, excluida de /comprar igual que las demás (no aparece como propiedad suelta).
   { propertyId: 240593, humanRef: 'GAR-240593', classification: 'desarrollo', excludeFromStandardCatalog: true },
   // Remeros Beach — 237447 es una UNIDAD TERMINADA EN VENTA (Sky Two; confirmado por Fabiana García,
   // 2026-10). Sigue vinculada al desarrollo (/desarrollos/remeros-beach la muestra como unidad
@@ -217,18 +217,19 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     slug: 'benavidez-village',
     name: 'Benavídez Village',
     publicName: 'Benavídez Village',
-    // 233702 es la unidad de referencia para imágenes/descripción del proyecto (las 5 unidades
-    // comparten el mismo texto). `propertyIds` en orden de UF.
-    sourcePropertyId: 233702,
-    humanRef: 'GAR-233702',
+    // 240593 (UF 16 vigente desde 2026-11-06) es la unidad de referencia para imágenes/descripción
+    // del proyecto (las unidades comparten el mismo texto). `propertyIds` en orden de UF.
+    sourcePropertyId: 240593,
+    humanRef: 'GAR-240593',
     // Unidades ACTIVAS que se resuelven desde 2Clics, en orden de UF. Fuera a propósito:
-    // 237472 (UF 15, VENDIDA), 233708 (UF 11, fuera de mercado → reserva curada), 233707 (2Clics hoy
-    // lo identifica como UF 16, no se asume que sea UF 20) y 240593 ("UF 16 D", sin decisión pública).
-    propertyIds: [237474, 233702, 240587, 240588],
+    // 237472 (UF 15, VENDIDA), 233708 (UF 11, fuera de mercado → reserva curada), 233702 (UF 16
+    // anterior, FUERA DE MERCADO desde 2026-11-06: la UF 16 activa pasó a 240593) y 233707 (fuera de
+    // mercado; no se asocia a UF 20).
+    propertyIds: [237474, 240593, 240587, 240588],
     market: 'AR',
     unitLabels: {
       237474: 'UF 12',
-      233702: 'UF 16',
+      240593: 'UF 16',
       240587: 'UF 21',
       240588: 'UF 23',
     },
