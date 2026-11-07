@@ -5,8 +5,7 @@ import './globals.css';
 import { CANONICAL_BASE_URL } from '@/lib/env';
 import { INSTITUTIONAL_OPEN_GRAPH, INSTITUTIONAL_TWITTER } from '@/lib/share-metadata';
 import WhatsAppTracking from '@/components/tracking/WhatsAppTracking';
-
-const GTM_ID = 'GTM-MBNKBBSW';
+import { GTM_ID, buildGtmBootstrap, shouldRenderGtmNoscript } from '@/lib/gtm';
 
 // Fuentes self-hosted vía next/font (sin request a Google, con métricas de
 // fallback automáticas que evitan layout shift / CLS).
@@ -91,15 +90,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
         />
 
-        {/* Google Tag Manager (noscript) */}
-        <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-            height="0"
-            width="0"
-            style={{ display: 'none', visibility: 'hidden' }}
-          />
-        </noscript>
+        {/* Google Tag Manager (noscript) — solo en builds de producción de Vercel; ver lib/gtm.ts */}
+        {shouldRenderGtmNoscript() ? (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            />
+          </noscript>
+        ) : null}
 
         <WhatsAppTracking />
 
@@ -108,9 +109,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Turnstile NO se carga acá: el script vive en <TurnstileScript /> y se
             incluye solo en las rutas con formulario (hoy, la home). */}
 
-        {/* Google Tag Manager */}
+        {/* Google Tag Manager — la guarda de hostname vive en el propio snippet (lib/gtm.ts): solo
+            carga en los hosts de producción de García (lib/tracking-hosts.ts). */}
         <Script id="gtm" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`}
+          {buildGtmBootstrap()}
         </Script>
       </body>
     </html>
