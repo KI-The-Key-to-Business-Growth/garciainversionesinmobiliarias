@@ -14,6 +14,9 @@ export default defineConfig({
       CRM_HASH: 'testhash',
       CRM_MESSAGE_URL: 'https://crm.test/msg',
       CONTACT_TO_EMAIL: 'alertas@test.local',
+      // Los tests de formularios simulan producción; la restricción de Preview/Development se
+      // prueba con vi.stubEnv('VERCEL_ENV', ...).
+      VERCEL_ENV: 'production',
     },
   },
   resolve: {

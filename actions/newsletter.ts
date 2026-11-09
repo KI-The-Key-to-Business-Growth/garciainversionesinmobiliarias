@@ -10,6 +10,7 @@ import { dbInsertNewsletter } from '@/lib/db/newsletter';
 import { sendEmail } from '@/lib/resend';
 import { createEventId } from '@/lib/tracking';
 import { captureError } from '@/lib/observability';
+import { isProductionRuntime, NON_PRODUCTION_SUBMISSION_MESSAGE } from '@/lib/runtime-env';
 import type { ActionResult } from '@/actions/contact';
 
 // ── Server Action: newsletter ────────────────────────────────────────────────
@@ -62,6 +63,12 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
     };
 
   const eventId = body.event_id || createEventId('newsletter');
+
+  // Preview/Development comparten Supabase y Resend con producción: no escribir ni enviar.
+  if (!isProductionRuntime()) {
+    console.warn('[newsletter] Entorno no productivo: suscripción simulada.');
+    return { ok: true, event_id: eventId, message: NON_PRODUCTION_SUBMISSION_MESSAGE };
+  }
 
   let isNewSubscriber = false;
   try {

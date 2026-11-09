@@ -10,6 +10,7 @@ import {
 } from '@/lib/2clics/client';
 import { MissingTwoclicsCredentialsError } from '@/lib/2clics/config';
 import { checkRate } from '@/lib/security/ratelimit';
+import { isProductionRuntime, NON_PRODUCTION_SUBMISSION_MESSAGE } from '@/lib/runtime-env';
 
 function externalLeadErrorSummary(error: unknown): string {
   if (error instanceof MissingTwoclicsCredentialsError) return 'missing_credentials';
@@ -36,6 +37,12 @@ export async function submitPropertyInquiry(formData: FormData): Promise<Propert
 
   if (!(await checkRate(ip, 'property-inquiry', 5, 15 * 60_000))) {
     return { ok: false, message: 'Demasiadas solicitudes. Intenta de nuevo en unos minutos.' };
+  }
+
+  // Preview/Development comparten la API key de 2Clics con producción: no crear negocios reales.
+  if (!isProductionRuntime()) {
+    console.warn('[2clics] Entorno no productivo: consulta de propiedad simulada.');
+    return { ok: true, message: NON_PRODUCTION_SUBMISSION_MESSAGE };
   }
 
   try {

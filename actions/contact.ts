@@ -17,6 +17,7 @@ import { dbLogIntegration } from '@/lib/db/logs';
 import { sendEmail } from '@/lib/resend';
 import { createEventId } from '@/lib/tracking';
 import { captureError } from '@/lib/observability';
+import { isProductionRuntime, NON_PRODUCTION_SUBMISSION_MESSAGE } from '@/lib/runtime-env';
 
 // ── Server Action: formulario de contacto ────────────────────────────────────
 // Validaciones y respuestas silenciosas anti-bot con paridad con legacy/server.js POST /api/contact.
@@ -125,6 +126,12 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
   const eventId = body.event_id || createEventId('lead');
   const leadType = 'consulta_general';
   const crmRef = `general:${eventId}`;
+
+  // Preview/Development comparten credenciales con producción: no crear negocios ni enviar emails.
+  if (!isProductionRuntime()) {
+    console.warn('[contact] Entorno no productivo: envío simulado. event_id:', eventId);
+    return { ok: true, event_id: eventId, message: NON_PRODUCTION_SUBMISSION_MESSAGE };
+  }
 
   // ── 2Clics: único destino comercial. Sin reintentos automáticos (evita duplicar negocios). ──
   const outcome = await sendGeneralInquiry(
