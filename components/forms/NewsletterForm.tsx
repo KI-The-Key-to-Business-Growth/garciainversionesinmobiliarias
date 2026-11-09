@@ -8,7 +8,7 @@ import { submitNewsletter } from '@/actions/newsletter';
 export default function NewsletterForm() {
   const loadedAtRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
-  const { getToken, reset } = useTurnstile('ts-newsletter-0');
+  const { getToken, reset, required } = useTurnstile('ts-newsletter-0');
 
   useEffect(() => {
     if (loadedAtRef.current) loadedAtRef.current.value = String(Date.now());
@@ -30,7 +30,15 @@ export default function NewsletterForm() {
     try {
       token = await getToken();
     } catch {
-      /* fail-open */
+      token = '';
+    }
+
+    // Con Turnstile requerido no se envía con token vacío: el server lo rechazaría igual.
+    if (required && !token) {
+      alert('No pudimos completar la verificación de seguridad. Recargá la página e intentá nuevamente.');
+      reset();
+      setSubmitting(false);
+      return;
     }
 
     const fd = new FormData(form);

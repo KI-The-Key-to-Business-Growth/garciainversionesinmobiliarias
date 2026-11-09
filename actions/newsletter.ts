@@ -13,7 +13,7 @@ import { captureError } from '@/lib/observability';
 import type { ActionResult } from '@/actions/contact';
 
 // ── Server Action: newsletter ────────────────────────────────────────────────
-// Paridad EXACTA con legacy/server.js POST /api/newsletter (1319-1476).
+// Orden: anti-bot → Turnstile (rechazo ANTES de tocar Supabase) → insert en Supabase → aviso interno.
 
 function toBody(formData: FormData): Record<string, string> {
   const body: Record<string, string> = {};
@@ -138,18 +138,17 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
 </body></html>`,
   });
 
+  // La suscripción ya quedó registrada en Supabase: si solo falla el aviso interno, el usuario
+  // sigue estando suscripto (reportarle error haría que reintente y quede duplicado sin aviso).
+  // El fallo se registra para poder reenviar el aviso a mano.
   if (!emailResult.ok) {
-    console.error('[newsletter] Error de email:', emailResult.error);
-    captureError(new Error(`newsletter email failed: ${emailResult.error}`), {
+    console.error('[newsletter] Aviso interno falló (suscripción registrada):', emailResult.error);
+    captureError(new Error(`newsletter notification failed: ${emailResult.error}`), {
       source: 'newsletter-email',
     });
-    return {
-      ok: false,
-      message: 'No pudimos procesar la suscripción. Por favor intentá de nuevo más tarde.',
-      ...(isProduction ? {} : { debug_error: emailResult.error }),
-    } as ActionResult;
+    return { ok: true, event_id: eventId, message: 'Suscripción recibida correctamente.' };
   }
 
-  console.log('[newsletter] Email enviado correctamente.');
+  console.log('[newsletter] Aviso interno enviado correctamente.');
   return { ok: true, event_id: eventId, message: 'Suscripción recibida correctamente.' };
 }

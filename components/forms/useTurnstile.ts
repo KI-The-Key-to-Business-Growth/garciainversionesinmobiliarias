@@ -4,12 +4,17 @@ import { useCallback, useEffect, useRef } from 'react';
 
 // Turnstile invisible — porta el motor de legacy/public/assets/js/site.js
 // (render explícito, execution:'execute', appearance:'interaction-only').
-// Sin NEXT_PUBLIC_TURNSTILE_SITE_KEY el widget no se renderiza y getToken
-// devuelve '' (el server hace fail-open si TURNSTILE_SECRET_KEY tampoco está).
+// Sin NEXT_PUBLIC_TURNSTILE_SITE_KEY el widget no se renderiza y getToken devuelve '' (en ese caso
+// `required` es false y el formulario puede enviarse: el server también saltea si no hay secret).
+// Con site key configurada, `required` es true: si getToken devuelve '' el formulario NO debe
+// enviarse (el server rechaza tokens vacíos cuando hay secret key).
 
 // Site key de Turnstile vía env var pública (configurada en Vercel). Sin ella, el
 // widget no se renderiza y getToken devuelve '' (el server valida server-side).
 const SITEKEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+// Si el desafío no responde (script bloqueado, desafío invisible que pide interacción), no se
+// deja el formulario colgado: se resuelve '' y el formulario muestra un error claro.
+const TOKEN_TIMEOUT_MS = 12_000;
 
 type TurnstileApi = {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string;
@@ -44,7 +49,7 @@ export function useTurnstile(containerId: string) {
           pendingResolve.current = null;
         },
         'error-callback': () => {
-          console.warn('[Turnstile] Error en verificación — fail-open');
+          console.warn('[Turnstile] Error en verificación del desafío');
           pendingResolve.current?.('');
           pendingResolve.current = null;
         },
@@ -78,7 +83,15 @@ export function useTurnstile(containerId: string) {
           resolve('');
           return;
         }
-        pendingResolve.current = resolve;
+        const settle = (token: string) => {
+          clearTimeout(timer);
+          resolve(token);
+        };
+        const timer = setTimeout(() => {
+          if (pendingResolve.current === settle) pendingResolve.current = null;
+          resolve('');
+        }, TOKEN_TIMEOUT_MS);
+        pendingResolve.current = settle;
         window.turnstile.execute(widgetId.current);
       }),
     [],
@@ -88,5 +101,5 @@ export function useTurnstile(containerId: string) {
     if (window.turnstile && widgetId.current !== null) window.turnstile.reset(widgetId.current);
   }, []);
 
-  return { getToken, reset };
+  return { getToken, reset, required: Boolean(SITEKEY) };
 }

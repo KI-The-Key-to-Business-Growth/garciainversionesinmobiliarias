@@ -3,7 +3,7 @@ import { getSupabase } from '@/lib/supabase';
 
 // ── Suscriptor de newsletter ─────────────────────────────────────────────────
 // Portado de legacy/server.js:708-727. Maneja unique_violation (23505) → isNew:false.
-// Sin Supabase: en serverless no se persiste (filesystem read-only) → isNew:true.
+// Sin Supabase configurado: lanza error. Nunca se informa éxito si la suscripción no se registró.
 
 export async function dbInsertNewsletter({
   email,
@@ -20,8 +20,7 @@ export async function dbInsertNewsletter({
 }): Promise<{ isNew: boolean }> {
   const supabase = getSupabase();
   if (!supabase) {
-    // Sin DB configurada → se asume nuevo (no hay forma de deduplicar sin persistencia)
-    return { isNew: true };
+    throw new Error('supabase_not_configured');
   }
 
   const { error } = await supabase

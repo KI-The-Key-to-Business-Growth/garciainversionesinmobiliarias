@@ -9,7 +9,7 @@ import { submitContact } from '@/actions/contact';
 export default function ContactForm() {
   const loadedAtRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
-  const { getToken, reset } = useTurnstile('ts-contact-0');
+  const { getToken, reset, required } = useTurnstile('ts-contact-0');
 
   useEffect(() => {
     // Timestamp anti-bot (timing check) al montar.
@@ -25,7 +25,15 @@ export default function ContactForm() {
     try {
       token = await getToken();
     } catch {
-      /* fail-open: el server valida */
+      token = '';
+    }
+
+    // Con Turnstile requerido no se envía con token vacío: el server lo rechazaría igual.
+    if (required && !token) {
+      alert('No pudimos completar la verificación de seguridad. Recargá la página e intentá nuevamente.');
+      reset();
+      setSubmitting(false);
+      return;
     }
 
     const fd = new FormData(form);

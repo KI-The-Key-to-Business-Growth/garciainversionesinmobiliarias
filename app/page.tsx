@@ -7,6 +7,7 @@ import Hero from '@/components/sections/Hero';
 import Trayectoria from '@/components/sections/Trayectoria';
 import SelectedOpportunities from '@/components/home/SelectedOpportunities';
 import Newsletter from '@/components/sections/Newsletter';
+import TurnstileScript from '@/components/forms/TurnstileScript';
 import { INSTITUTIONAL_OPEN_GRAPH } from '@/lib/share-metadata';
 
 // El Home conserva su metadata institucional (layout raíz) y es la única página que declara la
@@ -33,6 +34,7 @@ export default function HomePage() {
         <Trayectoria />
       </main>
       <Newsletter />
+      <TurnstileScript />
       <Footer />
       <WhatsAppFloat />
       <RevealObserver />
