@@ -48,7 +48,7 @@ salvo necesidad futura explícitamente aprobada.
 | Flujo | Trigger | Camino | Estado |
 |---|---|---|---|
 | Consulta de una propiedad puntual | Modal "Consultar esta propiedad" en la ficha | `actions/property-inquiry.ts` → `lib/2clics/client.ts` → `POST /api/lead/message` en `api.ext.2clics.com.ar` | ACTUAL, arquitectura nueva |
-| Contacto general del Home | Formulario de contacto | `actions/contact.ts` → `lib/crm/leads.ts` → `CRM_MESSAGE_URL` (`api.2clics.com.ar`, host viejo) con `CRM_HASH`/`CRM_AGENT_ID` | ACTUAL Y EN USO / PENDIENTE DE REVISIÓN ARQUITECTÓNICA — no migrar sin pedido explícito, puede estar procesando leads reales |
+| Contacto general (`/contacto`) | Formulario de contacto | `actions/contact.ts` → `lib/2clics/general-inquiry.ts` → `POST /api/lead/message` (sin propiedad, `retries: 0`). Respaldo por Resend si 2Clics falla o el resultado es incierto (timeout/red/5xx). `lib/crm/leads.ts` (host viejo) queda sin uso desde este flujo | ACTUAL (migrado, pendiente de prueba real en producción) |
 
 ## Webhook legacy (todavía cableado)
 

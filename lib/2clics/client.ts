@@ -386,6 +386,9 @@ export class TwoclicsClient {
   sendLeadMessage(
     region: TwoclicsRegion,
     input: TwoclicsLeadMessageInput,
+    // Opcional: sin `retries` se conserva el comportamiento histórico (consultas de fichas). El
+    // contacto general pasa `retries: 0` porque un reintento tras timeout podría duplicar el negocio.
+    options: { retries?: number } = {},
   ): Promise<TwoclicsLeadMessageResponse> {
     const cfg = requireTwoclicsRegionConfig(region);
     const body: TwoclicsLeadMessageInput = { ...input };
@@ -396,7 +399,11 @@ export class TwoclicsClient {
     }
 
     assertLeadTarget(body);
-    return this.request(region, '/api/lead/message', { method: 'POST', body });
+    return this.request(region, '/api/lead/message', {
+      method: 'POST',
+      body,
+      ...(options.retries !== undefined ? { retries: options.retries } : {}),
+    });
   }
 }
 

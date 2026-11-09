@@ -12,8 +12,17 @@ vi.mock('next/headers', () => ({
     ]),
 }));
 
-// Resend mockeado a ok (sólo se usa en el path de fallo de CRM).
+// Resend mockeado a ok (sólo se usa en el path de respaldo).
 vi.mock('@/lib/resend', () => ({ sendEmail: async () => ({ ok: true, result: {} }) }));
+
+// 2Clics mockeado: ningún test de este archivo hace requests reales.
+const { sendLeadMessage } = vi.hoisted(() => ({
+  sendLeadMessage: vi.fn(async (..._args: unknown[]) => ({ status: 'success' })),
+}));
+vi.mock('@/lib/2clics/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/2clics/client')>()),
+  twoclicsClient: { sendLeadMessage },
+}));
 
 import { submitContact } from '@/actions/contact';
 import { _resetRateLimit } from '@/lib/security/ratelimit';
@@ -35,7 +44,7 @@ const VALID = {
 
 beforeEach(() => {
   _resetRateLimit();
-  global.fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) })) as never;
+  sendLeadMessage.mockClear();
 });
 
 describe('submitContact — paridad de validaciones con server.js', () => {
@@ -101,7 +110,7 @@ describe('submitContact — éxito y rate limit', () => {
     expect(r.ok).toBe(true);
     expect(r.message).toBe('Consulta recibida correctamente.');
     expect(r.event_id).toBeTruthy();
-    expect(global.fetch).toHaveBeenCalledOnce(); // envío al CRM
+    expect(sendLeadMessage).toHaveBeenCalledOnce(); // envío a 2Clics
   });
 
   it('6º envío en la ventana → rate limited', async () => {

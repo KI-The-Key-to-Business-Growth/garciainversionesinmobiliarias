@@ -110,3 +110,54 @@ describe('TwoclicsClient.sendLeadMessage — nunca reintenta un fail ambiguo', (
     expect(result).toMatchObject({ status: 'fail' });
   });
 });
+
+// No regresión de las consultas de fichas: la opción `retries` de `sendLeadMessage` es opt-in. Sin
+// ella el comportamiento es el histórico; el contacto general la usa con 0 para no duplicar negocios.
+describe('TwoclicsClient.sendLeadMessage — opción retries (no regresión de fichas)', () => {
+  const PROPERTY_LEAD = {
+    property_app_id: 123,
+    name: 'Ana',
+    email: 'ana@example.com',
+    phone: '+54 9 11 5555 5555',
+    message: 'Quiero coordinar una visita.',
+  };
+  const serverError = { ok: false, status: 503, text: async () => '{"status":"fail"}' };
+
+  it('sin opciones (fichas): conserva el comportamiento histórico y reintenta ante 5xx', async () => {
+    const { twoclicsClient } = await loadClient();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(serverError)
+      .mockResolvedValueOnce(jsonResponse({ status: 'success' }));
+    global.fetch = fetchMock as never;
+
+    const result = await twoclicsClient.sendLeadMessage('AR', PROPERTY_LEAD);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({ status: 'success' });
+    // El body de la ficha conserva property_app_id y no agrega agent/realEstate.
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(sent).toMatchObject({ property_app_id: 123 });
+    expect(sent).not.toHaveProperty('agent');
+    expect(sent).not.toHaveProperty('realEstate');
+  });
+
+  it('con retries: 0 (contacto general): un solo intento aunque falle con 5xx', async () => {
+    const { twoclicsClient } = await loadClient();
+    const fetchMock = vi.fn().mockResolvedValue(serverError);
+    global.fetch = fetchMock as never;
+
+    await expect(
+      twoclicsClient.sendLeadMessage(
+        'AR',
+        { name: 'Ana', email: 'ana@example.com', message: 'Hola' },
+        { retries: 0 },
+      ),
+    ).rejects.toMatchObject({ statusCode: 503 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Consulta general: sin property/development/agent/realEstate inventados.
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(sent).toEqual({ name: 'Ana', email: 'ana@example.com', message: 'Hola' });
+  });
+});
