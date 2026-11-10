@@ -3,8 +3,15 @@ import 'server-only';
 // ── Cloudflare Turnstile ─────────────────────────────────────────────────────
 // Verificación humana real en formularios. FAIL-CLOSED: si Cloudflare no responde, tarda más de 5 s
 // o devuelve algo ilegible, el envío se RECHAZA (resultado 'unavailable'); nunca se saltea la
-// protección. Un token vacío o rechazado es 'invalid'. Sin TURNSTILE_SECRET_KEY solo se saltea la
-// validación (desarrollo local); en Vercel la clave está configurada.
+// protección. Un token vacío o rechazado es 'invalid'. Sin TURNSTILE_SECRET_KEY: en producción de
+// Vercel (VERCEL=1 y VERCEL_ENV=production) se rechaza ('unavailable', fail-closed); solo en
+// desarrollo local y en Preview se saltea la validación (los envíos externos ya están simulados).
+
+// Producción real de Vercel. Se exige también VERCEL=1 (lo fija Vercel en cada despliegue) para que
+// `next start` local con VERCEL_ENV=production no quede bloqueado en desarrollo.
+function isVercelProduction(): boolean {
+  return process.env.VERCEL === '1' && process.env.VERCEL_ENV === 'production';
+}
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
@@ -23,7 +30,12 @@ export async function verifyTurnstileResult(token: string, ip: string): Promise<
   const secret = process.env.TURNSTILE_SECRET_KEY || '';
 
   if (!secret) {
-    // Sin clave configurada: skip (útil en desarrollo local)
+    if (isVercelProduction()) {
+      // Producción sin clave: nunca se omite la validación.
+      console.error('[Turnstile] TURNSTILE_SECRET_KEY ausente en producción — rechazando (fail-closed).');
+      return 'unavailable';
+    }
+    // Local / Preview: skip (útil en desarrollo)
     console.warn('[Turnstile] TURNSTILE_SECRET_KEY no configurada — saltando validación.');
     return 'ok';
   }
