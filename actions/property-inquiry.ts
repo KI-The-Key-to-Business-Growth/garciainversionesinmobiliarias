@@ -10,6 +10,7 @@ import {
 } from '@/lib/2clics/client';
 import { MissingTwoclicsCredentialsError } from '@/lib/2clics/config';
 import { checkRate } from '@/lib/security/ratelimit';
+import { verifyTurnstile } from '@/lib/security/turnstile';
 import { isProductionRuntime, NON_PRODUCTION_SUBMISSION_MESSAGE } from '@/lib/runtime-env';
 
 function externalLeadErrorSummary(error: unknown): string {
@@ -37,6 +38,15 @@ export async function submitPropertyInquiry(formData: FormData): Promise<Propert
 
   if (!(await checkRate(ip, 'property-inquiry', 5, 15 * 60_000))) {
     return { ok: false, message: 'Demasiadas solicitudes. Intenta de nuevo en unos minutos.' };
+  }
+
+  // Cloudflare Turnstile verificado en el servidor (token vacío o inválido → rechazo).
+  const turnstileToken = String(formData.get('cf-turnstile-response') || '');
+  if (!(await verifyTurnstile(turnstileToken, ip))) {
+    return {
+      ok: false,
+      message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.',
+    };
   }
 
   // Preview/Development comparten la API key de 2Clics con producción: no crear negocios reales.

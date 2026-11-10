@@ -5,6 +5,8 @@ import { createPortal } from 'react-dom';
 import { submitPropertyInquiry } from '@/actions/property-inquiry';
 import type { PropertyInquiryState } from '@/lib/2clics/property-inquiry';
 import type { TwoclicsRegion } from '@/lib/2clics/types';
+import TurnstileScript from '@/components/forms/TurnstileScript';
+import { useTurnstile } from '@/components/forms/useTurnstile';
 
 type PropertyInquiryPanelProps = {
   propertyId: number | null;
@@ -33,9 +35,7 @@ export default function PropertyInquiryPanel({
 }: PropertyInquiryPanelProps) {
   const [open, setOpen] = useState(false);
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [state, setState] = useState<PropertyInquiryState>(INITIAL_STATE);
-  const loadedAtRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setPortalRoot(document.body);
@@ -43,7 +43,6 @@ export default function PropertyInquiryPanel({
 
   useEffect(() => {
     if (!open) return;
-    if (loadedAtRef.current) loadedAtRef.current.value = String(Date.now());
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
@@ -57,27 +56,6 @@ export default function PropertyInquiryPanel({
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    formData.set('page_url', window.location.href);
-    setSubmitting(true);
-
-    try {
-      const result = await submitPropertyInquiry(formData);
-      setState(result);
-      if (result.ok && result.message) form.reset();
-    } catch {
-      setState({
-        ok: false,
-        message: 'No pudimos procesar tu consulta en este momento. Por favor intenta de nuevo.',
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   return (
     <>
@@ -93,6 +71,8 @@ export default function PropertyInquiryPanel({
       >
         {label}
       </button>
+
+      {open ? <TurnstileScript /> : null}
 
       {open && portalRoot
         ? createPortal(
@@ -122,6 +102,94 @@ export default function PropertyInquiryPanel({
             <h3 id="property-inquiry-title">{modalTitle}</h3>
             <p className="twoclics-inquiry-property">{propertyTitle}</p>
 
+            <PropertyInquiryForm
+              propertyId={propertyId}
+              propertyTitle={propertyTitle}
+              propertyRegion={propertyRegion}
+              initialMessage={initialMessage}
+              state={state}
+              setState={setState}
+            />
+          </section>
+        </div>,
+          portalRoot,
+        )
+        : null}
+    </>
+  );
+}
+
+type PropertyInquiryFormProps = {
+  propertyId: number | null;
+  propertyTitle: string;
+  propertyRegion: TwoclicsRegion;
+  initialMessage: string;
+  state: PropertyInquiryState;
+  setState: (state: PropertyInquiryState) => void;
+};
+
+// El formulario vive en su propio componente: se monta al abrir el modal, así el contenedor de
+// Turnstile ya existe en el DOM cuando useTurnstile renderiza el widget.
+function PropertyInquiryForm({
+  propertyId,
+  propertyTitle,
+  propertyRegion,
+  initialMessage,
+  state,
+  setState,
+}: PropertyInquiryFormProps) {
+  const [submitting, setSubmitting] = useState(false);
+  const loadedAtRef = useRef<HTMLInputElement>(null);
+  const { getToken, reset, required } = useTurnstile('ts-property-inquiry');
+
+  useEffect(() => {
+    if (loadedAtRef.current) loadedAtRef.current.value = String(Date.now());
+  }, []);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setSubmitting(true);
+
+    let token = '';
+    try {
+      token = await getToken();
+    } catch {
+      token = '';
+    }
+
+    // Con Turnstile requerido no se envía con token vacío: el servidor lo rechazaría igual.
+    if (required && !token) {
+      setState({
+        ok: false,
+        message: 'No pudimos completar la verificación de seguridad. Recargá la página e intentá nuevamente.',
+      });
+      reset();
+      setSubmitting(false);
+      return;
+    }
+
+    const formData = new FormData(form);
+    formData.set('page_url', window.location.href);
+    formData.set('cf-turnstile-response', token);
+
+    try {
+      const result = await submitPropertyInquiry(formData);
+      setState(result);
+      if (result.ok && result.message) form.reset();
+      if (!result.ok) reset();
+    } catch {
+      setState({
+        ok: false,
+        message: 'No pudimos procesar tu consulta en este momento. Por favor intenta de nuevo.',
+      });
+      reset();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
             <form className="twoclics-inquiry-form" onSubmit={handleSubmit}>
               <input type="hidden" name="property_app_id" value={propertyId || ''} />
               <input type="hidden" name="property_title" value={propertyTitle} />
@@ -169,15 +237,11 @@ export default function PropertyInquiryPanel({
                 </p>
               ) : null}
 
+              {/* Turnstile invisible: contenedor oculto asociado al formulario */}
+              <div id="ts-property-inquiry" aria-hidden="true" style={{ display: 'none' }} />
               <button className="btn btn-primary" type="submit" disabled={submitting || !propertyId}>
                 {submitting ? 'Enviando...' : 'Enviar consulta'}
               </button>
             </form>
-          </section>
-        </div>,
-          portalRoot,
-        )
-        : null}
-    </>
   );
 }
