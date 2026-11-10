@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import CuratedDevelopmentDetailView from '@/components/properties/CuratedDevelopmentDetailView';
+import PropertyViewTracker from '@/components/tracking/PropertyViewTracker';
 import DevelopmentDetailView from '@/components/properties/DevelopmentDetailView';
 import ListingState from '@/components/properties/ListingState';
 import { formatLocation } from '@/lib/2clics/format';
@@ -103,6 +104,12 @@ export default async function DevelopmentDetailPage({ params }: DevelopmentDetai
       <>
         <Header />
         <main>
+          <PropertyViewTracker
+            contentType="development"
+            propertyId={sourceProperty?.propertyId ?? curation.sourcePropertyId}
+            developmentSlug={curation.slug}
+            market={curation.market}
+          />
           <CuratedDevelopmentDetailView
             curation={curation}
             source={

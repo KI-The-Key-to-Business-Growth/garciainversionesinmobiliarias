@@ -8,6 +8,7 @@ import type { TwoclicsRegion } from '@/lib/2clics/types';
 import TurnstileScript from '@/components/forms/TurnstileScript';
 import { useTurnstile } from '@/components/forms/useTurnstile';
 import { getAttributionPayload } from '@/lib/attribution-client';
+import { trackEventOnce } from '@/lib/analytics';
 
 type PropertyInquiryPanelProps = {
   propertyId: number | null;
@@ -179,6 +180,19 @@ function PropertyInquiryForm({
     try {
       const result = await submitPropertyInquiry(formData);
       setState(result);
+      // generate_lead: UNA sola vez, solo con la consulta efectivamente recibida (event_id lo
+      // entrega el servidor tras enviar a 2Clics o respaldar por email; los envíos simulados de
+      // Preview/Development y los rechazos no traen event_id y no cuentan).
+      if (result.ok && result.event_id) {
+        trackEventOnce('generate_lead', result.event_id, {
+          lead_type: 'consulta_propiedad',
+          form_name: 'Consulta de propiedad',
+          content_type: 'property',
+          property_id: result.property_id,
+          development_slug: result.development_slug,
+          page_location: window.location.href,
+        });
+      }
       if (result.ok && result.message) form.reset();
       if (!result.ok) reset();
     } catch {

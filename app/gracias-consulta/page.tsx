@@ -37,7 +37,7 @@ export default function GraciasPage() {
       <Footer />
       <WhatsAppFloat />
 
-      {/* Solo vista de página (engagement). NO es una conversión: el lead se mide con generate_lead. */}
+      {/* Solo vista de página (engagement). NO es una conversión: el lead se mide al enviar el formulario. */}
       <ThankYouTracking />
     </>
   );

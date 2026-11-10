@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import InvestmentOpportunityDetailView from '@/components/properties/InvestmentOpportunityDetailView';
 import ListingState from '@/components/properties/ListingState';
+import PropertyViewTracker from '@/components/tracking/PropertyViewTracker';
 import { getPublicPropertyById } from '@/lib/2clics/listings';
 import { getInvestmentEditorialCuration, resolveInvestmentImage } from '@/lib/investments';
 import { getInvestmentOpportunityBySlug } from '@/lib/site-curation';
@@ -47,14 +48,21 @@ export default async function InvestmentOpportunityPage({ params }: InvestmentOp
       <Header />
       <main>
         {sourceProperty ? (
-          <InvestmentOpportunityDetailView
-            opportunity={opportunity}
-            source={{
-              propertyId: sourceProperty.propertyId,
-              region: sourceProperty.region,
-              images: sourceProperty.images,
-            }}
-          />
+          <>
+            <PropertyViewTracker
+              contentType="investment"
+              propertyId={sourceProperty.propertyId}
+              market={sourceProperty.region}
+            />
+            <InvestmentOpportunityDetailView
+              opportunity={opportunity}
+              source={{
+                propertyId: sourceProperty.propertyId,
+                region: sourceProperty.region,
+                images: sourceProperty.images,
+              }}
+            />
+          </>
         ) : (
           <section className="twoclics-detail-section">
             <div className="container">

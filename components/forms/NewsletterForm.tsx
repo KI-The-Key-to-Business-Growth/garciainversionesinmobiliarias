@@ -59,7 +59,7 @@ export default function NewsletterForm() {
         reset();
         return;
       }
-      // Evento secundario, separado del circuito comercial (no es generate_lead).
+      // Evento secundario, separado del circuito comercial (no es un lead de venta).
       if (res.event_id) {
         trackEventOnce('newsletter_signup', res.event_id, {
           form_name: 'Newsletter',

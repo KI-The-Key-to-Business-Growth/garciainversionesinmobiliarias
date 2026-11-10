@@ -3,11 +3,13 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
 import ListingState from '@/components/properties/ListingState';
+import PropertyViewTracker from '@/components/tracking/PropertyViewTracker';
 import PropertyDetailView from '@/components/properties/PropertyDetailView';
 import { formatPublicLocation } from '@/lib/2clics/format';
 import { getPublicPropertyById, getRelatedPublicProperties } from '@/lib/2clics/listings';
 import { buildShareMetadata } from '@/lib/share-metadata';
 import {
+  getDevelopmentForPropertyId,
   getInvestmentOpportunityByPropertyId,
   getMasterCatalogExcludedPropertyIds,
   getPropertyBackLink,
@@ -75,12 +77,20 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
     <>
       <main>
         {property ? (
-          <PropertyDetailView
-            property={property}
-            relatedProperties={relatedProperties}
-            backLink={getPropertyBackLink(property.propertyId, property.operationType)}
-            reserved={isReservedPropertyId(property.propertyId)}
-          />
+          <>
+            <PropertyViewTracker
+              contentType="property"
+              propertyId={property.propertyId}
+              developmentSlug={getDevelopmentForPropertyId(property.propertyId)?.slug}
+              market={property.region}
+            />
+            <PropertyDetailView
+              property={property}
+              relatedProperties={relatedProperties}
+              backLink={getPropertyBackLink(property.propertyId, property.operationType)}
+              reserved={isReservedPropertyId(property.propertyId)}
+            />
+          </>
         ) : result.status === 'not-found' ? (
           notFound()
         ) : (
