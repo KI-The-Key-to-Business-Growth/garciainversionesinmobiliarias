@@ -1,6 +1,7 @@
 // Footer premium — mercados activos Argentina/Buenos Aires y Estados Unidos/Miami.
 import React from 'react';
 import Link from 'next/link';
+import ConsentSettingsLink from '@/components/consent/ConsentSettingsLink';
 
 export default function Footer() {
   return (
@@ -109,6 +110,7 @@ export default function Footer() {
           <Link href="/privacidad" className="footer-privacy-link">
             Política de Privacidad
           </Link>
+          <ConsentSettingsLink className="consent-settings-link" />
           <Link href="/#inicio">↑ Volver al inicio</Link>
         </div>
       </div>

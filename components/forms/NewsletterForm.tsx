@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTurnstile } from './useTurnstile';
 import { submitNewsletter } from '@/actions/newsletter';
+import { trackEventOnce } from '@/lib/analytics';
 
 // Formulario de newsletter cableado a la Server Action submitNewsletter.
 export default function NewsletterForm() {
@@ -55,12 +56,13 @@ export default function NewsletterForm() {
         reset();
         return;
       }
-      (window as unknown as { dataLayer?: unknown[] }).dataLayer?.push({
-        event: 'newsletter_signup',
-        event_id: res.event_id,
-        form_name: 'Newsletter',
-        page_location: window.location.href,
-      });
+      // Evento secundario, separado del circuito comercial (no es generate_lead).
+      if (res.event_id) {
+        trackEventOnce('newsletter_signup', res.event_id, {
+          form_name: 'Newsletter',
+          page_location: window.location.href,
+        });
+      }
       form.reset();
       reset();
       showSuccess();

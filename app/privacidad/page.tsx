@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
+import ConsentSettingsLink from '@/components/consent/ConsentSettingsLink';
 
 export const metadata: Metadata = {
   title: 'Política de Privacidad | García Inversiones Inmobiliarias',
@@ -34,7 +35,7 @@ export default function PrivacidadPage() {
           <div className="container">
             <span className="eyebrow">Información legal</span>
             <h1>Política de Privacidad</h1>
-            <p className="privacy-hero-sub">Última actualización: junio de 2026</p>
+            <p className="privacy-hero-sub">Última actualización: noviembre de 2026</p>
           </div>
         </section>
 
@@ -191,7 +192,7 @@ export default function PrivacidadPage() {
                 <section id="herramientas" className="privacy-section">
                   <h2>6. Herramientas de analítica y publicidad</h2>
                   <p>
-                    Este sitio puede utilizar herramientas de medición, analítica y publicidad
+                    Este sitio utiliza herramientas de medición, analítica y publicidad
                     digital, tales como <strong>Google Analytics 4</strong>,{' '}
                     <strong>Google Tag Manager</strong>, <strong>Meta Pixel</strong> y{' '}
                     <strong>Google Ads</strong>, con el objetivo de analizar el uso del sitio, medir
@@ -253,9 +254,28 @@ export default function PrivacidadPage() {
                     </p>
                   </div>
                   <p>
-                    Estas herramientas pueden utilizar <strong>cookies</strong> propias y de
-                    terceros para su funcionamiento.
+                    Estas herramientas utilizan <strong>cookies</strong> propias y de terceros para
+                    su funcionamiento.{' '}
+                    <strong>
+                      No se activan hasta que las aceptás
+                    </strong>{' '}
+                    en el aviso de cookies, y podés rechazarlas o retirar tu consentimiento en
+                    cualquier momento (ver sección 10). No enviamos tu nombre, correo electrónico ni
+                    teléfono a Google Analytics, Google Tag Manager ni Meta a través de estas
+                    herramientas.
                   </p>
+                  <div className="privacy-tool-block">
+                    <h3>Origen de la visita</h3>
+                    <p>
+                      Si aceptás las cookies de analítica o de publicidad, guardamos en tu
+                      dispositivo, por hasta 90 días, el origen de tu visita (por ejemplo, el anuncio
+                      o la campaña desde la que llegaste, la página de entrada y el sitio de
+                      referencia) junto con un identificador de sesión. Si nos enviás una consulta,
+                      asociamos esa información a la consulta para saber qué campañas generan
+                      oportunidades reales; no incluye tus datos de contacto. Si rechazás las
+                      cookies opcionales, no guardamos esta información.
+                    </p>
+                  </div>
                 </section>
 
                 <section id="no-venta" className="privacy-section">
@@ -354,17 +374,29 @@ export default function PrivacidadPage() {
                       que el sitio funcione correctamente.
                     </li>
                     <li>
-                      <strong>Analítica:</strong> cookies de Google Analytics para medir el uso del
-                      sitio de forma estadística y agregada.
+                      <strong>Analítica (opcional):</strong> cookies de Google Analytics para medir
+                      el uso del sitio de forma estadística y agregada.
                     </li>
                     <li>
-                      <strong>Publicidad:</strong> cookies de Google Ads y Meta Pixel para medir
+                      <strong>Publicidad (opcional):</strong> cookies de Google Ads y Meta Pixel para medir
                       conversiones y mostrar anuncios relevantes.
                     </li>
                   </ul>
                   <p>
-                    Podés configurar tu navegador para bloquear o eliminar las cookies. Ten en
-                    cuenta que deshabilitar ciertas cookies puede afectar la funcionalidad del
+                    Las cookies de analítica y de publicidad son <strong>opcionales</strong>: solo se
+                    activan si las aceptás en el aviso que aparece al ingresar al sitio. Si las
+                    rechazás, el sitio, los formularios, la verificación de seguridad y los enlaces a
+                    WhatsApp siguen funcionando con normalidad.
+                  </p>
+                  <p>
+                    Podés cambiar tu elección o retirar tu consentimiento en cualquier momento desde{' '}
+                    <ConsentSettingsLink className="consent-inline-link" />. Al retirarlo, eliminamos las
+                    cookies de medición y la información de origen de visita guardada en tu
+                    dispositivo.
+                  </p>
+                  <p>
+                    También podés configurar tu navegador para bloquear o eliminar las cookies. Tené
+                    en cuenta que deshabilitar ciertas cookies puede afectar la funcionalidad del
                     sitio.
                   </p>
                 </section>

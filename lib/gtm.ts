@@ -1,32 +1,39 @@
+import { CONSENT_COOKIE, CONSENT_VERSION } from '@/lib/consent';
 import { TRACKING_HOSTS } from '@/lib/tracking-hosts';
 
 // Contenedor de Google Tag Manager de García (confirmado). Los tags de Meta Pixel y GA4 viven
 // DENTRO de este contenedor, así que si GTM no carga, ninguno de los dos se ejecuta.
 export const GTM_ID = 'GTM-MBNKBBSW';
 
-// Snippet de arranque de GTM (mismo que entrega Google) con una guarda de hostname: se ejecuta en
-// el navegador y NO inserta gtm.js ni inicializa `dataLayer` si el host no es de producción. Por
-// eso corre igual en páginas prerenderizadas/estáticas, donde el host real solo se conoce en el
-// cliente (el HTML de un build sirve para todos los hosts).
+// Snippet de arranque de GTM con DOS guardas:
+//  1) hostname: solo corre en los hosts de producción (lib/tracking-hosts.ts). En cualquier otro
+//     host (localhost, previews) NO inicializa `dataLayer` ni inserta gtm.js.
+//  2) consentimiento: Google Consent Mode v2 se inicializa en "denied" ANTES que cualquier etiqueta;
+//     gtm.js (y con él GA4, Meta Pixel y Google Ads) solo se inserta si el visitante YA aceptó
+//     alguna categoría (cookie `gi_consent`) o cuando acepta en el banner (`window.__giLoadGtm`).
+//     Rechazo o sin elección = GTM no carga. El rechazo y el retiro posterior se respetan.
+// Se ejecuta en el navegador (el HTML de un build sirve para todos los hosts).
 export function buildGtmBootstrap(
   gtmId: string = GTM_ID,
   hosts: readonly string[] = TRACKING_HOSTS,
 ): string {
   return (
-    `(function(w,d,s,l,i,a){` +
+    `(function(w,d,s,l,i,a,c){` +
     `var h=String((w.location&&w.location.hostname)||'').toLowerCase().replace(/\\.$/,'');` +
     `if(a.indexOf(h)===-1)return;` +
-    `w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});` +
+    `w[l]=w[l]||[];` +
+    `function g(){w[l].push(arguments)}` +
+    `g('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',functionality_storage:'granted',security_storage:'granted',wait_for_update:500});` +
+    `var m=null;try{var r=(d.cookie||'').split(';');for(var k=0;k<r.length;k++){var p=r[k].split('=');if(p[0].trim()===c){m=new URLSearchParams(decodeURIComponent(p.slice(1).join('=').trim()));break}}}catch(e){}` +
+    `var ok=!!m&&m.get('v')==='${CONSENT_VERSION}'&&(m.get('a')==='1'||m.get('a')==='0')&&(m.get('m')==='1'||m.get('m')==='0');` +
+    `var an=ok&&m.get('a')==='1',mk=ok&&m.get('m')==='1';` +
+    `if(ok)g('consent','update',{analytics_storage:an?'granted':'denied',ad_storage:mk?'granted':'denied',ad_user_data:mk?'granted':'denied',ad_personalization:mk?'granted':'denied'});` +
+    `w.__giLoadGtm=function(){if(w.__giGtmLoaded)return;w.__giGtmLoaded=true;` +
+    `w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});` +
     `var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';` +
     `j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;` +
-    `f.parentNode.insertBefore(j,f);` +
-    `})(window,document,'script','dataLayer',${JSON.stringify(gtmId)},${JSON.stringify(hosts)});`
+    `f.parentNode.insertBefore(j,f)};` +
+    `if(an||mk)w.__giLoadGtm();` +
+    `})(window,document,'script','dataLayer',${JSON.stringify(gtmId)},${JSON.stringify(hosts)},${JSON.stringify(CONSENT_COOKIE)});`
   );
-}
-
-// El <noscript> con el iframe de GTM no puede comprobar el host en runtime. Se renderiza solo en
-// builds de producción de Vercel (VERCEL_ENV=production en build time): ni localhost ni previews
-// lo incluyen. Cubre únicamente a usuarios sin JavaScript.
-export function shouldRenderGtmNoscript(env: Record<string, string | undefined> = process.env): boolean {
-  return env.VERCEL_ENV === 'production';
 }

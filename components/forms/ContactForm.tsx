@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTurnstile } from './useTurnstile';
 import { submitContact } from '@/actions/contact';
+import { trackEventOnce } from '@/lib/analytics';
 
 // Formulario de contacto cableado a la Server Action submitContact.
 // Anti-bot: honeypot (campo website), timing (_form_loaded_at) y Turnstile invisible.
@@ -43,13 +44,6 @@ export default function ContactForm() {
     fd.set('event_id', `form_submit_${Date.now()}_${Math.random().toString(36).slice(2)}`);
     fd.set('page_location', window.location.href);
 
-    (window as unknown as { dataLayer?: unknown[] }).dataLayer?.push({
-      event: 'form_submit',
-      form_name: 'Formulario principal',
-      lead_type: 'consulta_general',
-      page_location: window.location.href,
-    });
-
     try {
       const res = await submitContact(fd);
       if (!res.ok) {
@@ -62,9 +56,9 @@ export default function ContactForm() {
         reset();
         return;
       }
-      (window as unknown as { dataLayer?: unknown[] }).dataLayer?.push({
-        event: 'generate_lead',
-        event_id: res.event_id,
+      // generate_lead: UNA sola vez, recién con la consulta efectivamente recibida (el servidor
+      // devuelve event_id solo después de registrar o de respaldar el envío).
+      trackEventOnce('generate_lead', res.event_id, {
         form_name: 'Formulario principal',
         lead_type: 'consulta_general',
         page_location: window.location.href,

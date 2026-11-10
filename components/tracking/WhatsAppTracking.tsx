@@ -1,14 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { trackEvent } from '@/lib/analytics';
 
 type DataLayerPayload = Record<string, string>;
-
-declare global {
-  interface Window {
-    dataLayer?: DataLayerPayload[];
-  }
-}
 
 function cleanPayload(payload: DataLayerPayload): DataLayerPayload {
   return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== ''));
@@ -79,8 +74,10 @@ export default function WhatsAppTracking() {
       );
       if (!link) return;
 
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push(buildEventPayload(link));
+      // Clic en WhatsApp = intención de contacto (NO un lead confirmado: la conversación se da en la
+      // app Business y no hay forma de verificarla desde la web). Solo con consentimiento.
+      const { event: eventName, ...params } = buildEventPayload(link);
+      trackEvent(eventName, params);
     }
 
     document.addEventListener('click', onClick, true);

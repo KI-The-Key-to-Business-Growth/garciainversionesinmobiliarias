@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
+import ThankYouTracking from '@/components/tracking/ThankYouTracking';
 
 export const metadata: Metadata = {
   title: 'Gracias por tu consulta | García Inversiones Inmobiliarias',
@@ -37,9 +37,8 @@ export default function GraciasPage() {
       <Footer />
       <WhatsAppFloat />
 
-      <Script id="thank-you-page-view" strategy="afterInteractive">
-        {`window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'thank_you_page_view',page_path:window.location.pathname,page_location:window.location.href,page_title:document.title});`}
-      </Script>
+      {/* Solo vista de página (engagement). NO es una conversión: el lead se mide con generate_lead. */}
+      <ThankYouTracking />
     </>
   );
 }
