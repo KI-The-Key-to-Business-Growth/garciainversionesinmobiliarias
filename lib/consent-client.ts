@@ -23,6 +23,7 @@ export type ConsentWindow = {
   dataLayer?: unknown[];
   __giLoadGtm?: () => void;
   __giGtmLoaded?: boolean;
+  __giFbqBlocked?: boolean;
   dispatchEvent?: (event: Event) => boolean;
   CustomEvent?: typeof CustomEvent;
 };
@@ -109,6 +110,13 @@ export function applyConsent(choice: ConsentChoice, win: ConsentWindow = browser
     }
   } catch {
     /* sin DOM de eventos (tests) */
+  }
+
+  // El Pixel de Meta quedó bloqueado (sin consentimiento de publicidad) en esta carga de página:
+  // para activarlo hay que recargar, así GTM y el Pixel arrancan con el consentimiento nuevo.
+  if (choice.marketing && win.__giFbqBlocked) {
+    win.location.reload();
+    return { reloaded: true, previous };
   }
 
   if (withdrew && win.__giGtmLoaded) {

@@ -24,16 +24,23 @@ export function buildGtmBootstrap(
     `w[l]=w[l]||[];` +
     `function g(){w[l].push(arguments)}` +
     `g('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',functionality_storage:'granted',security_storage:'granted',wait_for_update:500});` +
-    `var m=null;try{var r=(d.cookie||'').split(';');for(var k=0;k<r.length;k++){var p=r[k].split('=');if(p[0].trim()===c){m=new URLSearchParams(decodeURIComponent(p.slice(1).join('=').trim()));break}}}catch(e){}` +
+    `function rc(){var m=null;try{var r=(d.cookie||'').split(';');for(var k=0;k<r.length;k++){var p=r[k].split('=');if(p[0].trim()===c){m=new URLSearchParams(decodeURIComponent(p.slice(1).join('=').trim()));break}}}catch(e){}` +
     `var ok=!!m&&m.get('v')==='${CONSENT_VERSION}'&&(m.get('a')==='1'||m.get('a')==='0')&&(m.get('m')==='1'||m.get('m')==='0');` +
-    `var an=ok&&m.get('a')==='1',mk=ok&&m.get('m')==='1';` +
-    `if(ok)g('consent','update',{analytics_storage:an?'granted':'denied',ad_storage:mk?'granted':'denied',ad_user_data:mk?'granted':'denied',ad_personalization:mk?'granted':'denied'});` +
+    `return{an:ok&&m.get('a')==='1',mk:ok&&m.get('m')==='1',ok:ok}}` +
+    `var s0=rc();` +
+    `if(s0.ok)g('consent','update',{analytics_storage:s0.an?'granted':'denied',ad_storage:s0.mk?'granted':'denied',ad_user_data:s0.mk?'granted':'denied',ad_personalization:s0.mk?'granted':'denied'});` +
+    // Defensa en profundidad: el contenedor GTM publicado carga el Meta Pixel con etiquetas HTML sin
+    // condición de consentimiento. Si el visitante NO aceptó publicidad, se predefine un `fbq` nulo:
+    // el snippet oficial del Pixel (`b.fbq||...`) no descarga fbevents.js y todas sus llamadas son
+    // no-ops. Si luego acepta publicidad, se recarga la página (ver applyConsent).
     `w.__giLoadGtm=function(){if(w.__giGtmLoaded)return;w.__giGtmLoaded=true;` +
+    `var cur=rc();` +
+    `if(!cur.mk&&!w.fbq){var n=function(){};n.loaded=true;n.version='2.0';n.queue=[];n.push=n;w.fbq=n;w._fbq=n;w.__giFbqBlocked=true}` +
     `w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});` +
     `var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';` +
     `j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;` +
     `f.parentNode.insertBefore(j,f)};` +
-    `if(an||mk)w.__giLoadGtm();` +
+    `if(s0.an||s0.mk)w.__giLoadGtm();` +
     `})(window,document,'script','dataLayer',${JSON.stringify(gtmId)},${JSON.stringify(hosts)},${JSON.stringify(CONSENT_COOKIE)});`
   );
 }

@@ -32,6 +32,7 @@ function runBootstrap(hostname: string | undefined, script = buildGtmBootstrap()
         : e;
     }),
     load: window.__giLoadGtm as (() => void) | undefined,
+    window,
   };
 }
 
@@ -146,6 +147,38 @@ describe('lib/gtm — Consent Mode v2: denied por defecto y GTM solo con consent
         ad_personalization: 'denied',
       }),
     ]);
+  });
+
+  it('sin consentimiento de publicidad el Meta Pixel queda bloqueado (fbq nulo) aunque GTM cargue', () => {
+    const analytics = runBootstrap(PROD, buildGtmBootstrap(), ANALYTICS_ONLY);
+    expect(analytics.inserted).toHaveLength(1);
+    expect(typeof analytics.window.fbq).toBe('function');
+    expect(analytics.window.__giFbqBlocked).toBe(true);
+    // el snippet oficial del Pixel hace `b.fbq||(...)`: con fbq definido no descarga fbevents.js
+    expect(() => (analytics.window.fbq as (...a: unknown[]) => void)('track', 'Lead')).not.toThrow();
+
+    const all = runBootstrap(PROD, buildGtmBootstrap(), ACCEPT_ALL);
+    expect(all.window.fbq).toBeUndefined();
+    expect(all.window.__giFbqBlocked).toBeUndefined();
+  });
+
+  it('aceptar solo analítica en el banner también bloquea el Pixel; aceptar todo no', () => {
+    // el banner escribe la cookie ANTES de llamar a load(); se simula con el mismo document del sandbox
+    const sandbox = { cookie: '' };
+    const win: Record<string, unknown> = { location: { hostname: PROD } };
+    const inserted: unknown[] = [];
+    const doc = {
+      get cookie() {
+        return sandbox.cookie;
+      },
+      getElementsByTagName: () => [{ parentNode: { insertBefore: (n: unknown) => inserted.push(n) } }],
+      createElement: () => ({}),
+    };
+    vm.runInNewContext(buildGtmBootstrap(), { window: win, document: doc, URLSearchParams, decodeURIComponent });
+    sandbox.cookie = ANALYTICS_ONLY;
+    (win.__giLoadGtm as () => void)();
+    expect(inserted).toHaveLength(1);
+    expect(win.__giFbqBlocked).toBe(true);
   });
 
   it('aceptar en el banner (después) carga GTM una sola vez', () => {

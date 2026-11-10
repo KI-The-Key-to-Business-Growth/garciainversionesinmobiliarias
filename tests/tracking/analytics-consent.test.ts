@@ -158,6 +158,13 @@ describe('applyConsent — aceptar, rechazar y modificar', () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
+  it('si el Pixel quedó bloqueado en esta carga y ahora se acepta publicidad, recarga para activarlo', () => {
+    const { win, reload } = makeWin({ cookie: `gi_consent=${serializeConsent({ analytics: true, marketing: false })}`, gtmLoaded: true });
+    win.__giFbqBlocked = true;
+    expect(applyConsent(CONSENT_ALL, win).reloaded).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
   it('retirar sin que GTM haya cargado no recarga', () => {
     const { win, reload } = makeWin({ cookie: `gi_consent=${serializeConsent(CONSENT_ALL)}`, gtmLoaded: false });
     expect(applyConsent(CONSENT_DENIED, win).reloaded).toBe(false);
