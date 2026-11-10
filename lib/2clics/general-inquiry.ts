@@ -6,7 +6,7 @@ import {
   TwoclicsTimeoutError,
 } from '@/lib/2clics/client';
 import { MissingTwoclicsCredentialsError } from '@/lib/2clics/config';
-import type { TwoclicsLeadMessageInput } from '@/lib/2clics/types';
+import type { TwoclicsLeadMessageInput, TwoclicsRegion } from '@/lib/2clics/types';
 
 // ── Consulta general (sin propiedad) → External API de 2Clics ────────────────
 // Misma API que las fichas (`POST /api/lead/message`), sin property/development. El spec público
@@ -65,12 +65,19 @@ export function buildGeneralInquiryInput(fields: GeneralInquiryFields): Twoclics
   };
 }
 
-export async function sendGeneralInquiry(
+export function sendGeneralInquiry(input: TwoclicsLeadMessageInput): Promise<GeneralInquiryOutcome> {
+  return sendLeadOnce(input, 'AR');
+}
+
+// Envío de un lead a 2Clics SIN reintentos automáticos y con resultado clasificado. La API no
+// documenta idempotencia: tras un timeout/red/5xx no se puede saber si el negocio se creó, así que
+// jamás se reintenta una escritura. Lo usan el contacto general y las consultas de fichas.
+export async function sendLeadOnce(
   input: TwoclicsLeadMessageInput,
+  region: TwoclicsRegion = 'AR',
 ): Promise<GeneralInquiryOutcome> {
   try {
-    // retries: 0 — una escritura nunca se reintenta automáticamente (riesgo de duplicar el negocio).
-    const res = await twoclicsClient.sendLeadMessage('AR', input, { retries: 0 });
+    const res = await twoclicsClient.sendLeadMessage(region, input, { retries: 0 });
     if (res?.status === 'fail') return { status: 'failed', reason: 'api_status_fail' };
     return { status: 'sent' };
   } catch (error) {

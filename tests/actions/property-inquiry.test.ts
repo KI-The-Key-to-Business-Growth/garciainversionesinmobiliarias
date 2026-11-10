@@ -26,6 +26,7 @@ vi.mock('@/lib/2clics/client', async (importOriginal) => ({
   twoclicsClient: { sendLeadMessage },
 }));
 
+import { TwoclicsApiError, TwoclicsTimeoutError } from '@/lib/2clics/client';
 import { submitPropertyInquiry } from '@/actions/property-inquiry';
 import { submitContact } from '@/actions/contact';
 import { _resetRateLimit } from '@/lib/security/ratelimit';
@@ -102,6 +103,59 @@ describe('consulta de ficha — Turnstile verificado en el servidor', () => {
     expect(r.message).toBe('Consulta recibida correctamente.');
     expect(siteverify).toHaveBeenCalledOnce();
     expect(sendLeadMessage).toHaveBeenCalledOnce();
+  });
+});
+
+describe('consulta de ficha — sin reintentos y con resultado clasificado', () => {
+  it('éxito: un solo intento con retries:0, referencia de trazabilidad y sin email', async () => {
+    const r = await submitPropertyInquiry(fd(PROPERTY));
+    expect(r.ok).toBe(true);
+    expect(sendLeadMessage).toHaveBeenCalledOnce();
+    const [region, input, options] = sendLeadMessage.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+      unknown,
+    ];
+    expect(region).toBe('AR');
+    expect(options).toEqual({ retries: 0 });
+    expect(input).toMatchObject({ property_app_id: 240588, email: 'ana@example.com' });
+    expect(String(input.message)).toContain('Propiedad: Benavídez Village · UF 23');
+    expect(String(input.message)).toContain(`Ref: ${r.event_id}`);
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it('5xx: resultado incierto → un intento, email VERIFICAR, no afirma que exista el negocio', async () => {
+    sendLeadMessage.mockRejectedValueOnce(new TwoclicsApiError('boom', 502));
+    const r = await submitPropertyInquiry(fd(PROPERTY));
+    expect(sendLeadMessage).toHaveBeenCalledOnce();
+    expect(r.ok).toBe(true);
+    expect(r.message).toBe(REVIEW_MESSAGE);
+    const mail = sendEmail.mock.calls[0][0];
+    expect(mail.subject).toContain('VERIFICAR en 2Clics');
+    expect(mail.html).toContain('YA exista');
+  });
+
+  it('timeout: igual que 5xx, sin reintento', async () => {
+    sendLeadMessage.mockRejectedValueOnce(new TwoclicsTimeoutError());
+    const r = await submitPropertyInquiry(fd(PROPERTY));
+    expect(sendLeadMessage).toHaveBeenCalledOnce();
+    expect(r.message).toBe(REVIEW_MESSAGE);
+  });
+
+  it('4xx: fallo claro → respaldo por email para carga manual', async () => {
+    sendLeadMessage.mockRejectedValueOnce(new TwoclicsApiError('bad', 400));
+    const r = await submitPropertyInquiry(fd(PROPERTY));
+    expect(r.ok).toBe(true);
+    const mail = sendEmail.mock.calls[0][0];
+    expect(mail.subject).toContain('respaldo');
+    expect(mail.html).toContain('No se pudo crear el negocio');
+  });
+
+  it('2Clics falla y el email de respaldo también → error al usuario', async () => {
+    sendLeadMessage.mockRejectedValueOnce(new TwoclicsApiError('boom', 500));
+    sendEmail.mockResolvedValueOnce({ ok: false, error: 'x' });
+    const r = await submitPropertyInquiry(fd(PROPERTY));
+    expect(r.ok).toBe(false);
   });
 });
 

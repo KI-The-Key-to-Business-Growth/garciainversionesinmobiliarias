@@ -118,9 +118,10 @@ describe.each(['preview', 'development', ''])('entorno no productivo (VERCEL_ENV
 describe('producción (VERCEL_ENV=production): comportamiento real intacto', () => {
   beforeEach(() => vi.stubEnv('VERCEL_ENV', 'production'));
 
-  it('consulta de propiedad: envía a 2Clics con el mismo payload de siempre', async () => {
+  it('consulta de propiedad: envía a 2Clics con el mismo payload (ahora sin reintentos)', async () => {
     const r = await submitPropertyInquiry(fd(PROPERTY));
-    expect(r).toEqual({ ok: true, message: 'Consulta recibida correctamente.' });
+    expect(r.ok).toBe(true);
+    expect(r.message).toBe('Consulta recibida correctamente.');
     expect(sendLeadMessage).toHaveBeenCalledOnce();
     const [region, input, options] = sendLeadMessage.mock.calls[0] as [
       string,
@@ -128,7 +129,7 @@ describe('producción (VERCEL_ENV=production): comportamiento real intacto', () 
       unknown,
     ];
     expect(region).toBe('AR');
-    expect(options).toBeUndefined(); // fichas: sin cambios de reintentos
+    expect(options).toEqual({ retries: 0 }); // fichas: una escritura no se reintenta
     expect(input).toMatchObject({
       property_app_id: 240588,
       name: 'Ana García',
