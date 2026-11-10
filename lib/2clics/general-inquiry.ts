@@ -12,8 +12,9 @@ import type { TwoclicsLeadMessageInput, TwoclicsRegion } from '@/lib/2clics/type
 // Misma API que las fichas (`POST /api/lead/message`), sin property/development. El spec público
 // marca solo name/email/message como obligatorios; el destino (agent/realEstate) se completa en
 // `sendLeadMessage` solo si hay configuración regional — acá no se inventa ningún ID.
-// La atribución completa (UTM, click ids) queda para el Attribution Hub: al CRM solo viaja el
-// contexto comercial mínimo (origen web, motivo y página de la consulta).
+// La atribución completa (UTM, click ids, sesión) se guarda en Supabase (`lead_attribution`, por
+// `event_id`). Al CRM solo viaja el contexto comercial mínimo: origen web, motivo, página y, si el
+// visitante aceptó cookies, una línea de campaña con IDs reales (sin datos personales).
 
 const DEFAULT_GENERAL_MESSAGE = 'Hola, quiero hacer una consulta general.';
 
@@ -26,6 +27,8 @@ export type GeneralInquiryFields = {
   pageLocation?: string;
   // Referencia de trazabilidad: permite cruzar el negocio del CRM con logs y emails de respaldo.
   eventId?: string;
+  // Línea compacta de atribución de campaña (sin datos personales). Vacía si no hay consentimiento.
+  attributionNote?: string;
 };
 
 export type GeneralInquiryOutcome =
@@ -52,6 +55,7 @@ export function buildGeneralInquiryInput(fields: GeneralInquiryFields): Twoclics
       'Origen: Formulario web — consulta general',
       fields.motivo ? `Motivo: ${fields.motivo}` : '',
       normalizeUrl(fields.pageLocation) ? `Página: ${normalizeUrl(fields.pageLocation)}` : '',
+      fields.attributionNote || '',
       fields.eventId ? `Ref: ${fields.eventId.slice(0, 80)}` : '',
     ],
     '\n',

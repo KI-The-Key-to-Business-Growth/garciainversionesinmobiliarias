@@ -6,6 +6,7 @@ import { CANONICAL_BASE_URL } from '@/lib/env';
 import { INSTITUTIONAL_OPEN_GRAPH, INSTITUTIONAL_TWITTER } from '@/lib/share-metadata';
 import WhatsAppTracking from '@/components/tracking/WhatsAppTracking';
 import ConsentManager from '@/components/consent/ConsentManager';
+import AttributionCapture from '@/components/tracking/AttributionCapture';
 import { buildGtmBootstrap } from '@/lib/gtm';
 
 // Fuentes self-hosted vía next/font (sin request a Google, con métricas de
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
 
         <ConsentManager />
+        <AttributionCapture />
 
         {/* Turnstile NO se carga acá: el script vive en <TurnstileScript /> y se
             incluye solo en las rutas con formulario (hoy, la home). */}

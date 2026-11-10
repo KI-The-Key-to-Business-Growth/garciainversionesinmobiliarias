@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTurnstile } from './useTurnstile';
 import { submitNewsletter } from '@/actions/newsletter';
 import { trackEventOnce } from '@/lib/analytics';
+import { getAttributionPayload } from '@/lib/attribution-client';
 
 // Formulario de newsletter cableado a la Server Action submitNewsletter.
 export default function NewsletterForm() {
@@ -48,6 +49,8 @@ export default function NewsletterForm() {
     fd.set('lead_type', 'newsletter');
     fd.set('event_id', `newsletter_${Date.now()}_${Math.random().toString(36).slice(2)}`);
     fd.set('page_location', window.location.href);
+    const attribution = getAttributionPayload();
+    if (attribution) fd.set('attribution', attribution);
 
     try {
       const res = await submitNewsletter(fd);

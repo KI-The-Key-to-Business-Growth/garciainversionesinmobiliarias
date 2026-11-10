@@ -14,6 +14,9 @@ import { checkRate } from '@/lib/security/ratelimit';
 import { turnstileFailureMessage, verifyTurnstileResult } from '@/lib/security/turnstile';
 import { buildGeneralInquiryInput, sendGeneralInquiry } from '@/lib/2clics/general-inquiry';
 import { dbLogIntegration } from '@/lib/db/logs';
+import { recordLeadAttribution } from '@/lib/db/attribution';
+import { parseSubmitAttribution } from '@/lib/attribution';
+import { buildAttributionNote, buildLeadAttributionRow, resolveAttributionAsset } from '@/lib/attribution-server';
 import { sendEmail } from '@/lib/resend';
 import { createEventId } from '@/lib/tracking';
 import { captureError } from '@/lib/observability';
@@ -129,6 +132,10 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
     return { ok: true, event_id: eventId, message: NON_PRODUCTION_SUBMISSION_MESSAGE };
   }
 
+  // Atribución (solo si el visitante dio consentimiento; validada en el servidor, sin datos personales).
+  const attribution = parseSubmitAttribution(body.attribution);
+  const asset = resolveAttributionAsset({ attribution, pageLocation: body.page_location });
+
   // ── 2Clics: único destino comercial. Sin reintentos automáticos (evita duplicar negocios). ──
   const outcome = await sendGeneralInquiry(
     buildGeneralInquiryInput({
@@ -139,6 +146,20 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
       motivo: motivoVal,
       pageLocation: body.page_location,
       eventId,
+      attributionNote: buildAttributionNote(attribution, asset),
+    }),
+  );
+
+  // Registro de atribución por lead (best-effort: nunca frena la respuesta al usuario).
+  await recordLeadAttribution(
+    buildLeadAttributionRow({
+      eventId,
+      leadType,
+      formName: body.form_name || 'Formulario principal',
+      crmStatus: outcome.status,
+      attribution,
+      asset,
+      pageLocation: body.page_location,
     }),
   );
 

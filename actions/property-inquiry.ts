@@ -9,6 +9,9 @@ import { escapeHtml } from '@/lib/security/sanitize';
 import { env } from '@/lib/env';
 import { sendEmail } from '@/lib/resend';
 import { dbLogIntegration } from '@/lib/db/logs';
+import { recordLeadAttribution } from '@/lib/db/attribution';
+import { parseSubmitAttribution } from '@/lib/attribution';
+import { buildAttributionNote, buildLeadAttributionRow, resolveAttributionAsset } from '@/lib/attribution-server';
 import { createEventId } from '@/lib/tracking';
 import { captureError } from '@/lib/observability';
 import { isProductionRuntime, NON_PRODUCTION_SUBMISSION_MESSAGE } from '@/lib/runtime-env';
@@ -57,15 +60,37 @@ export async function submitPropertyInquiry(formData: FormData): Promise<Propert
   const eventId = createEventId('lead');
   const { region, input } = built.payload;
   const crmRef = `property:${input.property_app_id ?? 'n/a'}:${eventId}`;
+  // Atribución (solo con consentimiento) + activo identificado por el property_app_id real.
+  const pageUrl = String(formData.get('page_url') || '');
+  const attribution = parseSubmitAttribution(formData.get('attribution'));
+  const asset = resolveAttributionAsset({
+    propertyAppId: input.property_app_id,
+    pageLocation: pageUrl,
+    attribution,
+  });
+  const attributionNote = buildAttributionNote(attribution, asset);
   const outcome = await sendLeadOnce(
-    { ...input, message: `${input.message}
-
-Ref: ${eventId}` },
+    {
+      ...input,
+      message: `${input.message}${attributionNote ? `\n\n${attributionNote}` : ''}\n\nRef: ${eventId}`,
+    },
     region,
   );
+  await recordLeadAttribution(
+    buildLeadAttributionRow({
+      eventId,
+      leadType: 'consulta_propiedad',
+      formName: 'Consulta de propiedad',
+      crmStatus: outcome.status,
+      attribution,
+      asset,
+      pageLocation: pageUrl,
+    }),
+  );
+  const assetState = { property_id: asset.property_id, development_slug: asset.development_slug };
 
   if (outcome.status === 'sent') {
-    return { ok: true, event_id: eventId, message: 'Consulta recibida correctamente.' };
+    return { ok: true, event_id: eventId, message: 'Consulta recibida correctamente.', ...assetState };
   }
 
   const uncertain = outcome.status === 'uncertain';
@@ -123,5 +148,6 @@ Ref: ${eventId}` },
     ok: true,
     event_id: eventId,
     message: 'Recibimos tu consulta y la vamos a revisar. Te contactaremos a la brevedad.',
+    ...assetState,
   };
 }

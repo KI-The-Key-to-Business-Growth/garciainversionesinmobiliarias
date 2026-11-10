@@ -8,6 +8,9 @@ import { checkRate } from '@/lib/security/ratelimit';
 import { turnstileFailureMessage, verifyTurnstileResult } from '@/lib/security/turnstile';
 import { dbInsertNewsletter } from '@/lib/db/newsletter';
 import { sendEmail } from '@/lib/resend';
+import { recordLeadAttribution } from '@/lib/db/attribution';
+import { parseSubmitAttribution } from '@/lib/attribution';
+import { buildLeadAttributionRow, resolveAttributionAsset } from '@/lib/attribution-server';
 import { createEventId } from '@/lib/tracking';
 import { captureError } from '@/lib/observability';
 import { isProductionRuntime, NON_PRODUCTION_SUBMISSION_MESSAGE } from '@/lib/runtime-env';
@@ -66,14 +69,21 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
     return { ok: true, event_id: eventId, message: NON_PRODUCTION_SUBMISSION_MESSAGE };
   }
 
+  // Atribución del último toque (solo con consentimiento). Los UTM explícitos del form, si existen, mandan.
+  const attribution = parseSubmitAttribution(body.attribution);
+  const touch = attribution?.last;
+  const utmSource = String(body.utm_source || touch?.utm_source || '').slice(0, 200);
+  const utmMedium = String(body.utm_medium || touch?.utm_medium || '').slice(0, 200);
+  const utmCampaign = String(body.utm_campaign || touch?.utm_campaign || '').slice(0, 200);
+
   let isNewSubscriber = false;
   try {
     const result = await dbInsertNewsletter({
       email,
       origen: String(body.page_location || '').slice(0, 500),
-      utm_source: String(body.utm_source || '').slice(0, 200),
-      utm_medium: String(body.utm_medium || '').slice(0, 200),
-      utm_campaign: String(body.utm_campaign || '').slice(0, 200),
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
     });
     isNewSubscriber = result?.isNew !== false;
   } catch (err) {
@@ -86,14 +96,27 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
     } as ActionResult;
   }
 
+  // Atribución del alta (circuito separado del comercial: lead_type 'newsletter', sin CRM).
+  await recordLeadAttribution(
+    buildLeadAttributionRow({
+      eventId,
+      leadType: 'newsletter',
+      formName: 'Newsletter',
+      crmStatus: 'not_applicable',
+      attribution,
+      asset: resolveAttributionAsset({ pageLocation: body.page_location, attribution }),
+      pageLocation: body.page_location,
+    }),
+  );
+
   // Si ya existía, responder OK sin re-enviar Resend
   if (!isNewSubscriber) {
     return { ok: true, event_id: eventId, message: 'Suscripción recibida correctamente.' };
   }
 
-  const nlSource = escapeHtml(body.utm_source || '');
-  const nlMedium = escapeHtml(body.utm_medium || '');
-  const nlCampaign = escapeHtml(body.utm_campaign || '');
+  const nlSource = escapeHtml(utmSource);
+  const nlMedium = escapeHtml(utmMedium);
+  const nlCampaign = escapeHtml(utmCampaign);
   const nlPage = escapeHtml(body.page_location || '');
   const nlDateStr = new Date().toLocaleString('es-AR', {
     timeZone: 'America/Argentina/Buenos_Aires',

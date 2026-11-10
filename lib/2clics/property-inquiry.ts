@@ -7,6 +7,9 @@ export type PropertyInquiryState = {
   ok: boolean;
   message?: string;
   event_id?: string;
+  // Activo consultado (IDs reales), para el evento generate_lead del navegador.
+  property_id?: number;
+  development_slug?: string;
 };
 
 export type PropertyInquiryLead = {

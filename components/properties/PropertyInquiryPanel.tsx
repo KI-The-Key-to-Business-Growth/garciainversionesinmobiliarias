@@ -7,6 +7,7 @@ import type { PropertyInquiryState } from '@/lib/2clics/property-inquiry';
 import type { TwoclicsRegion } from '@/lib/2clics/types';
 import TurnstileScript from '@/components/forms/TurnstileScript';
 import { useTurnstile } from '@/components/forms/useTurnstile';
+import { getAttributionPayload } from '@/lib/attribution-client';
 
 type PropertyInquiryPanelProps = {
   propertyId: number | null;
@@ -171,6 +172,8 @@ function PropertyInquiryForm({
 
     const formData = new FormData(form);
     formData.set('page_url', window.location.href);
+    const attribution = getAttributionPayload();
+    if (attribution) formData.set('attribution', attribution);
     formData.set('cf-turnstile-response', token);
 
     try {

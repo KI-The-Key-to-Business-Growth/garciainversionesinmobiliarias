@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTurnstile } from './useTurnstile';
 import { submitContact } from '@/actions/contact';
 import { trackEventOnce } from '@/lib/analytics';
+import { getAttributionPayload } from '@/lib/attribution-client';
 
 // Formulario de contacto cableado a la Server Action submitContact.
 // Anti-bot: honeypot (campo website), timing (_form_loaded_at) y Turnstile invisible.
@@ -43,6 +44,8 @@ export default function ContactForm() {
     fd.set('lead_type', 'consulta_general');
     fd.set('event_id', `form_submit_${Date.now()}_${Math.random().toString(36).slice(2)}`);
     fd.set('page_location', window.location.href);
+    const attribution = getAttributionPayload();
+    if (attribution) fd.set('attribution', attribution);
 
     try {
       const res = await submitContact(fd);
