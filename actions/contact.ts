@@ -11,7 +11,7 @@ import {
 } from '@/lib/security/sanitize';
 import { isBotRequest, isSpamContent, isTooFast } from '@/lib/security/antibot';
 import { checkRate } from '@/lib/security/ratelimit';
-import { verifyTurnstile } from '@/lib/security/turnstile';
+import { turnstileFailureMessage, verifyTurnstileResult } from '@/lib/security/turnstile';
 import { buildGeneralInquiryInput, sendGeneralInquiry } from '@/lib/2clics/general-inquiry';
 import { dbLogIntegration } from '@/lib/db/logs';
 import { sendEmail } from '@/lib/resend';
@@ -116,12 +116,8 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
 
   // Cloudflare Turnstile
   const turnstileToken = String(body['cf-turnstile-response'] || '');
-  const turnstileOk = await verifyTurnstile(turnstileToken, ip);
-  if (!turnstileOk)
-    return {
-      ok: false,
-      message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.',
-    };
+  const turnstile = await verifyTurnstileResult(turnstileToken, ip);
+  if (turnstile !== 'ok') return { ok: false, message: turnstileFailureMessage(turnstile) };
 
   const eventId = body.event_id || createEventId('lead');
   const leadType = 'consulta_general';

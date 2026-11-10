@@ -5,7 +5,7 @@ import { env, isProduction } from '@/lib/env';
 import { escapeHtml, isValidEmail, MAX_LENGTHS } from '@/lib/security/sanitize';
 import { isBotRequest, isSpamContent, isTooFast } from '@/lib/security/antibot';
 import { checkRate } from '@/lib/security/ratelimit';
-import { verifyTurnstile } from '@/lib/security/turnstile';
+import { turnstileFailureMessage, verifyTurnstileResult } from '@/lib/security/turnstile';
 import { dbInsertNewsletter } from '@/lib/db/newsletter';
 import { sendEmail } from '@/lib/resend';
 import { createEventId } from '@/lib/tracking';
@@ -55,12 +55,8 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
 
   // Turnstile
   const turnstileToken = String(body['cf-turnstile-response'] || '');
-  const turnstileOk = await verifyTurnstile(turnstileToken, ip);
-  if (!turnstileOk)
-    return {
-      ok: false,
-      message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.',
-    };
+  const turnstile = await verifyTurnstileResult(turnstileToken, ip);
+  if (turnstile !== 'ok') return { ok: false, message: turnstileFailureMessage(turnstile) };
 
   const eventId = body.event_id || createEventId('newsletter');
 

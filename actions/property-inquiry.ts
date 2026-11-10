@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 import { buildPropertyInquiryLead, type PropertyInquiryState } from '@/lib/2clics/property-inquiry';
 import { sendLeadOnce } from '@/lib/2clics/general-inquiry';
 import { checkRate } from '@/lib/security/ratelimit';
-import { verifyTurnstile } from '@/lib/security/turnstile';
+import { turnstileFailureMessage, verifyTurnstileResult } from '@/lib/security/turnstile';
 import { escapeHtml } from '@/lib/security/sanitize';
 import { env } from '@/lib/env';
 import { sendEmail } from '@/lib/resend';
@@ -45,12 +45,8 @@ export async function submitPropertyInquiry(formData: FormData): Promise<Propert
 
   // Cloudflare Turnstile verificado en el servidor (token vacío o inválido → rechazo).
   const turnstileToken = String(formData.get('cf-turnstile-response') || '');
-  if (!(await verifyTurnstile(turnstileToken, ip))) {
-    return {
-      ok: false,
-      message: 'Verificación de seguridad fallida. Recargá la página e intentá nuevamente.',
-    };
-  }
+  const turnstile = await verifyTurnstileResult(turnstileToken, ip);
+  if (turnstile !== 'ok') return { ok: false, message: turnstileFailureMessage(turnstile) };
 
   // Preview/Development comparten la API key de 2Clics con producción: no crear negocios reales.
   if (!isProductionRuntime()) {
