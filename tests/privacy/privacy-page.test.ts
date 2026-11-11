@@ -107,22 +107,14 @@ describe('política de privacidad: consistencia con el funcionamiento real', () 
   });
 });
 
-describe('política de privacidad: control de publicación (borrador sin validar)', () => {
-  const pendingMarkers = (text.match(/\[A CONFIRMAR/g) ?? []).length;
-  const draftNote = page.includes('BORRADOR PARA REVISIÓN JURÍDICA');
-
-  it('un texto con «[A CONFIRMAR]» siempre lleva la nota de borrador', () => {
-    if (pendingMarkers > 0) expect(draftNote).toBe(true);
+describe('política de privacidad: estado de publicación', () => {
+  it('no queda ningún dato sin confirmar ni la nota de borrador', () => {
+    expect((text.match(/\[A CONFIRMAR/g) ?? []).length).toBe(0);
+    expect(page).not.toContain('BORRADOR PARA REVISIÓN JURÍDICA');
   });
 
-  it('el borrador no se presenta como validado', () => {
-    expect(draftNote).toBe(true); // se quita solo cuando el abogado valide el texto
-  });
-
-  // GATE: ejecutar con PRIVACY_PUBLISH_CHECK=1 antes de publicar. Falla mientras exista la nota de
-  // borrador o cualquier «[A CONFIRMAR]». La nota se quita únicamente tras la validación jurídica.
-  it.runIf(process.env.PRIVACY_PUBLISH_CHECK === '1')('PUBLICAR solo sin nota de borrador ni pendientes', () => {
-    expect(pendingMarkers).toBe(0);
-    expect(draftNote).toBe(false);
+  it('deja registrado que la revisión jurídica especializada está pendiente y no se declara validada', () => {
+    expect(page).toContain('SIN REVISIÓN JURÍDICA ESPECIALIZADA');
+    expect(text.toLowerCase()).not.toMatch(/abogado|asesor jur[ií]dico|validad[ao] por/);
   });
 });

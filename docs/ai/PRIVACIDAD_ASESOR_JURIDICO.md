@@ -40,5 +40,5 @@
 - **Regiones y contratos de Supabase, Upstash, Sentry y 2Clics:** se documentan para el abogado y para el cumplimiento del art. 12, pero **no se publican** salvo que el abogado lo indique. Pendiente: acceso a sus paneles y respuesta de 2Clics.
 - **Campañas fuera de Argentina:** fuera de alcance hoy; si se amplía a Latinoamérica u otros países se revisará antes.
 
-## Control de publicación
-La página lleva la nota «BORRADOR PARA REVISIÓN JURÍDICA»; mientras exista, `PRIVACY_PUBLISH_CHECK=1 npm test` falla. Se quita solo con la validación del abogado.
+## Estado de publicación
+La política simplificada se **publicó el 2026-11-11 por decisión de la titular, sin revisión jurídica especializada**. Esta lista queda como **pendiente de la segunda etapa**; las correcciones que el abogado indique se aplican después. La política **no** declara estar validada por un abogado. El borrado automático sigue desactivado y no se programó ningún cron (`vercel.json` retirado; se agrega al activar la retención).

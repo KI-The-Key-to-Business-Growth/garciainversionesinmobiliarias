@@ -1,8 +1,8 @@
 # /privacidad — propuesta consolidada para revisión (2026-11-11)
 
-> **Estado: BORRADOR PARA REVISIÓN JURÍDICA. No está validado por un abogado, no está publicado y no cambia la política vigente.** La implementación técnica no equivale a validación jurídica. Lo que hoy ve el público en `/privacidad` es la versión anterior.
+> **Estado: PUBLICADA el 2026-11-11 por decisión de la titular, SIN revisión jurídica especializada (pendiente).** No está validada por un abogado y no debe presentarse como tal. La revisión (consentimiento, transferencias internacionales, plazos de conservación, inscripción de bases de datos y correcciones que correspondan) está pendiente: ver `PRIVACIDAD_ASESOR_JURIDICO.md`.
 >
-> Rama `privacy/review-draft` (sin push, sin merge). La página lleva la nota de borrador y `PRIVACY_PUBLISH_CHECK=1 npm test` **falla mientras exista**; tampoco permite `[A CONFIRMAR]`. Se quita solo con la validación del abogado.
+> Se retiró la nota de borrador que bloqueaba la publicación. Los tests siguen impidiendo publicar `[A CONFIRMAR]`, promesas de borrado automático, plazos no aprobados, regiones o contratos no comprobados, y cualquier afirmación de validación jurídica.
 
 Referencia técnica del tema (las cuestiones jurídicas están **solo** en `PRIVACIDAD_ASESOR_JURIDICO.md`): (1) resumen de modificaciones, (2) hechos técnicos comprobados, (3) texto completo propuesto, (4) puntero al documento del abogado, (5) conservación y mecanismo de borrado (desactivado), (6) proveedores, (7) derechos y AAIP, (8) estado de cierre y comprobaciones para publicar.
 
@@ -350,11 +350,11 @@ tus datos personales:
 | **Vercel / Sentry / Upstash / Cloudflare** | registros técnicos | según cada proveedor (Hobby: 1 hora de registros de ejecución) | — | **no verificado** para Sentry, Upstash y Cloudflare |
 
 **Mecanismo técnico para los clics de WhatsApp (preparado en esta rama, deshabilitado, con pruebas):**
-- `lib/retention/whatsapp-clicks.ts` + `app/api/maintenance/retention/route.ts` + `vercel.json` (cron diario 06:17 UTC).
+- `lib/retention/whatsapp-clicks.ts` + `app/api/maintenance/retention/route.ts`. **No hay cron programado** (`vercel.json` retirado el 2026-11-11 para que nada se ejecute); al activar la retención se agrega `{"crons":[{"path":"/api/maintenance/retention","schedule":"17 6 * * *"}]}`.
 - Borra **solo** `lead_attribution` con `lead_type = 'whatsapp_click'` y `wa_message_received_at IS NULL` y más antiguas que el plazo. **No toca** formularios, contactos, CRM ni otras tablas (hay tests que lo garantizan).
 - **Auditable:** cada corrida escribe una fila en `retention_audit` (regla, plazo, corte, filas encontradas y borradas, estado, error) **antes** de borrar; si no puede registrarla, no borra. Consulta: `SELECT … FROM retention_audit ORDER BY ran_at DESC`.
 - **Controlado:** modo de prueba (`?dry=1`), plazo mínimo de 30 días, tope de 10.000 filas por corrida, autenticación por `CRON_SECRET`, **deshabilitado** salvo `RETENTION_ENABLED=true`, y **en Preview/Development nunca borra** (comparten base con producción).
-- **Para activarlo (con tu autorización):** (1) aprobar el plazo; (2) ejecutar `docs/ai/sql/2026-11-11_retention_audit.sql`; (3) cargar `CRON_SECRET` y `RETENTION_ENABLED=true` en Vercel (producción); (4) integrar la rama (el cron de Vercel se programa con `vercel.json`; el uso de Cron en el plan actual **no se verificó en esta sesión**); (5) correr una vez en modo de prueba y revisar `retention_audit`; (6) recién entonces publicar el compromiso de 90 días en la política.
+- **Para activarlo (con tu autorización):** (1) aprobar el plazo; (2) ejecutar `docs/ai/sql/2026-11-11_retention_audit.sql`; (3) cargar `CRON_SECRET` y `RETENTION_ENABLED=true` en Vercel (producción); (4) agregar el cron en `vercel.json` (el uso de Cron en el plan actual **no se verificó**); (5) correr una vez en modo de prueba y revisar `retention_audit`; (6) recién entonces publicar el compromiso de 90 días en la política.
 - *Alternativa sin código de aplicación:* programar el mismo borrado con `pg_cron` (disponible en Supabase, no instalada); el SQL equivalente está comentado en el archivo de auditoría.
 - Entre tanto, **las filas de prueba existentes (`id` 1, 2 y 3) y los clics que se vayan registrando no se eliminan solos.**
 
@@ -406,4 +406,4 @@ No hay acceso desde esta sesión a los paneles de Supabase, Upstash ni Sentry; l
 Hechas en la rama: `typecheck`, `lint`, 700+ tests, build de producción; consentimiento restrictivo (tests y pruebas en producción del 2026-11-11); mapas con carga controlada (tests de render); retención desactivada y sin filas alcanzadas (verificación de solo lectura). **Al publicar:** (1) PR con CI en verde; (2) tras el despliegue, abrir `/privacidad` y verificar texto, índice, enlace «Preferencias de cookies» y correo; (3) comprobar que el banner vuelve a preguntar una vez (`CONSENT_VERSION = 2`) y que, rechazando, un clic de WhatsApp no escribe filas; (4) comprobar un mapa (aviso, botón «Cargar mapa»). No se ejecuta SQL ni se activa el borrado automático.
 
 ### 8.4 Rama
-`privacy/review-draft`, sin push ni merge. Para publicar: validación del abogado → quitar la nota de borrador y actualizar la fecha → `PRIVACY_PUBLISH_CHECK=1 npm test` en verde → PR con CI.
+`privacy/review-draft`, sin push ni merge. Para publicar: validación del abogado → quitar la nota de borrador y actualizar la fecha → PR con CI.

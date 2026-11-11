@@ -12,12 +12,11 @@ export const metadata: Metadata = {
 };
 
 // ── ESTADO DE ESTE TEXTO ─────────────────────────────────────────────────────
-// BORRADOR PARA REVISIÓN JURÍDICA. NO está validado por un abogado ni debe presentarse como
-// aprobado. Esta nota es el control de publicación: mientras exista, `PRIVACY_PUBLISH_CHECK=1 npm test`
-// falla (tests/privacy/privacy-page.test.ts). Las cuestiones que el abogado debe resolver están en
-// docs/ai/PRIVACIDAD_ASESOR_JURIDICO.md; el resto de la documentación, en docs/ai/PRIVACIDAD_REVISION.md.
-// Al validarse el texto: quitar esta nota y actualizar la fecha de abajo. Un dato sin confirmar se
-// marca en el texto con «[A CONFIRMAR: …]» y también bloquea la publicación.
+// PUBLICADA EL 2026-11-11 POR DECISIÓN DE LA TITULAR, SIN REVISIÓN JURÍDICA ESPECIALIZADA.
+// El texto NO fue validado por un abogado; esa revisión está pendiente (consentimiento, transferencias
+// internacionales, plazos de conservación e inscripción de bases de datos). Lista de cuestiones:
+// docs/ai/PRIVACIDAD_ASESOR_JURIDICO.md. Documentación técnica: docs/ai/PRIVACIDAD_REVISION.md.
+// Un dato sin confirmar se marca en el texto con «[A CONFIRMAR: …]» y los tests impiden publicarlo.
 
 const INDEX = [
   ['identificacion', 'Quién es la responsable'],
@@ -375,8 +374,7 @@ export default function PrivacidadPage() {
                     Aplicamos medidas técnicas y organizativas razonables para proteger tu
                     información frente a accesos no autorizados, alteración, divulgación o
                     destrucción: conexión cifrada (HTTPS), validación de los datos de los
-                    formularios, acceso interno limitado y proveedores con estándares de seguridad
-                    reconocidos. Ningún sistema de transmisión de datos por Internet es
+                    formularios, verificación anti-spam y límite de solicitudes para evitar abusos. Ningún sistema de transmisión de datos por Internet es
                     completamente seguro, por lo que no podemos asegurar una protección absoluta.
                   </p>
                 </section>

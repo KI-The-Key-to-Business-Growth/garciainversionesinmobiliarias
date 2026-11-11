@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -175,7 +175,7 @@ describe('alcance del código de borrado (control estático)', () => {
 
   it('no hay eliminación automática para 2Clics ni WhatsApp Business (decisión pendiente)', () => {
     expect(src).not.toMatch(/2clics|twoclics|whatsapp_business/i);
-    const vercel = JSON.parse(readFileSync('vercel.json', 'utf8')) as { crons: Array<{ path: string }> };
-    expect(vercel.crons.map((c) => c.path)).toEqual(['/api/maintenance/retention']);
+    // la ejecución programada (cron) NO está configurada: se agrega solo al activar la retención
+    expect(existsSync('vercel.json')).toBe(false);
   });
 });
