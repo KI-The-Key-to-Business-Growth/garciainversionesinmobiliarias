@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { isHomePathname } from '@/lib/home-path';
 
 // Header transparente (home) que se oscurece al scrollear + menú mobile.
 // Porta el comportamiento de legacy/public/assets/js/site.js (menú + is-scrolled).
@@ -52,7 +53,8 @@ const MOBILE_LINKS = [
 
 export default function Header() {
   const pathname = usePathname() || '/';
-  const isHome = pathname === '/';
+  // `/index`: en Vercel la home hidrata con esa ruta canónica (ver lib/home-path.ts).
+  const isHome = isHomePathname(pathname);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
