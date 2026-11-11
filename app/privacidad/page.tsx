@@ -83,14 +83,22 @@ export default function PrivacidadPage() {
                   </p>
                   <div className="privacy-card">
                     <p>
-                      <strong>García Inversiones Inmobiliarias</strong>
+                      <strong>Fabiana García</strong>, persona humana, que opera bajo el nombre
+                      comercial <strong>García Inversiones Inmobiliarias</strong>.
                     </p>
                     <p>
-                      Nombre legal o titular responsable y CUIT:{' '}
-                      <Pendiente grupo="B">razón social o titular, y CUIT</Pendiente>
+                      Matrícula profesional y CUIT:{' '}
+                      <Pendiente grupo="B">
+                        número de matrícula (verificar en el colegio profesional) y CUIT, desde
+                        documentación oficial
+                      </Pendiente>
                     </p>
                     <p>
-                      Domicilio: <Pendiente grupo="B">domicilio legal o de contacto</Pendiente>
+                      Domicilio:{' '}
+                      <Pendiente grupo="B">
+                        domicilio, solo cuando la titular confirme expresamente que puede figurar
+                        públicamente
+                      </Pendiente>
                     </p>
                     <p>
                       Sitio web:{' '}
@@ -103,7 +111,10 @@ export default function PrivacidadPage() {
                       <a href="mailto:contacto@garciainversiones.com.ar">
                         contacto@garciainversiones.com.ar
                       </a>{' '}
-                      <Pendiente grupo="B">comprobar que esta casilla esté operativa para solicitudes de privacidad</Pendiente>
+                      <Pendiente grupo="B">
+                        definir y verificar la casilla para solicitudes de privacidad (existencia, recepción y
+                        acceso efectivo de la titular)
+                      </Pendiente>
                     </p>
                     <p>Ubicación: Buenos Aires, Argentina</p>
                   </div>

@@ -46,19 +46,21 @@ Este documento reemplaza a la versión anterior de `PRIVACIDAD_REVISION.md` y es
 El responsable del tratamiento de los datos personales recabados a través de
 este sitio web es:
 
-**García Inversiones Inmobiliarias**
+**Fabiana García**, persona humana, que opera bajo el nombre
+comercial **García Inversiones Inmobiliarias**.
 
-Nombre legal o titular responsable y CUIT:
-**[A CONFIRMAR (grupo B): razón social o titular, y CUIT]**
+Matrícula profesional y CUIT:
+**[A CONFIRMAR (grupo B): número de matrícula (verificar en el colegio profesional) y CUIT, desde documentación oficial]**
 
-Domicilio: **[A CONFIRMAR (grupo B): domicilio legal o de contacto]**
+Domicilio:
+**[A CONFIRMAR (grupo B): domicilio, solo cuando la titular confirme expresamente que puede figurar públicamente]**
 
 Sitio web:
 [www.garciainversionesinmobiliarias.com.ar](https://www.garciainversionesinmobiliarias.com.ar)
 
 Correo de contacto:
 [contacto@garciainversiones.com.ar](mailto:contacto@garciainversiones.com.ar)
-**[A CONFIRMAR (grupo B): comprobar que esta casilla esté operativa para solicitudes de privacidad]**
+**[A CONFIRMAR (grupo B): definir y verificar la casilla para solicitudes de privacidad (existencia, recepción y acceso efectivo de la titular)]**
 
 Ubicación: Buenos Aires, Argentina
 
@@ -599,3 +601,38 @@ Ver tabla de la sección 6. Resumen de lo **documentado por los proveedores** (n
 
 ### 11.5 Qué falta para publicar
 1. Datos del grupo B de García. 2. Validación jurídica del grupo C. 3. Decidir `CONSENT_VERSION` 2 y la activación de la conservación. 4. Quitar `Pendiente` y la nota de borrador; `PRIVACY_PUBLISH_CHECK=1 npm test` en verde. 5. PR con CI y verificación en producción. Nada de esto se hizo: la rama no está publicada ni integrada.
+
+## 12. Actualización con los datos informados por Fabiana (2026-11-11)
+
+### 12.1 Responsable (incorporado al borrador, sin publicar)
+- Titular: **Fabiana García, persona humana**, nombre comercial García Inversiones Inmobiliarias (el borrador ya no la presenta como sociedad).
+- Matrícula profesional (informada: CMCPSI 6378): **verificar en el colegio profesional** antes de publicar; sigue como `[A CONFIRMAR]`.
+- CUIT: **pendiente**, desde documentación oficial; no se inventa.
+- Domicilio: lo informó Fabiana, pero **no se copió al repositorio ni a la página** hasta que confirme expresamente que puede figurar públicamente.
+- Correo: propuesto `fabiana@garciainversiones.com.ar`, **no confirmado** y no usado en la página (sigue `contacto@garciainversiones.com.ar`, también a verificar). Debe comprobarse existencia, recepción y acceso efectivo de la titular.
+- Decisiones técnicas confirmadas por García: `CONSENT_VERSION = 2`, modelo restrictivo, mapas con carga controlada, 90 días como propuesta para clics de WhatsApp, mecanismo desactivado, sin borrado automático en 2Clics ni WhatsApp Business, 24 meses para prospectos solo como propuesta.
+
+### 12.2 Verificación técnica de proveedores: qué se pudo cerrar y qué no
+Se intentó desde las herramientas autorizadas de esta sesión; **no hay sesión iniciada en los paneles de Supabase, Upstash ni Sentry**, y las variables de Vercel son *sensibles* (sus valores no se pueden leer). Por eso **no se confirmó** ninguna región ni ningún acuerdo aceptado; no se afirma nada que no esté comprobado.
+
+| Proveedor | Cerrado | Sigue sin confirmar (dónde mirar) |
+|---|---|---|
+| Vercel | funciones en Washington D. C.; plan Hobby (DPA solo Pro/Enterprise) | ninguno hasta contratar Pro |
+| Resend | envío desde São Paulo (DNS); cuenta en EE. UU. según el proveedor | DPA incorporado a los términos: sin acción propia |
+| Cloudflare | Turnstile y DNS; DPA incorporado al acuerdo | — |
+| Supabase | proyecto `ljpolupsgwtreinuxrdo`; indicios de AWS São Paulo por rango de IP (inferencia) | región exacta: *Project Settings → General* y *Legal → DPA* |
+| Upstash | clave de límite con IP, ventana ≤ 15 min | región de la base: panel de la base; DPA |
+| Sentry | `sendDefaultPii: false` | región de la organización (US/UE) y si se aceptó el DPA: *Settings → Legal & Compliance* |
+| 2Clics | uso: contactos, mensajes y nota de origen | ubicación del tratamiento, contrato/DPA, subencargados y retención: pedirlos al proveedor |
+
+### 12.3 Lista final de datos que debe aportar Fabiana (grupo B)
+1. CUIT (constancia de ARCA/AFIP) y confirmación de la matrícula profesional.
+2. Autorización expresa para publicar el domicilio (y cuál: el de Tigre u otro).
+3. Casilla para privacidad: confirmar `fabiana@garciainversiones.com.ar` o la que corresponda, y que ella la recibe y accede (mensaje de prueba).
+4. Si las conversaciones de WhatsApp se incorporarán al CRM.
+5. Región de Supabase, Upstash y Sentry, y si el DPA está aceptado (capturas de los paneles; las hace quien tiene el acceso).
+6. Ubicación del tratamiento y contrato de 2Clics (consulta al proveedor).
+
+### 12.4 Rama para PR
+- Rama `privacy/review-draft`, sin push ni merge. Revisión jurídica: `docs/ai/PRIVACIDAD_ASESOR_JURIDICO.md`.
+- Para publicar: completar la lista anterior, validación del asesor, quitar `Pendiente` y la nota de borrador, `PRIVACY_PUBLISH_CHECK=1 npm test` en verde y PR con CI. Hasta entonces el control sigue bloqueando la publicación y el borrado automático sigue desactivado.
