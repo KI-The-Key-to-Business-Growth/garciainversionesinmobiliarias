@@ -3,12 +3,15 @@
 import { useEffect } from 'react';
 import { newEventId, trackEventOnce } from '@/lib/analytics';
 import { runWhenAnalyticsReady } from '@/lib/when-analytics-ready';
+import { clearWhatsAppAssetContext, setWhatsAppAssetContext } from '@/lib/whatsapp-context';
 
 type PropertyViewTrackerProps = {
   contentType: 'property' | 'development' | 'investment';
   propertyId?: number | null;
   developmentSlug?: string | null;
   market?: string | null;
+  // Nombre visible del activo: arma el texto del mensaje de WhatsApp («… sobre {nombre}. Ref: …»).
+  assetLabel?: string | null;
 };
 
 // Evento `property_view` (GTM → GA4 `property_view` + Meta `ViewContent`): una vez por visualización
@@ -22,7 +25,19 @@ export default function PropertyViewTracker({
   propertyId,
   developmentSlug,
   market,
+  assetLabel,
 }: PropertyViewTrackerProps) {
+  // Activo de la página para los enlaces de WhatsApp (no depende del consentimiento: describe la página).
+  useEffect(() => {
+    const context = {
+      key: `${contentType}:${propertyId ?? developmentSlug ?? ''}`,
+      label: assetLabel ?? undefined,
+      propertyId: propertyId ?? undefined,
+    };
+    setWhatsAppAssetContext(context);
+    return () => clearWhatsAppAssetContext(context);
+  }, [contentType, propertyId, developmentSlug, assetLabel]);
+
   useEffect(() => {
     const viewId = newEventId('view');
     return runWhenAnalyticsReady(() => {

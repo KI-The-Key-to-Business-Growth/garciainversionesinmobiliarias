@@ -53,6 +53,7 @@ export default async function InvestmentOpportunityPage({ params }: InvestmentOp
               contentType="investment"
               propertyId={sourceProperty.propertyId}
               market={sourceProperty.region}
+              assetLabel={opportunity.name}
             />
             <InvestmentOpportunityDetailView
               opportunity={opportunity}

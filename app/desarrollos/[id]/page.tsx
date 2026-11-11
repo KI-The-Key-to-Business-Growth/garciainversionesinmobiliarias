@@ -109,6 +109,7 @@ export default async function DevelopmentDetailPage({ params }: DevelopmentDetai
             propertyId={sourceProperty?.propertyId ?? curation.sourcePropertyId}
             developmentSlug={curation.slug}
             market={curation.market}
+            assetLabel={curation.name}
           />
           <CuratedDevelopmentDetailView
             curation={curation}

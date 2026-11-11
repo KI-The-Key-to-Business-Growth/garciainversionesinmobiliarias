@@ -83,6 +83,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
               propertyId={property.propertyId}
               developmentSlug={getDevelopmentForPropertyId(property.propertyId)?.slug}
               market={property.region}
+              assetLabel={property.title}
             />
             <PropertyDetailView
               property={property}

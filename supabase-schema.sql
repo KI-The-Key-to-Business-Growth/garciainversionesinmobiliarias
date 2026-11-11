@@ -233,3 +233,14 @@ REVOKE ALL ON SEQUENCE lead_attribution_id_seq FROM anon, authenticated;
 --   SELECT count(*) FROM pg_policies WHERE tablename = 'lead_attribution';             -- esperado: 0
 --   SELECT grantee, privilege_type FROM information_schema.role_table_grants
 --     WHERE table_name = 'lead_attribution' AND grantee IN ('anon','authenticated');    -- esperado: 0 filas
+
+-- ── Referencia de WhatsApp (PROPUESTO 2026-11-11, NO aplicado; ver docs/ai/sql/2026-11-11_whatsapp_ref.sql) ──
+-- Columnas adicionales: la tabla ya existe, esto no repite la migración inicial.
+ALTER TABLE lead_attribution ADD COLUMN IF NOT EXISTS asset_key TEXT;
+ALTER TABLE lead_attribution ADD COLUMN IF NOT EXISTS wa_message_received_at TIMESTAMPTZ;
+ALTER TABLE lead_attribution ADD COLUMN IF NOT EXISTS wa_match_method TEXT;
+ALTER TABLE lead_attribution DROP CONSTRAINT IF EXISTS lead_attribution_wa_match_method_chk;
+ALTER TABLE lead_attribution ADD CONSTRAINT lead_attribution_wa_match_method_chk
+  CHECK (wa_match_method IS NULL OR wa_match_method IN ('ref', 'probable'));
+CREATE INDEX IF NOT EXISTS idx_lead_attribution_asset        ON lead_attribution (asset_key);
+CREATE INDEX IF NOT EXISTS idx_lead_attribution_type_created ON lead_attribution (lead_type, created_at DESC);

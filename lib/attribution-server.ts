@@ -6,6 +6,7 @@ import {
 import {
   getDevelopmentBySlug,
   getDevelopmentForPropertyId,
+  getInvestmentOpportunityBySlug,
   isDevelopmentPublic,
 } from '@/lib/site-curation';
 
@@ -68,6 +69,21 @@ export function resolveAttributionAsset(input: {
   return {};
 }
 
+// Clave estable del activo para análisis por activo (una sola convención para todo García):
+//   inv:<slug>  oportunidad de inversión · prop:<propertyId>  propiedad · dev:<slug>  desarrollo.
+// Sin activo identificable → null (consulta general/institucional). Se calcula con IDs y slugs reales
+// del registro curado, nunca con el nombre de una campaña o de un anuncio.
+export function resolveAssetKey(input: { asset: AttributionAsset; pageLocation?: string }): string | null {
+  const path = pathOf(input.pageLocation);
+  const inv = path.match(/^\/invertir\/([a-z0-9-]{1,80})\/?$/i);
+  if (inv && getInvestmentOpportunityBySlug(inv[1].toLowerCase())) return `inv:${inv[1].toLowerCase()}`;
+  const prop = path.match(/^\/propiedades\/(\d{1,12})\/?$/);
+  if (prop) return `prop:${Number(prop[1])}`;
+  if (input.asset.development_slug) return `dev:${input.asset.development_slug}`;
+  if (input.asset.property_id) return `prop:${input.asset.property_id}`;
+  return null;
+}
+
 function campaignTouch(attr: SubmitAttribution | null | undefined): AttributionTouch | null {
   if (!attr) return null;
   const hasSignal = (t: AttributionTouch) =>
@@ -128,6 +144,8 @@ export type LeadAttributionRow = {
   landing_page: string | null;
   referrer: string | null;
   page_path: string | null;
+  // Solo lo escribe el registro de clics de WhatsApp (requiere el SQL 2026-11-11_whatsapp_ref.sql).
+  asset_key?: string | null;
   first_touch: AttributionTouch | null;
   last_touch: AttributionTouch | null;
 };
@@ -144,6 +162,7 @@ export function buildLeadAttributionRow(input: {
   attribution: SubmitAttribution | null;
   asset: AttributionAsset;
   pageLocation?: string;
+  assetKey?: string | null;
 }): LeadAttributionRow {
   const a = input.attribution;
   const t = a?.last;
@@ -175,6 +194,8 @@ export function buildLeadAttributionRow(input: {
     landing_page: orNull(t?.landing_page),
     referrer: orNull(t?.referrer),
     page_path: orNull(pathOf(input.pageLocation) || undefined),
+    // Omitido (no null) cuando no aplica: los formularios no dependen de la columna nueva.
+    ...(input.assetKey ? { asset_key: input.assetKey } : {}),
     first_touch: a?.first ?? null,
     last_touch: a?.last ?? null,
   };
