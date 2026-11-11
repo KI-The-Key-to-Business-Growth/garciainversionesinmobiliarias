@@ -33,7 +33,7 @@ Persistencia **solo con consentimiento** (analítica o publicidad); click ids y 
 - Envío: campo `attribution` (JSON) en Contacto, Newsletter y consulta de ficha. El servidor lo **valida** (lista blanca, longitudes, consentimiento declarado; descarta click ids sin marketing).
 - **Identificación del activo por IDs reales:** `property_app_id` del formulario → desarrollo vía `lib/site-curation.ts`; si no, página de envío; si no, landing de la campaña (`/desarrollos/<slug>`, `/propiedades/<id>`). Nunca por el nombre de la campaña/anuncio. Ej.: 236682 → `domus-brickell-center`; 237474/240593/240587/240588 → `benavidez-village`.
 - 2Clics: el mensaje del negocio suma una línea `Atribución web: meta / paid_social · campaña: … (id …) · conjunto id … · anuncio id … · desarrollo: …` (sin datos personales, sin click ids). El `Ref: <event_id>` ya existente cruza con Supabase.
-- Supabase: tabla **`lead_attribution`** (sin datos personales; clave `event_id`). SQL en `docs/ai/sql/2026-11-10_lead_attribution.sql` (también en `supabase-schema.sql`). **NO aplicada**; la web funciona igual sin ella (registro best-effort con timeout de 2 s). Sin consentimiento solo se guarda el registro operativo (tipo, activo, estado CRM) con atribución en NULL.
+- Supabase: tabla **`lead_attribution`** (sin datos personales; clave `event_id`). SQL en `docs/ai/sql/2026-11-10_lead_attribution.sql` (también en `supabase-schema.sql`). **Aplicada en Supabase (2026-11-11)**; la web funciona igual aunque falle (registro best-effort con timeout de 2 s). Sin consentimiento solo se guarda el registro operativo (tipo, activo, estado CRM) con atribución en NULL.
 - No viaja ningún dato personal a GA4, GTM ni Meta (`lib/analytics.ts` descarta claves y valores con forma de email/teléfono).
 
 ### Convención de URLs para anuncios de Meta
@@ -63,19 +63,27 @@ Removido: `form_submit` (intento de envío; no tenía etiqueta y contaba intento
 `select_property` existe en GTM pero el sitio no lo emite (sin cambios).
 El `event_id` de `generate_lead` es el mismo `Ref` del CRM y de `lead_attribution`: base para deduplicar con una futura Conversions API.
 
-## 5. Cambios de GTM preparados (NO aplicados — requieren aprobación)
+## 5. GTM publicado — versión 8 (2026-11-11)
 
-El sitio ya queda protegido sin ellos (el Pixel se bloquea por código sin consentimiento). Aplicarlos mejora la calidad de datos y el cumplimiento dentro de GTM.
+Contenedor `GTM-MBNKBBSW` (cuenta 6359369458, contenedor 254669036). **Versión activa: 8** «Medición Meta Ads: consentimiento, parámetros GA4, eventID y PageView único» (14 etiquetas, 6 activadores, 8 variables). Base: v7. **Reversión:** publicar la v7 (`node tools/gtm/gtm.mjs publish 7 --confirm`, con autorización). Respaldos de v7 y v8 en `documentacion/gtm-backups/` (fuera del repo). Administración por la API oficial v2 con cuenta de servicio (`tools/gtm/`, README sin secretos).
 
-**Respaldo y reversión:** (1) Admin → Exportar contenedor (versión 7) y guardar el JSON. (2) Trabajar en un espacio nuevo "Consentimiento + parámetros". (3) Reversión = volver a publicar la versión 7 (Versiones → v7 → Publicar).
+Contenido publicado:
 
-1. **Variables de capa de datos (v2):** `event_id`, `lead_type`, `form_name`, `content_type`, `property_id`, `development_slug`, `market`, `button_location`.
-2. **Etiquetas GA4 de evento** (`generate_lead`, `click_whatsapp`, `newsletter_signup`, `property_view`): agregar como parámetros `event_id`, `lead_type`, `content_type`, `property_id`, `development_slug`, `market`.
-3. **Meta (etiquetas HTML Lead/ViewContent/Contact/Subscribe):** pasar `eventID` para deduplicación futura: `fbq("track","Lead",{content_ids:["{{DLV property_id}}"],content_type:"product"},{eventID:"{{DLV event_id}}"});` (ídem resto).
-4. **Consentimiento por etiqueta:** habilitar "Consent Overview"; en las etiquetas Meta (init + 5 eventos) → Configuración avanzada → Consentimiento → "Requerir consentimiento adicional": `ad_storage`. Etiquetas GA4: `analytics_storage` (integrado). El `gclidw`/Conversion Linker: `ad_storage`.
-5. **Conversiones GA4 (Admin de GA4):** marcar como evento clave `generate_lead` (principal). Secundarios: `click_whatsapp`, `newsletter_signup`. `property_view` como métrica de interés, no conversión.
-6. **Meta Events Manager:** optimizar campañas por `Lead` (principal); `Contact` y `Subscribe` secundarios. `ViewContent` solo para audiencias.
-7. Sin tocar: campañas, presupuestos, audiencias, otros contenedores.
+1. **Variables de capa de datos (v2):** `DLV - event_id`, `lead_type`, `form_name`, `content_type`, `property_id`, `development_slug`, `market`, `button_location`.
+2. **GA4 (etiquetas de evento `generate_lead`, `click_whatsapp`, `newsletter_signup`, `property_view`):** los ocho parámetros anteriores. `event_id` llega a GA4 en el campo nativo `evnid` (no como `ep.event_id`); los parámetros que un evento no trae simplemente no se envían.
+3. **Meta (Lead, ViewContent, Contact, Subscribe):** `fbq("track", …, params, {eventID})` con el `event_id` del dataLayer y guardas (nunca envía el texto "undefined"; `content_ids` solo si hay `property_id`). `SelectProperty` sin cambios.
+4. **Consentimiento por etiqueta:** `ad_storage` requerido en `Meta - Pixel`, las 4 etiquetas de evento de Meta, `SelectProperty` y el Conversion Linker. GA4 usa `analytics_storage` integrado. Los defaults de Consent Mode se definen solo en el sitio (`lib/gtm.ts`), no en GTM.
+5. **Un solo PageView / init por carga:** `Meta - Pixel` (id 4) en `oncePerLoad` (antes `oncePerEvent`: al ser *setup tag* de las demás, repetía `init` + `PageView` en cada evento). Guarda `window.__giMetaLastPath` con la ruta ya contada.
+6. **PageView de navegación interna (Next.js):** etiqueta `Meta - PageView navegación interna` con activador `History Change - navegación interna`. Solo envía `PageView` si cambió la **ruta** (`location.pathname`); ignora fragmentos, query, `replaceState` y repeticiones. Respeta `ad_storage`.
+7. Sin tocar: activadores de eventos existentes, otros contenedores, campañas, presupuestos.
+
+Verificación (Preview del workspace y luego el contenedor publicado, solicitudes interceptadas → *intentadas*, no recibidas): un `init` por carga, un `PageView` por página (incluida navegación interna Home → Desarrollo → Listado → Ficha → Contacto), `ViewContent` una vez por ficha con `eventID` = `event_id` del dataLayer (también en visitantes recurrentes), sin llamadas a Meta con solo analítica ni tras retirar el consentimiento, sin `PageView` por fragmento/query/`replaceState`. GA4: un `page_view` por URL (GA4 envía el de la página anterior junto al siguiente evento; no hay duplicado). **No verificado:** `Lead` y `Subscribe` (no se generaron leads ni suscripciones artificiales) y la recepción efectiva en Meta/GA4.
+
+**Pendiente (fuera de GTM):** (a) GA4: marcar `generate_lead` como evento clave principal (secundarios `click_whatsapp`, `newsletter_signup`; `property_view` no es conversión); (b) Meta Events Manager: optimizar por `Lead` (`Contact`/`Subscribe` secundarios; `ViewContent` solo audiencias).
+
+### Corrección web asociada (commit 39512be)
+
+`PropertyViewTracker` corría antes de que el script de GTM (`afterInteractive`) creara `window.dataLayer`; los visitantes con consentimiento guardado perdían `property_view`. `lib/when-analytics-ready.ts` reintenta (100 ms, máx. 5 s, solo con consentimiento guardado), dispara una sola vez y se limpia al desmontar.
 
 ## 6. Textos legales para validar con un asesor (no son asesoramiento legal)
 
@@ -83,7 +91,9 @@ Actualizados en `/privacidad` (secciones 6 y 10) y requieren validación legal: 
 
 ## 7. Pendientes / límites conocidos
 
-- La tabla `lead_attribution` debe crearse en Supabase para empezar a guardar la atribución.
+- Queda una fila de prueba en `lead_attribution` (id 1, `event_id = '__prueba_esquema__'`, sin datos personales); borrarla a mano en el SQL Editor.
 - WhatsApp: no hay atribución de la conversación (app Business, sin Cloud API). Solo el clic, con la última campaña guardada.
-- No hay Conversions API: el Pixel es 100% navegador; quien rechaza cookies no se mide (esperado en este modelo).
-- Hasta aplicar los cambios de GTM, GA4 y Meta reciben los eventos **sin parámetros** (el contenedor v7 no los mapea) y Meta sin `eventID`.
+- No hay Conversions API: el Pixel es 100% navegador; quien rechaza cookies no se mide (esperado en este modelo). `event_id` ya queda listo para deduplicar con una futura CAPI.
+- Validación legal de `/privacidad` pendiente (ver `PRIVACIDAD_REVISION.md`); la implementación técnica no equivale a validación jurídica.
+- Con «solo analítica» salen pings de Consent Mode de Google (`googlesyndication.com/ccm`, `google.com/g/collect`) sin cookies de publicidad; no son de Meta.
+- `Lead` y `Subscribe` sin prueba de extremo a extremo; se verificarán con la primera consulta real.
