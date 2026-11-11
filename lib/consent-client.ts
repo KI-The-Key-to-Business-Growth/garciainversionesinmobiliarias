@@ -92,6 +92,10 @@ export function applyConsent(choice: ConsentChoice, win: ConsentWindow = browser
     Boolean(previous) &&
     ((previous!.analytics && !choice.analytics) || (previous!.marketing && !choice.marketing));
 
+  // Sin elección válida previa (primera vez, o cookie de una versión anterior que ya no cuenta): si no
+  // se concede todo, se limpian las cookies de medición que hubieran quedado de antes.
+  if (!previous && !(choice.analytics && choice.marketing)) clearMeasurementCookies(win);
+
   if (withdrew) {
     clearMeasurementCookies(win);
     if (!hasAnyConsent(choice)) clearAttribution(win);

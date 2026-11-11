@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { _resetFiredEvents, stripPii, trackEvent, trackEventOnce } from '@/lib/analytics';
-import { CONSENT_ALL, CONSENT_DENIED, buildConsentCookie, serializeConsent } from '@/lib/consent';
+import { CONSENT_ALL, CONSENT_DENIED, CONSENT_VERSION, buildConsentCookie, serializeConsent } from '@/lib/consent';
 import { applyConsent, getStoredConsent, type ConsentWindow } from '@/lib/consent-client';
 import { captureAttribution, extractTouch, readAttributionStore } from '@/lib/attribution';
 
@@ -169,5 +169,34 @@ describe('applyConsent — aceptar, rechazar y modificar', () => {
     const { win, reload } = makeWin({ cookie: `gi_consent=${serializeConsent(CONSENT_ALL)}`, gtmLoaded: false });
     expect(applyConsent(CONSENT_DENIED, win).reloaded).toBe(false);
     expect(reload).not.toHaveBeenCalled();
+  });
+});
+
+describe('CONSENT_VERSION 2 — se vuelve a preguntar una vez', () => {
+  it('una cookie de la versión 1 ya no cuenta como elección', () => {
+    const { win } = makeWin({ cookie: 'gi_consent=v%3D1%26a%3D1%26m%3D1%26t%3D1' });
+    expect(getStoredConsent(win)).toBeNull();
+  });
+
+  it('la versión vigente es 2 y la cookie nueva la lleva', () => {
+    expect(CONSENT_VERSION).toBe(2);
+    expect(serializeConsent(CONSENT_ALL)).toMatch(/^v%3D2%26/);
+  });
+
+  it('rechazar tras una cookie v1: limpia cookies de medición y atribución previas', () => {
+    const { win, jar } = makeWin({
+      cookie: 'gi_consent=v%3D1%26a%3D1%26m%3D1%26t%3D1; _ga=1; _fbp=3; _gcl_au=4; sesion=keep',
+    });
+    captureAttribution(win, CONSENT_ALL, extractTouch('https://www.garciainversionesinmobiliarias.com.ar/?utm_source=meta', ''));
+    applyConsent(CONSENT_DENIED, win);
+    expect([...jar.keys()].sort()).toEqual(['gi_consent', 'sesion']);
+    expect(readAttributionStore(win)).toBeNull();
+  });
+
+  it('aceptar todo tras una cookie v1 no borra nada y carga GTM', () => {
+    const { win, jar, loadGtm } = makeWin({ cookie: 'gi_consent=v%3D1%26a%3D1%26m%3D1%26t%3D1; _ga=1' });
+    applyConsent(CONSENT_ALL, win);
+    expect(jar.has('_ga')).toBe(true);
+    expect(loadGtm).toHaveBeenCalledTimes(1);
   });
 });

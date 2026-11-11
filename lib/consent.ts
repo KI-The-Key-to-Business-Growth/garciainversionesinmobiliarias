@@ -7,7 +7,7 @@
 // de navegador reciben el "entorno" por parámetro, así se prueban en Node.
 
 export const CONSENT_COOKIE = 'gi_consent';
-export const CONSENT_VERSION = 1;
+export const CONSENT_VERSION = 2;
 export const CONSENT_MAX_AGE_DAYS = 180;
 // Evento DOM que abre el panel de preferencias (lo usa el link del footer y /privacidad).
 export const CONSENT_OPEN_EVENT = 'gi:open-consent';
