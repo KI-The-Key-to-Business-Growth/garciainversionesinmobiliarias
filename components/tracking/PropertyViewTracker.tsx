@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { analyticsAllowed, newEventId, trackEventOnce } from '@/lib/analytics';
-import { CONSENT_CHANGE_EVENT } from '@/lib/consent';
+import { newEventId, trackEventOnce } from '@/lib/analytics';
+import { runWhenAnalyticsReady } from '@/lib/when-analytics-ready';
 
 type PropertyViewTrackerProps = {
   contentType: 'property' | 'development' | 'investment';
@@ -12,9 +12,11 @@ type PropertyViewTrackerProps = {
 };
 
 // Evento `property_view` (GTM → GA4 `property_view` + Meta `ViewContent`): una vez por visualización
-// de ficha de propiedad, desarrollo u oportunidad. Identifica el activo por IDs reales
-// (property_id de 2Clics, slug curado), nunca por texto libre. Solo con consentimiento: si el
-// visitante acepta DESPUÉS de cargar la ficha, la vista se registra en ese momento (una sola vez).
+// de ficha de propiedad, desarrollo u oportunidad. Identifica el activo por IDs reales (property_id de
+// 2Clics, slug curado), nunca por texto libre. Solo con consentimiento: si el visitante acepta DESPUÉS
+// de cargar la ficha, la vista se registra en ese momento; si ya tenía consentimiento guardado y GTM
+// todavía no creó el `dataLayer`, se reintenta unos instantes (lib/when-analytics-ready.ts).
+// Siempre una sola vez por visualización (mismo event_id); la limpieza corta listener e intervalo.
 export default function PropertyViewTracker({
   contentType,
   propertyId,
@@ -23,7 +25,7 @@ export default function PropertyViewTracker({
 }: PropertyViewTrackerProps) {
   useEffect(() => {
     const viewId = newEventId('view');
-    const fire = () =>
+    return runWhenAnalyticsReady(() => {
       trackEventOnce('property_view', viewId, {
         content_type: contentType,
         property_id: propertyId ?? undefined,
@@ -31,16 +33,7 @@ export default function PropertyViewTracker({
         market: market ?? undefined,
         page_path: window.location.pathname,
       });
-
-    if (analyticsAllowed()) {
-      fire();
-      return;
-    }
-    const onConsent = () => {
-      if (analyticsAllowed()) fire();
-    };
-    window.addEventListener(CONSENT_CHANGE_EVENT, onConsent);
-    return () => window.removeEventListener(CONSENT_CHANGE_EVENT, onConsent);
+    });
   }, [contentType, propertyId, developmentSlug, market]);
 
   return null;
