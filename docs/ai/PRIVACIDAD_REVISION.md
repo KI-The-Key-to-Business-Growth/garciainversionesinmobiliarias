@@ -1,19 +1,19 @@
 # /privacidad — propuesta consolidada para revisión (2026-11-11)
 
-> **Estado: BORRADOR PARA REVISIÓN JURÍDICA. No está validado por un profesional, no está publicado y no cambia ninguna política vigente.** La implementación técnica no equivale a validación jurídica. Lo que hoy ve el público en `/privacidad` es la versión anterior (publicada el 2026-11-11, sin mención al enlace de WhatsApp con referencia).
+> **Estado: BORRADOR PARA REVISIÓN JURÍDICA. No está validado por un abogado, no está publicado y no cambia la política vigente.** La implementación técnica no equivale a validación jurídica. Lo que hoy ve el público en `/privacidad` es la versión anterior.
 >
-> Rama `privacy/review-draft` (sin push, sin merge). Cada dato no comprobable figura como **`[A CONFIRMAR: …]`** y el control `PRIVACY_PUBLISH_CHECK=1 npm test` **falla mientras queden pendientes**: así el borrador no puede publicarse por accidente.
+> Rama `privacy/review-draft` (sin push, sin merge). La página lleva la nota de borrador y `PRIVACY_PUBLISH_CHECK=1 npm test` **falla mientras exista**; tampoco permite `[A CONFIRMAR]`. Se quita solo con la validación del abogado.
 
-Este documento reemplaza a la versión anterior de `PRIVACIDAD_REVISION.md` y es la **única** referencia del tema: (1) qué cambió, (2) hechos técnicos comprobados, (3) texto completo propuesto, (4) cuestiones para el asesor, (5) conservación, (6) proveedores y transferencias, (7) datos del responsable, (8) derechos y AAIP, (9) otras jurisdicciones, (10) cómo publicar.
+Referencia técnica del tema (las cuestiones jurídicas están **solo** en `PRIVACIDAD_ASESOR_JURIDICO.md`): (1) resumen de modificaciones, (2) hechos técnicos comprobados, (3) texto completo propuesto, (4) puntero al documento del abogado, (5) conservación y mecanismo de borrado (desactivado), (6) proveedores, (7) derechos y AAIP, (8) estado de cierre y comprobaciones para publicar.
 
-## 1. Qué cambió respecto de la política vigente
-- **Nueva explicación de los enlaces de WhatsApp y el origen de consultas** (sección 6): referencia aleatoria, qué se registra con cada consentimiento, copiar no registra, clic ≠ mensaje, WhatsApp es un servicio de Meta.
-- **Afirmaciones absolutas retiradas** (sección 6 y 7): «No enviamos tu nombre, correo ni teléfono a Google/Meta» pasa a distinguir **datos de formulario** (no se incorporan a los eventos) de **datos técnicos** que las plataformas reciben por sí mismas (IP, navegador, cookies propias). «No vende, alquila ni cede» se limita a «no vende datos de contacto ni el contenido de las consultas» y reconoce el papel de Google y Meta.
-- **Secciones nuevas:** 11 *Proveedores y transferencias internacionales*, 12 *Conservación de los datos*. Los números de «Cambios» (13) y «Contacto» (14) se desplazaron; las referencias internas a las secciones 6 y 10 no cambian.
-- **Datos del responsable:** razón social/CUIT y domicilio como pendientes; el correo `contacto@garciainversiones.com.ar` se conserva y queda marcado «comprobar».
-- **Derechos:** se agrega *actualizar*, gratuidad y frecuencia del acceso, plazos de la ley (marcados a validar) y datos de la AAIP.
-- **Cookies:** cookie propia de la elección (180 días) y descripción de los mapas de Google Maps, que ahora **no se cargan** hasta que el visitante lo pide o acepta publicidad (sección 11). Los videos y recorridos virtuales son enlaces, no contenido incrustado.
-- **Banner/panel de cookies:** las descripciones de *Analítica* y *Publicidad* ahora mencionan el registro del clic hacia WhatsApp con el mismo alcance que la política. `CONSENT_VERSION` se subió a 2 en un commit **separado** (`f4ee99d`) para volver a preguntar una vez a todos (finalidad informada distinta); está pendiente de revisión y puede descartarse sin afectar el resto (evaluación en la sección 11).
+## 1. Resumen de modificaciones (versión simplificada, 2026-11-11)
+- **Política pública reescrita y simplificada** (12 secciones, lenguaje claro, comparable en estructura con las de inmobiliarias argentinas, sin copiar textos): responsable; datos; finalidades; formularios, consultas y newsletter; WhatsApp; analítica y publicidad; cookies y mapas; proveedores y transferencias; conservación; seguridad; derechos; cambios y contacto.
+- **Responsable:** María Fabiana García, persona humana, titular de García Inversiones Inmobiliarias, matrícula CMCPSI 6378, domicilio informado (con la aclaración de que no es oficina ni atención al público) y correo `fabiana@garciainversiones.com.ar`. Sin CUIT (decisión del abogado).
+- **Se retiró** todo lo que no aporta claridad al visitante: apartados sobre otras jurisdicciones, regiones técnicas no verificadas, tablas y detalles de implementación, y la sección larga de derechos del borrador anterior.
+- **Conservación sin promesas no cumplibles:** se anuncian solo los plazos ya implementados (90 días el origen de visita en el navegador; 180 días la elección de cookies). Los clics de WhatsApp, formularios, CRM y conversaciones se conservan «mientras sean necesarios». **No** se anuncia eliminación automática ni el plazo de 90 días de WhatsApp (propuesta, mecanismo desactivado).
+- **Transferencias:** se informa la función de cada proveedor, que algunos tratan datos fuera del país (en particular EE. UU.) y que cada uno aplica sus propias condiciones; no se afirman regiones ni contratos no comprobados.
+- **Sin cambios:** modelo restrictivo de consentimiento, `CONSENT_VERSION = 2`, carga controlada de Google Maps, mecanismo de retención desactivado.
+- **Marcadores `[A CONFIRMAR]`:** los siete marcadores jurídicos se resolvieron con redacción revisable (no se borraron sin más); las preguntas que dependen del abogado están en `PRIVACIDAD_ASESOR_JURIDICO.md`. El control de publicación se mantiene mediante la nota «BORRADOR PARA REVISIÓN JURÍDICA» (`PRIVACY_PUBLISH_CHECK=1 npm test` falla mientras exista).
 
 ## 2. Hechos técnicos comprobados (separados de las decisiones jurídicas)
 | Afirmación de la política | Evidencia |
@@ -41,448 +41,288 @@ Este documento reemplaza a la versión anterior de `PRIVACIDAD_REVISION.md` y es
 ## 3. Texto completo propuesto para `/privacidad`
 *(Generado automáticamente desde `app/privacidad/page.tsx` de la rama para que coincida exactamente con lo que se publicaría. Los textos en negrita entre corchetes son pendientes.)*
 
-## 1. Identificación del responsable
+## 1. Quién es la responsable
 
-El responsable del tratamiento de los datos personales recabados a través de
+La responsable del tratamiento de los datos personales recabados a través de
 este sitio web es:
 
-**María Fabiana García**, persona humana, que opera bajo el
-nombre comercial **García Inversiones Inmobiliarias**.
+**María Fabiana García**, persona humana, titular de
+**García Inversiones Inmobiliarias**.
 
 Matrícula profesional: CMCPSI 6378.
 
 Domicilio: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
 Provincia de Buenos Aires, Argentina.
 
-El domicilio informado es el que la titular indica a los fines de esta política.
-No constituye una oficina comercial ni un establecimiento de atención al
-público. Las consultas y reuniones se coordinan previamente a través de
-nuestros canales oficiales de contacto.
+Correo electrónico:
+[fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
 
 Sitio web:
 [www.garciainversionesinmobiliarias.com.ar](https://www.garciainversionesinmobiliarias.com.ar)
 
-Correo de contacto:
+El domicilio informado es el que la titular indica a los fines de esta política.
+No constituye una oficina comercial ni un establecimiento de atención al
+público. Las consultas y reuniones se coordinan previamente a través de nuestros
+canales oficiales de contacto.
+
+## 2. Qué datos recopilamos
+
+-
+**Datos que nos proporcionás:** nombre y apellido, correo
+electrónico, teléfono o WhatsApp, y el motivo y el mensaje de tu consulta,
+cuando completás un formulario, te suscribís al newsletter o nos escribís por
+WhatsApp.
+
+-
+**Datos técnicos de navegación:** páginas visitadas, origen de la
+visita, tipo de navegador y de dispositivo, y la dirección IP, que reciben
+nuestros proveedores de alojamiento, seguridad y medición cuando se carga el
+sitio. Las herramientas de analítica y publicidad solo se activan si las
+aceptás (ver secciones 6 y 7).
+
+-
+**Referencia técnica de WhatsApp:** cuando seleccionás un enlace
+de WhatsApp del sitio, según lo que hayas aceptado (ver sección 5).
+
+No solicitamos intencionalmente datos sensibles ni datos de menores de 18 años.
+Si sos menor, por favor no envíes tus datos a través de este sitio.
+
+## 3. Para qué usamos tus datos
+
+- Responder tus consultas comerciales e inmobiliarias.
+
+- Gestionar el seguimiento y la relación comercial con quienes nos consultan.
+
+-
+Enviarte información sobre propiedades y novedades del mercado, únicamente si
+te suscribiste al newsletter.
+
+-
+Conocer el uso del sitio y qué propiedades, desarrollos y campañas generan
+consultas, según lo que hayas aceptado en el aviso de cookies.
+
+- Proteger el sitio y los formularios frente al spam y usos automatizados.
+
+No vendemos tus datos de contacto ni el contenido de tus consultas. Los
+compartimos solo con los proveedores que nos permiten operar el sitio (sección
+8), con las plataformas de medición y publicidad si aceptaste sus cookies
+(sección 6), con WhatsApp si iniciás una conversación, y cuando una autoridad
+competente lo exija conforme a la ley.
+
+## 4. Formularios, consultas y newsletter
+
+Los datos que ingresás en los formularios de contacto o de consulta por una
+propiedad se usan para responderte por el medio que nos indicaste y para
+registrar la consulta y darle seguimiento en nuestro sistema de gestión de
+clientes (CRM), cuando corresponda. Cada consulta se notifica internamente por correo
+electrónico. No usamos tus datos de contacto para
+enviarte comunicaciones no relacionadas con tu consulta sin tu consentimiento.
+
+Para proteger los formularios del spam usamos una verificación de Cloudflare
+(Turnstile), que analiza señales técnicas de tu navegador, como la dirección IP.
+Funciona aunque rechaces las cookies opcionales.
+
+La suscripción al newsletter es voluntaria. Podés darte de baja en cualquier
+momento escribiendo a
 [fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
+con el asunto «Baja newsletter».
 
-## 2. Datos que recopilamos
+## 5. WhatsApp
 
-Podemos recopilar los siguientes tipos de información personal cuando
-interactuás con nuestro sitio:
-
--
-**Datos de identificación:** nombre y apellido.
-
--
-**Datos de contacto:** dirección de correo electrónico y número
-de teléfono o WhatsApp.
+Al seleccionar un enlace de WhatsApp de este sitio se prepara un mensaje
+relacionado con la propiedad, el desarrollo o la oportunidad que estabas
+viendo, con una referencia técnica aleatoria que no incorpora directamente tu
+nombre, teléfono ni correo electrónico. Qué registramos depende de tu elección
+en el aviso de cookies:
 
 -
-**Información de la consulta:** motivo de la consulta y mensaje
-que nos enviás a través del formulario de contacto.
+**Si aceptaste solo las cookies de analítica:** registramos la
+referencia, la propiedad o el desarrollo consultado y la página de origen. No
+guardamos datos de campañas ni identificadores publicitarios en ese registro.
 
 -
-**Dirección de correo para newsletter:** cuando te suscribís
-voluntariamente a nuestras novedades.
+**Si aceptaste las cookies de publicidad:** además asociamos el
+clic con el origen de tu visita y la campaña, incluidos identificadores
+técnicos de publicidad.
 
 -
-**Datos de navegación:** información técnica recabada por
-herramientas de analítica (ver sección 6), como páginas visitadas, duración de
-la sesión y origen del tráfico.
+**Si rechazaste ambas:** no registramos el clic. Copiar el enlace
+sin abrirlo tampoco genera un registro.
 
--
-**Datos técnicos de conexión:** como la dirección IP, el tipo de
-navegador y de dispositivo, que reciben nuestros proveedores de alojamiento, de
-seguridad y de medición cuando se carga el sitio (ver sección 11).
+Seleccionar un enlace no significa que hayas enviado un mensaje. Si decidís
+iniciar la conversación, se realiza mediante WhatsApp, un servicio de Meta, que
+trata la información conforme a sus propias condiciones y política de
+privacidad. Las conversaciones se mantienen en la aplicación de WhatsApp
+Business, atendida personalmente por la titular. Las consultas comerciales
+relevantes se registran manualmente en nuestro CRM (2Clics); no se leen ni se
+procesan las conversaciones de forma automática.
 
--
-**Referencia técnica de WhatsApp:** cuando seleccionás un enlace de
-WhatsApp de nuestro sitio, según lo que hayas aceptado (ver sección 6).
+## 6. Analítica y publicidad
 
--
-**Conversaciones de WhatsApp:** si decidís iniciar una conversación,
-la información que nos proporcionás en ella.
+Utilizamos **Google Analytics 4**, **Google Tag Manager**,
+**Meta Pixel** y **Google Ads** para entender cómo se
+usa el sitio, medir qué anuncios generan consultas y mejorar nuestras campañas.
+Recopilan información técnica y de navegación (páginas visitadas, origen del
+tráfico, interacciones, dispositivo y eventos de conversión), de forma
+estadística o asociada a identificadores técnicos del navegador.
+**No se activan hasta que las aceptás** en el aviso de cookies.
 
-No solicitamos intencionalmente datos sensibles (según la legislación vigente)
-ni datos de menores de 18 años. Si sos menor, por favor no envíes tus datos a
-través de este sitio.
-
-## 3. Finalidad del tratamiento
-
-Los datos personales que nos proporcionás se utilizan exclusivamente para los
-siguientes fines:
-
--
-Responder consultas comerciales e inmobiliarias enviadas a través de los
-formularios del sitio o de WhatsApp.
-
--
-Enviar información sobre propiedades, oportunidades de inversión y novedades
-del mercado (únicamente si te suscribiste al newsletter).
-
-- Gestionar la relación comercial con potenciales y actuales clientes.
-
--
-Mejorar la experiencia del usuario y el rendimiento del sitio web mediante
-datos estadísticos, agregados o seudonimizados, según la configuración de cada
-herramienta.
-
-- Medir la efectividad de nuestras campañas publicitarias.
-
--
-Conocer qué propiedades, desarrollos u oportunidades generan consultas a través
-de los enlaces de WhatsApp, únicamente según tu consentimiento (ver sección 6).
-
-- Proteger el sitio y los formularios frente a spam y usos automatizados.
-
-## 4. Formularios de contacto
-
-Cuando completás y enviás el formulario de contacto o el formulario de consulta
-por una propiedad, los datos ingresados son utilizados para:
-
--
-Responderte de manera personalizada a través de los canales que nos indicaste
-(email, WhatsApp o teléfono).
-
--
-Registrar o gestionar la consulta en nuestro sistema de gestión de clientes
-(CRM), cuando corresponda, para asegurar un seguimiento adecuado.
-
--
-Contactarte con información adicional relacionada con la propiedad o servicio
-de tu interés.
-
-Para proteger los formularios del spam, usamos una verificación de Cloudflare
-(Turnstile) que analiza señales técnicas de tu navegador, como la dirección IP,
-para distinguir a las personas de los programas automáticos. Esta verificación
-funciona aunque rechaces las cookies opcionales.
-
-No utilizaremos tus datos de contacto para enviarte comunicaciones no
-relacionadas con tu consulta sin tu consentimiento previo.
-
-## 5. Suscripción al newsletter
-
-Si te suscribís a nuestro newsletter, utilizaremos tu dirección de correo
-electrónico para enviarte periódicamente:
-
--
-Novedades sobre propiedades destacadas y nuevas oportunidades de inversión.
-
-- Información sobre mercados inmobiliarios nacionales e internacionales.
-
-- Contenido de valor relacionado con el real estate.
-
-La suscripción es completamente voluntaria. Podés darte de baja en cualquier
-momento escribiéndonos a
-[fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
-con el asunto "Baja newsletter".
-
-## 6. Herramientas de analítica y publicidad
-
-Este sitio utiliza herramientas de medición, analítica y publicidad
-digital, tales como **Google Analytics 4**,
-**Google Tag Manager**, **Meta Pixel** y
-**Google Ads**, con el objetivo de analizar el uso del sitio, medir
-conversiones, mejorar la experiencia del usuario y optimizar campañas
-publicitarias.
-
-Estas herramientas pueden recopilar información técnica y de navegación, como
-páginas visitadas, origen del tráfico, interacciones realizadas, dispositivo
-utilizado y eventos de conversión. La información se utiliza de forma
-estadística, agregada o asociada a identificadores técnicos de navegación, según
-la configuración de cada plataforma.
-
-### Google Analytics 4
-
-Utilizamos Google Analytics 4 para analizar el comportamiento de los usuarios
-en el sitio. Para más información, podés consultar la
-[Política de privacidad de Google](https://policies.google.com/privacy)
-.
-
-### Meta Pixel
-
-Podemos utilizar Meta Pixel para medir la efectividad de anuncios en Facebook
-e Instagram, crear audiencias y mostrar publicidad relevante. Meta puede usar
-la información que recibe también para sus propios fines, conforme a su
-política. Para más información, consultá la
-[Política de privacidad de Meta](https://www.facebook.com/privacy/policy/)
-.
-
-### Google Ads
-
-Podemos utilizar Google Ads para medir conversiones generadas a partir de
-anuncios y mejorar la relevancia de nuestras campañas. Para más información,
-consultá la
-[Política de privacidad de Google](https://policies.google.com/privacy)
-.
-
-Estas herramientas utilizan **cookies** propias y de terceros para
-su funcionamiento. **No se activan hasta que las aceptás** en el
-aviso de cookies, y podés rechazarlas o retirar tu consentimiento en cualquier
-momento (ver sección 10).
-
-Los datos que escribís en nuestros formularios (nombre, correo electrónico,
-teléfono y mensaje) no se incorporan a los eventos que enviamos a Google
-Analytics, Google Tag Manager ni Meta. Sin embargo, cuando estas herramientas se
-cargan, sus proveedores reciben por sí mismos datos técnicos del navegador y de
-la conexión, como la dirección IP, el tipo de navegador y de dispositivo y los
-identificadores de sus propias cookies, y los tratan conforme a sus propias
-políticas.
-
-### Origen de la visita
+Los datos que escribís en nuestros formularios (nombre, correo, teléfono y
+mensaje) no se incorporan a los eventos que enviamos a Google Analytics, Google
+Tag Manager ni Meta. Sin embargo, cuando estas herramientas se cargan, sus
+proveedores reciben por sí mismos datos técnicos del navegador y de la
+conexión, como la dirección IP, y los tratan conforme a sus propias políticas:
+[Google](https://policies.google.com/privacy)
+y
+[Meta](https://www.facebook.com/privacy/policy/)
+. Meta puede usar la información que recibe también para sus propios fines.
 
 Si aceptás las cookies de analítica o de publicidad, guardamos en tu
 dispositivo, por hasta 90 días, el origen de tu visita (por ejemplo, el anuncio
-o la campaña desde la que llegaste, la página de entrada y el sitio de
-referencia) junto con un identificador de sesión. Si nos enviás una consulta,
-asociamos esa información a la consulta para saber qué campañas generan
-oportunidades reales; no incluye tus datos de contacto. Si rechazás las
-cookies opcionales, no guardamos esta información.
+o la campaña desde la que llegaste y la página de entrada) junto con un
+identificador de sesión. Si nos enviás una consulta, asociamos esa información
+a la consulta para saber qué campañas generan oportunidades reales; no incluye
+tus datos de contacto. Si las rechazás, no guardamos esta información.
 
-### Enlaces de WhatsApp y origen de consultas
-
-Cuando seleccionás un enlace de WhatsApp de nuestro sitio, se prepara un
-mensaje relacionado con la propiedad, el desarrollo o la oportunidad que
-estabas consultando. El mensaje incluye una referencia técnica aleatoria que no
-incorpora directamente tu nombre, teléfono ni correo electrónico.
-
-Si aceptaste las cookies de analítica o de publicidad, podemos registrar esa
-referencia junto con la propiedad o el desarrollo consultado y la página desde
-la cual accediste al enlace. Si aceptaste las cookies de publicidad, además
-podemos asociar esa interacción con información sobre el origen de tu visita y
-la campaña publicitaria correspondiente, incluidos identificadores técnicos de
-publicidad (por ejemplo, identificadores de clic y del navegador). Si aceptaste
-solo las de analítica, no guardamos datos de campañas ni identificadores
-publicitarios en ese registro.
-
-Si rechazaste ambas opciones, no conservamos ese registro de clic. Copiar el
-enlace sin abrirlo tampoco genera un registro.
-
-Seleccionar un enlace no significa que hayas enviado un mensaje. Si decidís
-iniciar la conversación, esta se realiza mediante WhatsApp, un servicio de
-Meta, que trata la información conforme a sus propias condiciones y política de
-privacidad. García utiliza la información que nos proporcionás en la
-conversación para responder tu consulta y gestionar el seguimiento comercial
-correspondiente. Esas conversaciones se mantienen en la aplicación de
-WhatsApp Business, atendida personalmente por la titular. Las consultas
-comerciales relevantes se registran manualmente en el CRM 2Clics; no se leen
-ni se procesan las conversaciones de forma automática.
-
-## 7. No vendemos tus datos
-
-García Inversiones Inmobiliarias **no vende** tus datos personales de
-contacto (nombre, correo electrónico, teléfono) ni el contenido de tus consultas.
-Tus datos podrán ser compartidos únicamente en los siguientes supuestos:
+## 7. Cookies y contenidos de terceros
 
 -
-**Proveedores de servicios:** empresas que nos asisten en la
-operación del sitio (alojamiento, base de datos, correo electrónico, CRM,
-seguridad), únicamente para prestar el servicio contratado. Los detallamos en la
-sección 11.
+**Necesarias:** permiten que el sitio y los formularios
+funcionen, incluida una cookie propia donde guardamos tu elección sobre las
+cookies por hasta 180 días.
 
 -
-**Plataformas de medición y publicidad:** solo si aceptaste las
-cookies correspondientes. Reciben datos técnicos y de uso, no tus datos de
-contacto, y pueden tratarlos conforme a sus propias políticas (ver sección 6).
+**Analítica (opcional):** medición del uso del sitio y registro
+básico de los clics hacia WhatsApp (sección 5).
 
 -
-**WhatsApp (Meta):** si iniciás una conversación con nosotros.
+**Publicidad (opcional):** medición de conversiones y anuncios, y
+asociación de los clics hacia WhatsApp con la campaña de origen.
 
--
-**Obligación legal:** cuando una autoridad competente lo requiera
-conforme a la legislación vigente.
+Las opcionales solo se activan si las aceptás en el aviso que aparece al
+ingresar. Si las rechazás, el sitio, los formularios, la verificación de
+seguridad y los enlaces a WhatsApp siguen funcionando con normalidad. Podés
+cambiar tu elección o retirar tu consentimiento en cualquier momento desde
+«Preferencias de cookies». Al retirarlo,
+eliminamos las cookies de medición y el origen de visita guardado en tu
+dispositivo. También podés bloquear o borrar cookies desde tu navegador, lo que
+puede afectar el funcionamiento de algunas partes del sitio.
 
-## 8. Seguridad
-
-Aplicamos medidas técnicas y organizativas razonables para proteger la
-información personal que nos proporcionás frente a accesos no autorizados,
-alteración, divulgación o destrucción. Entre ellas:
-
-- Transmisión de datos mediante conexión HTTPS/TLS.
-
--
-Validación y sanitización de los datos recibidos a través de los formularios.
-
-- Limitación de acceso interno a la información confidencial.
-
--
-Almacenamiento de datos en proveedores con estándares de seguridad
-reconocidos.
-
-Sin perjuicio de lo anterior, ningún sistema de transmisión de datos por
-Internet es completamente seguro, por lo que no podemos garantizar una seguridad
-absoluta.
-
-## 9. Tus derechos
-
-De acuerdo con la Ley N.° 25.326 de Protección de los Datos Personales de
-Argentina y normativa aplicable, tenés derecho a:
-
--
-**Acceder** a los datos personales que tenemos sobre vos.
-
--
-**Rectificar y actualizar** datos incorrectos, incompletos o
-desactualizados.
-
--
-**Suprimir** tus datos personales (derecho al olvido), en los
-casos previstos por la ley.
-
--
-**Oponerte** al tratamiento de tus datos en determinadas
-circunstancias.
-
--
-**Revocar** el consentimiento otorgado en cualquier momento.
-
-Para ejercer cualquiera de estos derechos, escribinos a
-[fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
-indicando tu solicitud y los datos necesarios para identificarte.
-
-El derecho de acceso es gratuito y puede ejercerse a intervalos no inferiores a
-seis meses, salvo que acredites un interés legítimo. Responderemos las solicitudes
-de acceso dentro de los diez (10) días corridos de recibido tu reclamo, y las de
-rectificación, actualización o supresión dentro de los cinco (5) días hábiles.
-**[A CONFIRMAR (grupo C): validar estos plazos (arts. 14 y 16 de la Ley 25.326, según el texto vigente) y el procedimiento interno para cumplirlos]**
-
-La Agencia de Acceso a la Información Pública (AAIP) es el órgano de control de
-la Ley N.° 25.326 y tiene la atribución de atender las denuncias y reclamos de
-quienes resulten afectados en sus derechos. Podés comunicarte con ella en
-[www.argentina.gob.ar/aaip/datospersonales](https://www.argentina.gob.ar/aaip/datospersonales)
-. **[A CONFIRMAR (grupo C): leyenda exacta exigida por la normativa vigente, y datos de contacto de la AAIP]**
-
-## 10. Cookies
-
-Las cookies son pequeños archivos de texto que los sitios web almacenan en tu
-dispositivo. Este sitio utiliza cookies propias y de terceros para los
-siguientes fines:
-
--
-**Funcionamiento del sitio:** cookies técnicas necesarias para
-que el sitio funcione correctamente, incluida una cookie propia donde guardamos
-tu elección sobre las cookies por hasta 180 días.
-
--
-**Analítica (opcional):** cookies de Google Analytics para medir
-el uso del sitio de forma estadística y agregada, y registro de los clics hacia
-WhatsApp según lo descripto en la sección 6.
-
--
-**Publicidad (opcional):** cookies de Google Ads y Meta Pixel para medir
-conversiones y mostrar anuncios relevantes, y asociación de los clics hacia
-WhatsApp con la campaña de origen.
-
-Las cookies de analítica y de publicidad son **opcionales**: solo se
-activan si las aceptás en el aviso que aparece al ingresar al sitio. Si las
-rechazás, el sitio, los formularios, la verificación de seguridad y los enlaces a
-WhatsApp siguen funcionando con normalidad.
-
-Podés cambiar tu elección o retirar tu consentimiento en cualquier momento desde
-«Preferencias de cookies». Al retirarlo, eliminamos las
-cookies de medición y la información de origen de visita guardada en tu
-dispositivo.
-
-Algunas páginas de propiedades y desarrollos incluyen un mapa de Google Maps. El mapa no
-se carga al abrir la página: aparece un aviso con el botón «Cargar mapa» y solo
-se muestra cuando lo pedís, o automáticamente si aceptaste las cookies de
+Algunas fichas de propiedades y desarrollos incluyen un mapa de Google Maps. El
+mapa no se carga al abrir la página: aparece un aviso con el botón «Cargar
+mapa», y se muestra solo cuando lo pedís o si aceptaste las cookies de
 publicidad. Al cargarse, Google puede recibir tu dirección IP y datos de tu
-navegador y, según el caso, usar sus propias cookies, conforme a sus políticas.
-El enlace «Abrir en Google Maps» abre el sitio de Google en otra pestaña. Los
-videos y recorridos virtuales son enlaces: no se cargan dentro de esta web.
+navegador y usar sus propias cookies, conforme a sus políticas. Los videos y
+recorridos virtuales son enlaces: no se cargan dentro de este sitio.
 
-También podés configurar tu navegador para bloquear o eliminar las cookies. Tené
-en cuenta que deshabilitar ciertas cookies puede afectar la funcionalidad del
-sitio.
+## 8. Proveedores y transferencias fuera de Argentina
 
-## 11. Proveedores y transferencias internacionales
-
-Para operar este sitio nos apoyamos en los siguientes proveedores. Cada uno
-recibe solo la información necesaria para su función:
+Para operar el sitio nos apoyamos en proveedores tecnológicos. Cada uno recibe la
+información necesaria para su función:
 
 -
-**Vercel (alojamiento):** recibe los datos de conexión (como la
-dirección IP y las páginas solicitadas) y los registros técnicos del servicio.
-Las funciones del sitio se ejecutan en Washington D. C., Estados Unidos.
+**Vercel:** alojamiento del sitio. Las funciones del sitio se
+ejecutan en Washington D. C., Estados Unidos.
 
 -
-**Supabase (base de datos):** guarda las suscripciones al
+**Supabase:** base de datos donde se guardan las suscripciones al
 newsletter y los registros técnicos de origen de las consultas y de clics a
 WhatsApp (sin tu nombre, correo ni teléfono).
 
 -
-**Resend (correo electrónico):** procesa los avisos internos de
-cada consulta, que incluyen los datos que ingresaste (nombre, correo, teléfono
-y mensaje). Los envíos se realizan desde la región de São Paulo (Brasil); según el proveedor, los datos de su cuenta se alojan en los Estados Unidos.
+**Resend:** envío de los avisos de cada consulta, que incluyen los
+datos que ingresaste. Los envíos se realizan desde São Paulo (Brasil); según
+el proveedor, los datos de su cuenta se alojan en Estados Unidos.
 
 -
-**2Clics (CRM):** recibe los datos de tus consultas para su
-seguimiento comercial y, cuando aceptaste las cookies correspondientes, una nota
-con el origen de la consulta.
+**2Clics:** sistema de gestión de clientes (CRM) donde se
+registran las consultas para su seguimiento comercial y, si aceptaste las
+cookies correspondientes, una nota con el origen de la consulta.
 
 -
-**Cloudflare (verificación anti-spam y DNS):** recibe señales
-técnicas de tu navegador (como la dirección IP) al verificar los formularios.
+**Cloudflare:** verificación anti-spam de los formularios y DNS.
 
 -
-**Upstash (límite de solicitudes):** procesa de forma temporal la
-dirección IP asociada a contadores para limitar abusos.
+**Upstash:** límite de solicitudes para evitar abusos; procesa de
+forma temporal la dirección IP.
 
 -
-**Sentry (monitoreo de errores):** recibe información técnica de
-errores del servidor; está configurado sin el envío automático de datos
-personales.
+**Sentry:** monitoreo de errores técnicos; está configurado sin el
+envío automático de datos personales.
 
 -
-**Google y Meta:** analítica, publicidad y WhatsApp, según las
-secciones 6 y 10.
+**Google y Meta:** analítica, publicidad y WhatsApp (secciones 5 y
+6).
 
 Algunos de estos proveedores tratan información fuera de la Argentina, en
-particular en los Estados Unidos.
-**[A CONFIRMAR (grupo C): redacción sobre las transferencias internacionales y su base jurídica (art. 12 de la Ley 25.326: nivel adecuado, cláusulas contractuales modelo aprobadas por la AAIP u otra), según la documentación de cada proveedor; no afirmar garantías que no estén documentadas]**
+particular en Estados Unidos, donde el nivel de protección de los datos
+personales puede ser distinto del argentino. Cada proveedor trata los datos
+conforme a sus propias condiciones y políticas de privacidad, que podés
+consultar en sus sitios.
 
-## 12. Conservación de los datos
+## 9. Conservación de los datos
 
-Conservamos los datos solo durante el tiempo necesario para las finalidades
-descriptas, y los eliminamos o anonimizamos cuando dejan de ser necesarios. Los
-plazos dependen de dónde se guarda cada dato:
+Conservamos los datos solo mientras sean necesarios para las finalidades
+descriptas en esta política o para cumplir obligaciones legales:
 
 -
 **En tu navegador:** el origen de tu visita, por hasta 90 días, y
-tu elección sobre las cookies, por hasta 180 días. Podés borrarlos en cualquier
-momento (ver sección 10).
+tu elección sobre las cookies, por hasta 180 días. Podés borrarlos en
+cualquier momento.
 
 -
-**Registros técnicos de clics hacia WhatsApp (nuestra base de datos):**
-hasta 90 días y luego se eliminan automáticamente.
-**[A CONFIRMAR (grupo C): plazo de 90 días en estudio; no publicar como compromiso hasta aprobar la política y activar la eliminación automática]**
+**Registros técnicos de clics hacia WhatsApp:** mientras sean
+necesarios para conocer qué propiedades y campañas generan consultas.
 
 -
-**Registros de origen de consultas por formulario y suscripciones al newsletter:**
-**[A CONFIRMAR (grupo C): plazo de conservación]**
+**Consultas, contactos y conversaciones:** mientras sean
+necesarios para responderte, dar seguimiento a la consulta y mantener la
+relación comercial.
 
 -
-**Contactos y negocios en nuestro CRM:**
-**[A CONFIRMAR (grupo C): plazo de conservación (decisión comercial y jurídica)]**
+**Newsletter:** mientras estés suscripto; podés pedir la baja en
+cualquier momento.
 
--
-**Conversaciones de WhatsApp Business y correos de consulta:**
-**[A CONFIRMAR (grupo C): plazo de conservación (decisión comercial y jurídica)]**
+Cuando dejan de ser necesarios, los eliminamos o dejamos de utilizarlos. Podés
+pedir la supresión de tus datos en cualquier momento (sección 11). Los
+proveedores de analítica, publicidad y alojamiento conservan la información
+según sus propias políticas.
 
-Los proveedores de analítica, publicidad y alojamiento conservan la información
-que reciben según sus propias políticas.
+## 10. Seguridad
 
-## 13. Cambios en esta política
+Aplicamos medidas técnicas y organizativas razonables para proteger tu
+información frente a accesos no autorizados, alteración, divulgación o
+destrucción: conexión cifrada (HTTPS), validación de los datos de los
+formularios, acceso interno limitado y proveedores con estándares de seguridad
+reconocidos. Ningún sistema de transmisión de datos por Internet es
+completamente seguro, por lo que no podemos asegurar una protección absoluta.
 
-Podemos actualizar esta Política de Privacidad periódicamente para reflejar
-cambios en nuestras prácticas, en las herramientas que utilizamos o en la
-legislación aplicable. Cuando realicemos cambios sustanciales, actualizaremos la
-fecha indicada al inicio de este documento.
+## 11. Tus derechos
 
-## 14. Contacto
+De acuerdo con la Ley N.° 25.326 de Protección de los Datos Personales, podés
+acceder a tus datos, rectificarlos y actualizarlos, solicitar su supresión,
+oponerte a su tratamiento en los casos previstos y revocar el consentimiento que
+hayas otorgado. Para ejercerlos, escribinos a
+[fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
+indicando tu solicitud y los datos necesarios para identificarte.
 
-Para cualquier consulta, solicitud o reclamo relacionado con el tratamiento de
-tus datos personales, podés contactarnos por los siguientes medios:
+El acceso es gratuito y puede ejercerse a intervalos no inferiores a seis meses,
+salvo que acredites un interés legítimo. Respondemos las solicitudes de acceso
+dentro de los diez (10) días corridos y las de rectificación, actualización o
+supresión dentro de los cinco (5) días hábiles de recibido tu reclamo.
+
+La Agencia de Acceso a la Información Pública (AAIP) es el órgano de control de
+la Ley N.° 25.326 y atiende las denuncias y reclamos de quienes consideren
+afectados sus derechos:
+[www.argentina.gob.ar/aaip/datospersonales](https://www.argentina.gob.ar/aaip/datospersonales)
+.
+
+## 12. Cambios y contacto
+
+Podemos actualizar esta política para reflejar cambios en nuestras prácticas, en
+las herramientas que usamos o en la ley; cuando sean sustanciales, actualizaremos
+la fecha indicada al inicio. Para cualquier consulta, solicitud o reclamo sobre
+tus datos personales:
 
 **Email:**
 [fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
@@ -490,22 +330,8 @@ tus datos personales, podés contactarnos por los siguientes medios:
 **WhatsApp:**
 [+54 9 11 6724-0353](https://wa.me/5491167240353)
 
-**Sitio web:**
-[www.garciainversionesinmobiliarias.com.ar](https://www.garciainversionesinmobiliarias.com.ar)
-
-## 4. Cuestiones que debe validar el asesor jurídico (lista breve; ninguna está resuelta)
-1. **Responsable:** razón social/titular, CUIT, domicilio y correo operativo (sección 7).
-2. **Consentimiento:** si el consentimiento de **analítica** alcanza para el registro básico del clic (referencia + activo + página); y si ampliar la descripción de las finalidades en el banner **sin volver a pedir** el consentimiento a quienes ya eligieron es suficiente (la versión 2 está preparada aparte; ver sección 11).
-3. **Transferencias internacionales:** según la AAIP, EE. UU. **no figura** entre los países con nivel adecuado; hay que definir la base de cada transferencia (art. 12, Ley 25.326; cláusulas modelo aprobadas por Res. AAIP 198/2023 y su presentación en 30 días, con redacciones distintas en dos páginas de la AAIP) y qué contratos de tratamiento de datos (DPA) aceptó realmente García con cada proveedor (sección 6). Hoy **no hay documentación en el repositorio** que respalde ninguna.
-4. **Registro de bases de datos (arts. 21 y 24):** si la base de consultas/newsletter debe inscribirse ante la AAIP; las páginas de la AAIP no mencionan newsletters ni listas de contacto de sitios web.
-5. **Plazos y leyenda:** vigencia de los plazos de los arts. 14 (10 días corridos) y 16 (5 días hábiles) en el texto actualizado de la ley y de cualquier reforma; leyenda exacta sobre la AAIP (no se leyó la Disposición DNPDP 10/2008).
-6. **Conservación:** plazos de la sección 5 (90 días de los clics es solo una propuesta de trabajo) y su fundamento.
-7. **Mapas de Google:** confirmar que el criterio implementado (carga con clic, o automática solo con consentimiento de publicidad) es suficiente.
-8. **Otras jurisdicciones:** si las campañas dirigidas a la UE/España o a EE. UU. exigen información o condiciones adicionales (sección 9), incluida la exigencia de Google de **conservar registros del consentimiento** (hoy solo hay cookie).
-9. **WhatsApp:** roles de García (responsable) y de WhatsApp/Meta (encargado, según los términos del WhatsApp Business App vigentes desde el 2026-09-23) y redacción si en el futuro las conversaciones se incorporan al CRM o se analizan con IA (no implementado; requeriría texto y validación aparte).
-10. **Google y Meta:** cómo describir su condición (responsable, corresponsable o encargado según la jurisdicción) y la frase «no vendemos tus datos» frente al uso propio que ambos hacen de los datos de medición.
-11. **Newsletter:** base de licitud, mecanismo de baja y plazo de eliminación.
-12. **Menores:** redacción vigente («no solicitamos datos de menores de 18 años»).
+## 4. Cuestiones para el abogado
+Única lista vigente: `docs/ai/PRIVACIDAD_ASESOR_JURIDICO.md` (transferencias, consentimiento, conservación, registro de bases y derechos/datos del responsable).
 
 ## 5. Conservación (propuesta de trabajo; no es una política aprobada)
 **No se aplica un mismo plazo a todos los sistemas.** Fundamento general: la Ley 25.326 (art. 4, inc. 7) exige destruir los datos cuando dejan de ser necesarios para su finalidad; no fija un plazo único.
@@ -548,13 +374,7 @@ Información tomada de las páginas **públicas** de cada proveedor (leídas el 
 | **2Clics** | CRM: nombre, correo, teléfono, mensaje y nota de origen | **no verificada** (su sitio no fue accesible desde esta sesión) | **no verificado** | ubicación, contrato y subencargados |
 | **Google Maps (mapas incrustados)** | IP y datos del navegador, solo al cargarse el mapa (clic o consentimiento de publicidad) | del proveedor | del proveedor | criterio de carga (punto 7) |
 
-## 7. Datos del responsable que faltan confirmar
-- **Razón social o titular responsable y CUIT** — no figuran en el repositorio ni en la política vigente.
-- **Domicilio legal o de contacto** — hoy solo «Buenos Aires, Argentina».
-- **Correo para solicitudes de privacidad** — se mantiene `contacto@garciainversiones.com.ar`. Comprobación hecha: el dominio `garciainversiones.com.ar` **existe y tiene servidor de correo propio** (proveedor `hostmar`, con SPF); el dominio del sitio no tiene correo. **No se comprobó que la casilla exista ni que sea de García**: alguien de García debe enviar un mensaje de prueba. No se reemplazó por ninguna otra dirección.
-- Si García está o debe estar inscripta en el Registro Nacional de Bases de Datos (punto 4).
-
-## 8. Derechos, plazos y AAIP (lo que dice la ley, leída del texto original; pendiente de validar vigencia)
+## 7. Derechos, plazos y AAIP (lo que dice la ley, leída del texto original; pendiente de validar vigencia)
 - Art. 14: acceso gratuito a intervalos no inferiores a seis meses (salvo interés legítimo); respuesta **dentro de 10 días corridos** de la intimación fehaciente.
 - Art. 16: rectificación, actualización o supresión **dentro de 5 días hábiles** del reclamo.
 - Art. 6: la información al titular debe incluir la **identidad y el domicilio del responsable** (de ahí el pendiente de la sección 1).
@@ -562,81 +382,28 @@ Información tomada de las páginas **públicas** de cada proveedor (leídas el 
 - Reforma: la AAIP describe un proyecto de ley de 2023 (Mensaje 87/2023); **no se pudo confirmar** su estado parlamentario ni que haya reforma vigente.
 - El texto original de la ley leído puede no reflejar modificaciones posteriores.
 
-## 9. Otras jurisdicciones (preguntas, no conclusiones)
-- **UE/España:** si las campañas a personas en España/UE hacen aplicable el régimen europeo de protección de datos. Aunque se aplicara, hay requisitos de proveedores ya documentados: Google exige consentimiento válido para cookies y personalización de anuncios en el EEE, Reino Unido y Suiza, **conservar registros del consentimiento** e instrucciones de revocación; los términos de Meta exigen aviso claro y consentimiento verificable antes de sus cookies en la UE.
-- **EE. UU. (Miami):** si alguna ley estatal aplicable exige avisos u opciones adicionales (no se verificó ninguna).
-- La política actual está redactada solo conforme a la ley argentina y no distingue países.
+## 8. Estado de cierre y comprobaciones para publicar
 
-## 10. Cómo publicar (cuando el contenido esté validado)
-1. El asesor valida el texto y se completan **todos** los `[A CONFIRMAR]` (datos del responsable, ubicaciones, plazos, redacción de transferencias).
-2. Quitar los `Pendiente` y la nota de borrador de `app/privacidad/page.tsx` y actualizar la fecha.
-3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 7 pendientes jurídicos (grupo C), a propósito).
-4. Decidir la activación de la conservación (sección 5) **antes** de publicar el compromiso de 90 días.
-5. Integrar por PR con CI y verificar la página, el banner y el registro de clics en producción.
+### 8.1 Datos del responsable (resueltos)
+María Fabiana García (nombre según su DNI, confirmado por la titular); matrícula CMCPSI 6378 contrastada con el padrón oficial (https://cmcpsi.org.ar/colegiados/padron); domicilio de El Talar autorizado, con la aclaración de que no es oficina ni atención al público (el padrón profesional publica otro, Nordelta: no se reemplazó); correo confirmado por la titular. CUIT: no se exhibe; se obtendrá de documentación oficial solo si el abogado decide que corresponde.
 
-## 11. Cierre de rama: lo que está terminado y lo que falta
+### 8.2 Proveedores: evidencia y relevancia
+| Proveedor | Comprobado | Sin comprobar | ¿Va en el texto público? |
+|---|---|---|---|
+| Vercel | funciones en Washington D. C.; plan Hobby (DPA solo Pro/Enterprise) | — | sí, lo comprobado |
+| Resend | envío desde São Paulo (DNS); cuenta en EE. UU. según el proveedor | — | sí |
+| Cloudflare | Turnstile y DNS; DPA incorporado al acuerdo *self-serve* | — | función |
+| Supabase | proyecto `ljpolupsgwtreinuxrdo` | región y DPA (*Project Settings → General*; *Legal*) | solo función |
+| Upstash | clave de límite con IP, ventana ≤ 15 min | región y DPA (panel de la base) | solo función |
+| Sentry | `sendDefaultPii: false` | región y DPA aceptado (*Settings → Legal & Compliance*) | solo función |
+| 2Clics | recibe contactos, mensajes y nota de origen | ver solicitud | solo función |
 
-### 11.1 Los 17 pendientes, clasificados
-- **Grupo A — técnicos (resueltos en el código, 2):** (1) contenidos incrustados: solo hay dos mapas de Google Maps y ahora se cargan con un clic o con consentimiento de publicidad; el texto se corrigió (antes mencionaba, por error, videos y recorridos incrustados); (2) región de envío de Resend: São Paulo (DNS).
-- **Grupo B — datos que debe aportar García (9):** razón social/titular y CUIT; domicilio; casilla de correo operativa (`contacto@garciainversiones.com.ar`: enviar un mensaje de prueba); si las conversaciones de WhatsApp pasarán al CRM; región de Supabase (panel); región de Upstash (panel); región de Sentry y si se aceptó su DPA (panel); ubicación y contrato de 2Clics (consulta al proveedor).
-- **Grupo C — criterio jurídico (6):** transferencias internacionales (base y redacción); plazos y leyenda de la AAIP; plazo de 90 días de clics de WhatsApp; plazo de formularios/newsletter; plazo del CRM; plazo de conversaciones de WhatsApp y correos.
-- El registro de bases de datos (arts. 21 y 24) y la ley aplicable a campañas en UE/EE. UU. no son pendientes dentro del texto sino preguntas del grupo C (sección 4).
-
-### 11.2 Conservación
-- Criterio propuesto: 90 días para clics de WhatsApp **sin mensaje asociado**. Mecanismo terminado, **deshabilitado**, con 19 tests (incluido un control estático: solo toca `lead_attribution` y `retention_audit`, un único `delete`, mismas tres condiciones en conteo y borrado, sin referencias a 2Clics ni WhatsApp Business).
-- Verificación en producción (solo lectura, 2026-11-11): 3 filas en total (`prueba` 1, `whatsapp_click` 2); **0 alcanzadas** por la regla de 90 días (todas del 2026-11-11). Nada se borró.
-- No hay eliminación automática para 2Clics ni WhatsApp Business. El plazo de 24 meses para prospectos sigue como propuesta pendiente de decisión comercial y jurídica.
-- Activación: pasos de la sección 5; requiere aprobación formal del plazo y una corrida de prueba (`?dry=1`) en el entorno elegido.
-
-### 11.3 Evaluación de `CONSENT_VERSION` = 2 (commit separado, pendiente de revisión)
-- **Efecto:** la cookie `gi_consent` v1 deja de valer; todos los visitantes vuelven a ver el banner **una vez**. Hasta que elijan, GTM/GA4/Pixel no cargan (el snippet inicial compara la versión).
-- **Por qué:** la descripción de las finalidades cambió (registro del clic hacia WhatsApp); informar una finalidad distinta y pedir consentimiento de nuevo es el criterio más conservador.
-- **Costo:** pérdida temporal de medición de quienes no vuelvan a aceptar; hoy el tráfico es bajo, antes de campañas es el mejor momento.
-- **Limpieza:** si el visitante tenía una cookie v1 y ahora no concede todo, se borran las cookies de medición y la atribución guardadas (tests incluidos).
-- **Cómo descartarlo:** revertir el commit `f4ee99d`; el resto de la rama no depende de él.
-
-### 11.4 Transferencias y garantías que el asesor debe validar
-Ver tabla de la sección 6. Resumen de lo **documentado por los proveedores** (no es prueba de que García lo haya aceptado): Vercel (EE. UU.; DPA solo Pro/Enterprise, García en Hobby); Supabase (SCC; región a confirmar); Resend (cuenta en EE. UU., SCC + DPF); Upstash (DPF/SCC; DPA no leído); Sentry (DPF; el DPA hay que aceptarlo; región fija al crear la organización); Cloudflare (SCC + DPF); Google y Meta (términos propios y exigencias de consentimiento); 2Clics (sin datos). EE. UU. no figura entre los países con nivel adecuado según la AAIP.
-
-### 11.5 Qué falta para publicar
-1. Datos del grupo B de García. 2. Validación jurídica del grupo C. 3. Decidir `CONSENT_VERSION` 2 y la activación de la conservación. 4. Quitar `Pendiente` y la nota de borrador; `PRIVACY_PUBLISH_CHECK=1 npm test` en verde. 5. PR con CI y verificación en producción. Nada de esto se hizo: la rama no está publicada ni integrada.
-
-## 12. Estado de cierre (2026-11-11)
-*(Reemplaza lo dicho sobre el responsable, los pendientes y el estado de proveedores en las secciones 6, 7 y 11. Las cuestiones jurídicas están en `PRIVACIDAD_ASESOR_JURIDICO.md`.)*
-
-### 12.1 Datos del responsable: resueltos e incorporados
-| Dato | Estado |
-|---|---|
-| Titular | **María Fabiana García**, persona humana (nombre completo según su DNI, confirmado por la titular) |
-| Nombre comercial | García Inversiones Inmobiliarias |
-| Matrícula | CMCPSI 6378, contrastada con el padrón oficial de colegiados (https://cmcpsi.org.ar/colegiados/padron) |
-| Domicilio | Hipólito Yrigoyen 1470, El Talar (CP 1618), Tigre, Buenos Aires; **publicación autorizada**, con la aclaración de que no es oficina ni atención al público. El padrón profesional publica otro (Nordelta): no se reemplazó |
-| Correo | `fabiana@garciainversiones.com.ar`, confirmado por la titular como correcto y operativo |
-| CUIT | **No figura en la página.** Se obtendrá de documentación oficial solo si el asesor determina que debe exhibirse |
-| WhatsApp / CRM | Conversaciones en WhatsApp Business atendidas por la titular; consultas relevantes cargadas manualmente en 2Clics; sin lectura automática |
-
-### 12.2 Proveedores: qué está documentado y por qué no bloquea el texto público
-| Proveedor | Evidencia comprobada | Sin comprobar |
-|---|---|---|
-| Vercel | funciones en Washington D. C.; plan Hobby (DPA solo Pro/Enterprise) | — |
-| Resend | envío desde São Paulo (DNS); cuenta en EE. UU. según el proveedor | — |
-| Cloudflare | Turnstile y DNS; DPA incorporado al acuerdo *self-serve* | — |
-| Supabase | proyecto `ljpolupsgwtreinuxrdo`; sin comprobar región ni DPA | panel: *Project Settings → General*; *Legal* |
-| Upstash | clave de límite con IP, ventana ≤ 15 min | panel de la base (región); DPA |
-| Sentry | `sendDefaultPii: false` | *Settings → Legal & Compliance* (región de la organización, DPA aceptado) |
-| 2Clics | recibe contactos, mensajes y nota de origen | solicitud abajo |
-
-No pude acceder a los paneles de Supabase, Upstash y Sentry (sin sesión iniciada; las variables de Vercel son sensibles y no se pueden leer). **No se infirió ninguna región.**
-
-**Fundamento de no incluir regiones en la política (propuesta, a confirmar por el asesor):** la ley leída exige informar al titular finalidad, destinatarios y datos del responsable (art. 6) y regula la transferencia a países sin nivel adecuado (art. 12); no se encontró en el texto leído una exigencia de nombrar la región de cada proveedor. Por eso la política informa la función de cada proveedor, que algunos tratan datos fuera del país (en particular EE. UU.) y solo afirma lo comprobado. Si el asesor concluye lo contrario, esas regiones pasan a ser impedimento.
+No hay acceso desde esta sesión a los paneles de Supabase, Upstash ni Sentry; las variables de Vercel son sensibles. **No se infirió ninguna región.** Esta información va al abogado (art. 12), no al texto público, salvo que él indique lo contrario.
 
 > **Solicitud a 2Clics:** «Para la política de privacidad de García Inversiones Inmobiliarias necesitamos que nos confirmen por escrito: (a) en qué país y región se almacenan y procesan los datos de nuestras cuentas (contactos, mensajes, notas); (b) las condiciones contractuales aplicables, incluido el acuerdo de tratamiento de datos o cláusulas de protección de datos; (c) si intervienen subencargados y en qué países; (d) qué plazos de conservación y mecanismos de eliminación ofrece la plataforma; y (e) cómo se atienden los pedidos de acceso, rectificación y supresión.» Hasta recibir respuesta no se da por verificada ninguna garantía.
 
-### 12.3 Decisiones técnicas aprobadas (no se reabren)
-`CONSENT_VERSION = 2`; modelo restrictivo; Google Maps con carga controlada; 90 días como propuesta para referencias técnicas de WhatsApp; mecanismo de borrado preparado y **desactivado**; sin borrado automático en 2Clics ni WhatsApp Business; 24 meses para prospectos solo como propuesta.
+### 8.3 Comprobaciones técnicas antes de publicar (sin afectar el funcionamiento actual)
+Hechas en la rama: `typecheck`, `lint`, 700+ tests, build de producción; consentimiento restrictivo (tests y pruebas en producción del 2026-11-11); mapas con carga controlada (tests de render); retención desactivada y sin filas alcanzadas (verificación de solo lectura). **Al publicar:** (1) PR con CI en verde; (2) tras el despliegue, abrir `/privacidad` y verificar texto, índice, enlace «Preferencias de cookies» y correo; (3) comprobar que el banner vuelve a preguntar una vez (`CONSENT_VERSION = 2`) y que, rechazando, un clic de WhatsApp no escribe filas; (4) comprobar un mapa (aviso, botón «Cargar mapa»). No se ejecuta SQL ni se activa el borrado automático.
 
-### 12.4 Qué impide publicar
-Siete marcadores `[A CONFIRMAR]` en la página, todos de criterio jurídico: plazos de derechos, leyenda de la AAIP, redacción de transferencias internacionales, plazo de 90 días de clics de WhatsApp, y plazos de formularios/newsletter, CRM y conversaciones/correos. `PRIVACY_PUBLISH_CHECK=1 npm test` sigue fallando por ellos, a propósito.
-
-### 12.5 Rama
-`privacy/review-draft`, sin push ni merge. Para publicar: validación del asesor, quitar `Pendiente` y la nota de borrador, control en verde, PR con CI, verificación en producción.
+### 8.4 Rama
+`privacy/review-draft`, sin push ni merge. Para publicar: validación del abogado → quitar la nota de borrador y actualizar la fecha → `PRIVACY_PUBLISH_CHECK=1 npm test` en verde → PR con CI.

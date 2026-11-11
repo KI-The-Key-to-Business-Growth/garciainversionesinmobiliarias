@@ -12,35 +12,41 @@ const text = page
   .split(/\r?\n/)
   .filter((line) => !line.trim().startsWith('//')) // sin los comentarios del código
   .join(' ')
-  .replace(/<[^>]+>/g, ' ').replace(/\{'\s*'\}/g, ' ').replace(/\s+/g, ' ');
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/\{'\s*'\}/g, ' ')
+  .replace(/\s+/g, ' ');
 
 describe('política de privacidad: consistencia con el funcionamiento real', () => {
   it('el modelo restrictivo del código es el que la política describe', () => {
     expect(WHATSAPP_CLICK_REQUIRES_CONSENT).toBe(true); // sin consentimiento no se registra el clic
     expect(WHATSAPP_ATTRIBUTION_REQUIRES_MARKETING_CONSENT).toBe(true); // solo analítica: sin datos de campaña
-    expect(text).toContain('Si rechazaste ambas opciones, no conservamos ese registro de clic');
-    expect(text).toContain('Si aceptaste solo las de analítica, no guardamos datos de campañas ni identificadores publicitarios en ese registro');
+    expect(text).toContain('Si rechazaste ambas: no registramos el clic');
+    expect(text).toContain('No guardamos datos de campañas ni identificadores publicitarios en ese registro');
     expect(text).toContain('incluidos identificadores técnicos de publicidad');
   });
 
-  it('describe la funcionalidad de WhatsApp: referencia aleatoria, clic ≠ mensaje, Meta, copiar no registra', () => {
-    expect(text).toContain('Enlaces de WhatsApp y origen de consultas');
+  it('describe WhatsApp: referencia aleatoria, clic ≠ mensaje, Meta, copiar no registra, CRM manual', () => {
     expect(text).toContain('referencia técnica aleatoria que no incorpora directamente tu nombre, teléfono ni correo electrónico');
     expect(text).toContain('Seleccionar un enlace no significa que hayas enviado un mensaje');
     expect(text).toContain('WhatsApp, un servicio de Meta');
     expect(text).toContain('Copiar el enlace sin abrirlo tampoco genera un registro');
+    expect(text).toContain('atendida personalmente por la titular');
+    expect(text).toContain('se registran manualmente en nuestro CRM (2Clics); no se leen ni se procesan las conversaciones de forma automática');
   });
 
-  it('los plazos de la política coinciden con las constantes del código', () => {
+  it('los plazos anunciados coinciden con lo implementado y no se promete borrado automático', () => {
     expect(ATTRIBUTION_TTL_DAYS).toBe(90);
     expect(text).toMatch(/por hasta 90 días, el origen de tu visita/);
     expect(CONSENT_MAX_AGE_DAYS).toBe(180);
     expect(text).toMatch(/por hasta 180 días/);
+    // 90 días de los clics de WhatsApp: propuesta; el borrado está desactivado → no se anuncia
     expect(WHATSAPP_CLICK_RETENTION_DAYS).toBe(90);
-    expect(text).toMatch(/clics hacia WhatsApp[^.]*hasta 90 días y luego se eliminan automáticamente/);
+    expect(text).not.toMatch(/se eliminan automáticamente|eliminación automática|borrado automático/i);
+    expect(text).not.toMatch(/WhatsApp[^.]*(hasta|por) 90 días/);
+    expect(text).not.toMatch(/24 meses|dos años/i);
   });
 
-  it('no contiene afirmaciones absolutas que el comportamiento de los servicios no permite sostener', () => {
+  it('no contiene afirmaciones absolutas ni de validación jurídica que no se pueden sostener', () => {
     for (const phrase of [
       'No enviamos tu nombre, correo electrónico ni teléfono a Google Analytics',
       'no vende, alquila ni cede',
@@ -57,25 +63,38 @@ describe('política de privacidad: consistencia con el funcionamiento real', () 
     ]) {
       expect(text.toLowerCase(), phrase).not.toContain(phrase.toLowerCase());
     }
-    // La diferencia entre datos de formulario y datos técnicos de las plataformas está dicha.
     expect(text).toContain('no se incorporan a los eventos que enviamos a Google Analytics, Google Tag Manager ni Meta');
     expect(text).toContain('reciben por sí mismos datos técnicos del navegador y de la conexión, como la dirección IP');
   });
 
-  it('nombra a todos los proveedores que intervienen en el tratamiento', () => {
+  it('nombra a todos los proveedores y no afirma regiones ni contratos sin comprobar', () => {
     for (const provider of ['Vercel', 'Supabase', 'Resend', '2Clics', 'Cloudflare', 'Upstash', 'Sentry', 'Google', 'Meta']) {
       expect(text, provider).toContain(provider);
     }
     expect(text).toContain('Las funciones del sitio se ejecutan en Washington D. C., Estados Unidos');
+    expect(text).not.toMatch(/cláusulas contractuales|marco de privacidad|\bDPA\b|nivel adecuado|Standard Contractual/i);
+    expect(text).not.toMatch(/Supabase[^.]*(región|São Paulo|Virginia|Irlanda)/i);
+  });
+
+  it('no incluye apartados sobre campañas internacionales hipotéticas ni detalles de implementación', () => {
+    expect(text).not.toMatch(/España|Unión Europea|RGPD|GDPR|California/i);
+    expect(text).not.toMatch(/lead_attribution|retention_audit|service role|RLS|tabla/i);
   });
 
   it('el índice apunta a secciones que existen', () => {
     const ids = [...page.matchAll(/\['([a-z-]+)', '[^']+'\]/g)].map((m) => m[1]);
-    expect(ids.length).toBeGreaterThanOrEqual(14);
+    expect(ids.length).toBeGreaterThanOrEqual(12);
     for (const id of ids) expect(page, id).toContain(`id="${id}"`);
   });
 
-  it('el correo de contacto es el indicado por la titular y es el mismo en toda la política', () => {
+  it('identifica a la responsable con los datos confirmados y sin inventar otros', () => {
+    expect(text).toContain('María Fabiana García');
+    expect(text).toContain('titular de García Inversiones Inmobiliarias');
+    expect(text).toContain('CMCPSI 6378');
+    expect(text).toContain('Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre');
+    expect(text).toContain('No constituye una oficina comercial ni un establecimiento de atención al público');
+    expect(text).not.toMatch(/CUIT/i); // no se exhibe por defecto (decisión del asesor)
+    expect(text).not.toMatch(/Nordelta/i);
     const emails = new Set([...page.matchAll(/[\w.+-]+@[\w-]+\.[\w.-]+/g)].map((m) => m[0]));
     expect([...emails]).toEqual(['fabiana@garciainversiones.com.ar']);
   });
@@ -89,26 +108,21 @@ describe('política de privacidad: consistencia con el funcionamiento real', () 
 });
 
 describe('política de privacidad: control de publicación (borrador sin validar)', () => {
-  const pending = (page.match(/<Pendiente grupo="[BC]">/g) ?? []).length;
+  const pendingMarkers = (text.match(/\[A CONFIRMAR/g) ?? []).length;
   const draftNote = page.includes('BORRADOR PARA REVISIÓN JURÍDICA');
 
-  it('todo pendiente lleva grupo B (datos de García) o C (criterio jurídico); ninguno sin clasificar', () => {
-    expect((page.match(/<Pendiente>/g) ?? []).length).toBe(0);
-    expect((page.match(/<Pendiente grupo="[^BC"]*"/g) ?? []).length).toBe(0);
+  it('un texto con «[A CONFIRMAR]» siempre lleva la nota de borrador', () => {
+    if (pendingMarkers > 0) expect(draftNote).toBe(true);
   });
 
-  it('mientras haya puntos «[A CONFIRMAR]» el borrador lo dice, y no al revés', () => {
-    expect(pending > 0).toBe(draftNote);
+  it('el borrador no se presenta como validado', () => {
+    expect(draftNote).toBe(true); // se quita solo cuando el abogado valide el texto
   });
 
-  it('el borrador no se presenta como validado ni cambia los datos del responsable por inventados', () => {
-    expect(text).not.toMatch(/CUIT:\s*\d/); // ningún CUIT inventado
-    expect(page).not.toMatch(/Av\.|Avenida|Calle\s+\w+\s+\d+/); // ningún domicilio inventado
-  });
-
-  // GATE: ejecutar con PRIVACY_PUBLISH_CHECK=1 antes de publicar. Falla mientras queden pendientes.
-  it.runIf(process.env.PRIVACY_PUBLISH_CHECK === '1')('PUBLICAR solo sin pendientes y sin la nota de borrador', () => {
-    expect(pending).toBe(0);
+  // GATE: ejecutar con PRIVACY_PUBLISH_CHECK=1 antes de publicar. Falla mientras exista la nota de
+  // borrador o cualquier «[A CONFIRMAR]». La nota se quita únicamente tras la validación jurídica.
+  it.runIf(process.env.PRIVACY_PUBLISH_CHECK === '1')('PUBLICAR solo sin nota de borrador ni pendientes', () => {
+    expect(pendingMarkers).toBe(0);
     expect(draftNote).toBe(false);
   });
 });
