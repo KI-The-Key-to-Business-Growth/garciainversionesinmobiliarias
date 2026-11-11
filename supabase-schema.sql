@@ -223,3 +223,13 @@ CREATE INDEX IF NOT EXISTS idx_lead_attribution_dev      ON lead_attribution (de
 
 -- Mismo criterio que el resto: la app usa la service role (bypassa RLS); anon/authenticated quedan sin acceso.
 ALTER TABLE lead_attribution ENABLE ROW LEVEL SECURITY;
+
+-- Defensa en profundidad: sin privilegios para los roles de la API pública (además de RLS sin políticas).
+REVOKE ALL ON TABLE lead_attribution FROM anon, authenticated;
+REVOKE ALL ON SEQUENCE lead_attribution_id_seq FROM anon, authenticated;
+
+-- Verificación posterior (solo lectura):
+--   SELECT relrowsecurity FROM pg_class WHERE relname = 'lead_attribution';            -- esperado: true
+--   SELECT count(*) FROM pg_policies WHERE tablename = 'lead_attribution';             -- esperado: 0
+--   SELECT grantee, privilege_type FROM information_schema.role_table_grants
+--     WHERE table_name = 'lead_attribution' AND grantee IN ('anon','authenticated');    -- esperado: 0 filas
