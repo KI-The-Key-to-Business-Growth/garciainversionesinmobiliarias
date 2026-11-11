@@ -275,6 +275,29 @@ select {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 2px 24px rgba(0, 0, 0, 0.2);
 }
+/* Velo superior del header flotante: el menú (blanco) sobre las zonas luminosas de la imagen (cielo)
+   medía 2,0–2,8:1 de contraste, por debajo del mínimo AA (4,5:1). El degradé azul de la marca
+   (#071628) devuelve la legibilidad sin quitar la transparencia ni tapar la imagen: es más fuerte
+   arriba, donde está el texto, y desaparece hacia abajo. Se desvanece con la misma transición al
+   desplazarse (por eso es un pseudo-elemento con opacidad y no un `background`, que no se anima). */
+.site-header--floating::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(7, 22, 40, 0.8) 0%,
+    rgba(7, 22, 40, 0.64) 55%,
+    rgba(7, 22, 40, 0) 100%
+  );
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+.site-header--floating.is-scrolled::before {
+  opacity: 0;
+}
 
 /* ── Logo ── */
 .hdr-brand {
