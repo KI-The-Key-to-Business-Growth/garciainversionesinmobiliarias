@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -148,5 +149,33 @@ describe('conservación de clics de WhatsApp', () => {
     expect((await runWhatsAppClickRetention({ now: NOW, db: a.db })).ok).toBe(false);
     expect(a.calls.some((c) => c.op !== 'select')).toBe(false);
     expect((await runWhatsAppClickRetention({ now: NOW, db: null })).error).toMatch(/no configurado/i);
+  });
+});
+
+describe('alcance del código de borrado (control estático)', () => {
+  const src = readFileSync('lib/retention/whatsapp-clicks.ts', 'utf8')
+    .split(/\r?\n/)
+    .filter((l) => !l.trim().startsWith('//'))
+    .join('\n');
+
+  it('solo toca lead_attribution y retention_audit, y tiene un único borrado', () => {
+    const tables = [...src.matchAll(/\.from\('([a-z_]+)'\)/g)].map((m) => m[1]);
+    expect([...new Set(tables)].sort()).toEqual(['lead_attribution', 'retention_audit']);
+    expect([...src.matchAll(/\.delete\(/g)]).toHaveLength(1);
+    expect([...src.matchAll(/\.rpc\(|\.raw\(|\.sql\(|truncate/gi)]).toHaveLength(0);
+  });
+
+  it('el borrado y el conteo comparten exactamente las tres condiciones de la política', () => {
+    const conds = [...src.matchAll(/\.(eq|is|lt)\('(lead_type|wa_message_received_at|created_at)'/g)].map((m) => m[2]);
+    // conteo + borrado: las mismas tres condiciones dos veces (la auditoría filtra por id)
+    expect(conds.sort()).toEqual(['created_at', 'created_at', 'lead_type', 'lead_type', 'wa_message_received_at', 'wa_message_received_at']);
+    expect(src).toContain(".eq('lead_type', 'whatsapp_click')");
+    expect(src).toContain(".is('wa_message_received_at', null)");
+  });
+
+  it('no hay eliminación automática para 2Clics ni WhatsApp Business (decisión pendiente)', () => {
+    expect(src).not.toMatch(/2clics|twoclics|whatsapp_business/i);
+    const vercel = JSON.parse(readFileSync('vercel.json', 'utf8')) as { crons: Array<{ path: string }> };
+    expect(vercel.crons.map((c) => c.path)).toEqual(['/api/maintenance/retention']);
   });
 });
