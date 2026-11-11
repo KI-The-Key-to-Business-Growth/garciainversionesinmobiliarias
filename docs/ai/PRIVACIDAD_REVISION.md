@@ -46,20 +46,13 @@ Este documento reemplaza a la versión anterior de `PRIVACIDAD_REVISION.md` y es
 El responsable del tratamiento de los datos personales recabados a través de
 este sitio web es:
 
-**Fabiana García**, persona humana, que opera bajo el nombre
-comercial **García Inversiones Inmobiliarias**.
-
-Denominación legal completa:
-**[A CONFIRMAR (grupo B): nombre completo según documento de identidad o constancia fiscal (el padrón profesional la registra como «María Fabiana García»)]**
+**María Fabiana García**, persona humana, que opera bajo el
+nombre comercial **García Inversiones Inmobiliarias**.
 
 Matrícula profesional: CMCPSI 6378.
 
-CUIT:
-**[A CONFIRMAR (grupo C): CUIT, desde documentación oficial, y si el asesor considera obligatorio exhibirlo en esta política]**
-
 Domicilio: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
 Provincia de Buenos Aires, Argentina.
-**[A CONFIRMAR (grupo C): cómo denominarlo (legal, de contacto o constituido); el padrón profesional publica otro domicilio]**
 
 El domicilio informado es el que la titular indica a los fines de esta política.
 No constituye una oficina comercial ni un establecimiento de atención al
@@ -71,7 +64,6 @@ Sitio web:
 
 Correo de contacto:
 [fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
-**[A CONFIRMAR (grupo B): comprobar la escritura exacta de la casilla, que recibe mensajes y que está bajo el control de la titular]**
 
 ## 2. Datos que recopilamos
 
@@ -416,8 +408,7 @@ Las funciones del sitio se ejecutan en Washington D. C., Estados Unidos.
 -
 **Supabase (base de datos):** guarda las suscripciones al
 newsletter y los registros técnicos de origen de las consultas y de clics a
-WhatsApp (sin tu nombre, correo ni teléfono). Ubicación:
-**[A CONFIRMAR (grupo B): región del proyecto de Supabase]**
+WhatsApp (sin tu nombre, correo ni teléfono).
 
 -
 **Resend (correo electrónico):** procesa los avisos internos de
@@ -427,8 +418,7 @@ y mensaje). Los envíos se realizan desde la región de São Paulo (Brasil); seg
 -
 **2Clics (CRM):** recibe los datos de tus consultas para su
 seguimiento comercial y, cuando aceptaste las cookies correspondientes, una nota
-con el origen de la consulta. Ubicación y condiciones:
-**[A CONFIRMAR (grupo B): ubicación del tratamiento y contrato de 2Clics]**
+con el origen de la consulta.
 
 -
 **Cloudflare (verificación anti-spam y DNS):** recibe señales
@@ -436,13 +426,12 @@ técnicas de tu navegador (como la dirección IP) al verificar los formularios.
 
 -
 **Upstash (límite de solicitudes):** procesa de forma temporal la
-dirección IP asociada a contadores para limitar abusos. Ubicación:
-**[A CONFIRMAR (grupo B): región de la base de Upstash]**
+dirección IP asociada a contadores para limitar abusos.
 
 -
 **Sentry (monitoreo de errores):** recibe información técnica de
 errores del servidor; está configurado sin el envío automático de datos
-personales. Ubicación: **[A CONFIRMAR (grupo B): región de la organización de Sentry]**
+personales.
 
 -
 **Google y Meta:** analítica, publicidad y WhatsApp, según las
@@ -581,7 +570,7 @@ Información tomada de las páginas **públicas** de cada proveedor (leídas el 
 ## 10. Cómo publicar (cuando el contenido esté validado)
 1. El asesor valida el texto y se completan **todos** los `[A CONFIRMAR]` (datos del responsable, ubicaciones, plazos, redacción de transferencias).
 2. Quitar los `Pendiente` y la nota de borrador de `app/privacidad/page.tsx` y actualizar la fecha.
-3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 15 pendientes —grupos B y C—, a propósito).
+3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 7 pendientes jurídicos (grupo C), a propósito).
 4. Decidir la activación de la conservación (sección 5) **antes** de publicar el compromiso de 90 días.
 5. Integrar por PR con CI y verificar la página, el banner y el registro de clics en producción.
 
@@ -612,32 +601,42 @@ Ver tabla de la sección 6. Resumen de lo **documentado por los proveedores** (n
 ### 11.5 Qué falta para publicar
 1. Datos del grupo B de García. 2. Validación jurídica del grupo C. 3. Decidir `CONSENT_VERSION` 2 y la activación de la conservación. 4. Quitar `Pendiente` y la nota de borrador; `PRIVACY_PUBLISH_CHECK=1 npm test` en verde. 5. PR con CI y verificación en producción. Nada de esto se hizo: la rama no está publicada ni integrada.
 
-## 12. Estado actual tras las confirmaciones de Fabiana (2026-11-11)
-*(Reemplaza las listas de las secciones 7 y 11.1 en lo que se refiere al responsable y a WhatsApp/CRM.)*
+## 12. Estado de cierre (2026-11-11)
+*(Reemplaza lo dicho sobre el responsable, los pendientes y el estado de proveedores en las secciones 6, 7 y 11. Las cuestiones jurídicas están en `PRIVACIDAD_ASESOR_JURIDICO.md`.)*
 
-### 12.1 Incorporado al borrador
-- **Titular:** Fabiana García, persona humana; nombre comercial García Inversiones Inmobiliarias. **Matrícula CMCPSI 6378: comprobada** en el padrón oficial de colegiados activos (https://cmcpsi.org.ar/colegiados/padron), a nombre de «María Fabiana García». La denominación legal exacta queda sujeta a su documento de identidad o constancia fiscal.
-- **Domicilio:** Hipólito Yrigoyen 1470, El Talar (CP 1618), Tigre, Buenos Aires, autorizado por Fabiana, con la aclaración de que no es oficina ni atención al público. El padrón profesional publica **otro domicilio (Nordelta)**: no se reemplazó uno por otro; queda para el asesor cómo denominar el de El Talar (legal, de contacto o constituido). La página dice «Domicilio» a secas.
-- **Correo:** `fabiana@garciainversiones.com.ar` en toda la política; falta verificar su funcionamiento efectivo.
-- **WhatsApp y CRM:** conversaciones en WhatsApp Business atendidas por la titular; consultas relevantes cargadas **manualmente** en 2Clics; sin lectura automática.
-- **Decisiones técnicas ya aprobadas (no se reabren):** `CONSENT_VERSION = 2`, modelo restrictivo, mapas con carga controlada, 90 días como propuesta para referencias técnicas de WhatsApp, mecanismo de borrado preparado y desactivado, sin borrado automático en 2Clics ni WhatsApp Business.
+### 12.1 Datos del responsable: resueltos e incorporados
+| Dato | Estado |
+|---|---|
+| Titular | **María Fabiana García**, persona humana (nombre completo según su DNI, confirmado por la titular) |
+| Nombre comercial | García Inversiones Inmobiliarias |
+| Matrícula | CMCPSI 6378, contrastada con el padrón oficial de colegiados (https://cmcpsi.org.ar/colegiados/padron) |
+| Domicilio | Hipólito Yrigoyen 1470, El Talar (CP 1618), Tigre, Buenos Aires; **publicación autorizada**, con la aclaración de que no es oficina ni atención al público. El padrón profesional publica otro (Nordelta): no se reemplazó |
+| Correo | `fabiana@garciainversiones.com.ar`, confirmado por la titular como correcto y operativo |
+| CUIT | **No figura en la página.** Se obtendrá de documentación oficial solo si el asesor determina que debe exhibirse |
+| WhatsApp / CRM | Conversaciones en WhatsApp Business atendidas por la titular; consultas relevantes cargadas manualmente en 2Clics; sin lectura automática |
 
-### Impedimentos reales para publicar
-1. **Validación jurídica** de los puntos de este resumen (transferencias, conservación, derechos y leyenda de la AAIP, consentimiento, campañas internacionales, registro de bases).
-2. **CUIT:** obtenerlo de documentación oficial y decidir con el asesor si debe exhibirse.
-3. **Denominación legal completa:** nombre según documento de identidad o constancia fiscal (el padrón profesional registra «María Fabiana García»).
-4. **Casilla `fabiana@garciainversiones.com.ar`:** comprobar escritura exacta, recepción y control efectivo (mensaje de prueba enviado y respondido por Fabiana).
-5. **Denominación del domicilio** de El Talar (legal, de contacto o constituido): el padrón profesional publica otro domicilio (Nordelta) y no se reemplazó uno por otro.
+### 12.2 Proveedores: qué está documentado y por qué no bloquea el texto público
+| Proveedor | Evidencia comprobada | Sin comprobar |
+|---|---|---|
+| Vercel | funciones en Washington D. C.; plan Hobby (DPA solo Pro/Enterprise) | — |
+| Resend | envío desde São Paulo (DNS); cuenta en EE. UU. según el proveedor | — |
+| Cloudflare | Turnstile y DNS; DPA incorporado al acuerdo *self-serve* | — |
+| Supabase | proyecto `ljpolupsgwtreinuxrdo`; sin comprobar región ni DPA | panel: *Project Settings → General*; *Legal* |
+| Upstash | clave de límite con IP, ventana ≤ 15 min | panel de la base (región); DPA |
+| Sentry | `sendDefaultPii: false` | *Settings → Legal & Compliance* (región de la organización, DPA aceptado) |
+| 2Clics | recibe contactos, mensajes y nota de origen | solicitud abajo |
 
-### Información complementaria (no impide publicar por sí sola)
-- **Regiones y DPA de Supabase, Upstash y Sentry:** falta acceso a sus paneles (Supabase: Project Settings → General y Legal; Upstash: panel de la base; Sentry: Settings → Legal & Compliance). Si el asesor decide que la política no debe nombrar regiones, se quitan esos marcadores; si debe nombrarlas, pasan a ser impedimento.
-- **2Clics:** respuesta del proveedor a la solicitud (texto en `PRIVACIDAD_REVISION.md`, sección 12.2). Mientras no conteste, la política no afirma ubicación ni garantías de 2Clics.
-- Verificación de la matrícula: **ya comprobada** en el padrón oficial (https://cmcpsi.org.ar/colegiados/padron): CMCPSI 6378 figura activa a nombre de María Fabiana García. No se compara aún con documentación de identidad o fiscal.
+No pude acceder a los paneles de Supabase, Upstash y Sentry (sin sesión iniciada; las variables de Vercel son sensibles y no se pueden leer). **No se infirió ninguna región.**
+
+**Fundamento de no incluir regiones en la política (propuesta, a confirmar por el asesor):** la ley leída exige informar al titular finalidad, destinatarios y datos del responsable (art. 6) y regula la transferencia a países sin nivel adecuado (art. 12); no se encontró en el texto leído una exigencia de nombrar la región de cada proveedor. Por eso la política informa la función de cada proveedor, que algunos tratan datos fuera del país (en particular EE. UU.) y solo afirma lo comprobado. Si el asesor concluye lo contrario, esas regiones pasan a ser impedimento.
 
 > **Solicitud a 2Clics:** «Para la política de privacidad de García Inversiones Inmobiliarias necesitamos que nos confirmen por escrito: (a) en qué país y región se almacenan y procesan los datos de nuestras cuentas (contactos, mensajes, notas); (b) las condiciones contractuales aplicables, incluido el acuerdo de tratamiento de datos o cláusulas de protección de datos; (c) si intervienen subencargados y en qué países; (d) qué plazos de conservación y mecanismos de eliminación ofrece la plataforma; y (e) cómo se atienden los pedidos de acceso, rectificación y supresión.» Hasta recibir respuesta no se da por verificada ninguna garantía.
 
-### 12.3 Criterio jurídico (grupo C)
-Ver `PRIVACIDAD_ASESOR_JURIDICO.md`.
+### 12.3 Decisiones técnicas aprobadas (no se reabren)
+`CONSENT_VERSION = 2`; modelo restrictivo; Google Maps con carga controlada; 90 días como propuesta para referencias técnicas de WhatsApp; mecanismo de borrado preparado y **desactivado**; sin borrado automático en 2Clics ni WhatsApp Business; 24 meses para prospectos solo como propuesta.
 
-### 12.4 Rama
-`privacy/review-draft`, sin push ni merge. Para publicar: cerrar los impedimentos de 12.1, validación del asesor, quitar `Pendiente` y la nota de borrador, `PRIVACY_PUBLISH_CHECK=1 npm test` en verde, PR con CI. Hasta entonces el control bloquea la publicación y el borrado automático sigue desactivado.
+### 12.4 Qué impide publicar
+Siete marcadores `[A CONFIRMAR]` en la página, todos de criterio jurídico: plazos de derechos, leyenda de la AAIP, redacción de transferencias internacionales, plazo de 90 días de clics de WhatsApp, y plazos de formularios/newsletter, CRM y conversaciones/correos. `PRIVACY_PUBLISH_CHECK=1 npm test` sigue fallando por ellos, a propósito.
+
+### 12.5 Rama
+`privacy/review-draft`, sin push ni merge. Para publicar: validación del asesor, quitar `Pendiente` y la nota de borrador, control en verde, PR con CI, verificación en producción.

@@ -83,31 +83,13 @@ export default function PrivacidadPage() {
                   </p>
                   <div className="privacy-card">
                     <p>
-                      <strong>Fabiana García</strong>, persona humana, que opera bajo el nombre
-                      comercial <strong>García Inversiones Inmobiliarias</strong>.
-                    </p>
-                    <p>
-                      Denominación legal completa:{' '}
-                      <Pendiente grupo="B">
-                        nombre completo según documento de identidad o constancia fiscal (el padrón
-                        profesional la registra como «María Fabiana García»)
-                      </Pendiente>
+                      <strong>María Fabiana García</strong>, persona humana, que opera bajo el
+                      nombre comercial <strong>García Inversiones Inmobiliarias</strong>.
                     </p>
                     <p>Matrícula profesional: CMCPSI 6378.</p>
                     <p>
-                      CUIT:{' '}
-                      <Pendiente grupo="C">
-                        CUIT, desde documentación oficial, y si el asesor considera obligatorio
-                        exhibirlo en esta política
-                      </Pendiente>
-                    </p>
-                    <p>
                       Domicilio: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
-                      Provincia de Buenos Aires, Argentina.{' '}
-                      <Pendiente grupo="C">
-                        cómo denominarlo (legal, de contacto o constituido); el padrón profesional
-                        publica otro domicilio
-                      </Pendiente>
+                      Provincia de Buenos Aires, Argentina.
                     </p>
                     <p>
                       El domicilio informado es el que la titular indica a los fines de esta política.
@@ -125,11 +107,7 @@ export default function PrivacidadPage() {
                       Correo de contacto:{' '}
                       <a href="mailto:fabiana@garciainversiones.com.ar">
                         fabiana@garciainversiones.com.ar
-                      </a>{' '}
-                      <Pendiente grupo="B">
-                        comprobar la escritura exacta de la casilla, que recibe mensajes y que está bajo el
-                        control de la titular
-                      </Pendiente>
+                      </a>
                     </p>
                   </div>
                 </section>
@@ -574,8 +552,7 @@ export default function PrivacidadPage() {
                     <li>
                       <strong>Supabase (base de datos):</strong> guarda las suscripciones al
                       newsletter y los registros técnicos de origen de las consultas y de clics a
-                      WhatsApp (sin tu nombre, correo ni teléfono). Ubicación:{' '}
-                      <Pendiente grupo="B">región del proyecto de Supabase</Pendiente>
+                      WhatsApp (sin tu nombre, correo ni teléfono).
                     </li>
                     <li>
                       <strong>Resend (correo electrónico):</strong> procesa los avisos internos de
@@ -585,8 +562,7 @@ export default function PrivacidadPage() {
                     <li>
                       <strong>2Clics (CRM):</strong> recibe los datos de tus consultas para su
                       seguimiento comercial y, cuando aceptaste las cookies correspondientes, una nota
-                      con el origen de la consulta. Ubicación y condiciones:{' '}
-                      <Pendiente grupo="B">ubicación del tratamiento y contrato de 2Clics</Pendiente>
+                      con el origen de la consulta.
                     </li>
                     <li>
                       <strong>Cloudflare (verificación anti-spam y DNS):</strong> recibe señales
@@ -594,13 +570,12 @@ export default function PrivacidadPage() {
                     </li>
                     <li>
                       <strong>Upstash (límite de solicitudes):</strong> procesa de forma temporal la
-                      dirección IP asociada a contadores para limitar abusos. Ubicación:{' '}
-                      <Pendiente grupo="B">región de la base de Upstash</Pendiente>
+                      dirección IP asociada a contadores para limitar abusos.
                     </li>
                     <li>
                       <strong>Sentry (monitoreo de errores):</strong> recibe información técnica de
                       errores del servidor; está configurado sin el envío automático de datos
-                      personales. Ubicación: <Pendiente grupo="B">región de la organización de Sentry</Pendiente>
+                      personales.
                     </li>
                     <li>
                       <strong>Google y Meta:</strong> analítica, publicidad y WhatsApp, según las
