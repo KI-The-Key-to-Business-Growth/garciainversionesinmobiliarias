@@ -12,8 +12,8 @@ Este documento reemplaza a la versión anterior de `PRIVACIDAD_REVISION.md` y es
 - **Secciones nuevas:** 11 *Proveedores y transferencias internacionales*, 12 *Conservación de los datos*. Los números de «Cambios» (13) y «Contacto» (14) se desplazaron; las referencias internas a las secciones 6 y 10 no cambian.
 - **Datos del responsable:** razón social/CUIT y domicilio como pendientes; el correo `contacto@garciainversiones.com.ar` se conserva y queda marcado «comprobar».
 - **Derechos:** se agrega *actualizar*, gratuidad y frecuencia del acceso, plazos de la ley (marcados a validar) y datos de la AAIP.
-- **Cookies:** cookie propia de la elección (180 días), contenidos incrustados (mapas, videos, recorridos) y su pendiente de decisión.
-- **Banner/panel de cookies:** las descripciones de *Analítica* y *Publicidad* ahora mencionan el registro del clic hacia WhatsApp con el mismo alcance que la política. **No se subió `CONSENT_VERSION`** (no se vuelve a preguntar a todos): cambiar la descripción de las finalidades sin pedir de nuevo el consentimiento es una cuestión para el asesor (punto 2 de la sección 4).
+- **Cookies:** cookie propia de la elección (180 días) y descripción de los mapas de Google Maps, que ahora **no se cargan** hasta que el visitante lo pide o acepta publicidad (sección 11). Los videos y recorridos virtuales son enlaces, no contenido incrustado.
+- **Banner/panel de cookies:** las descripciones de *Analítica* y *Publicidad* ahora mencionan el registro del clic hacia WhatsApp con el mismo alcance que la política. `CONSENT_VERSION` se subió a 2 en un commit **separado** (`f4ee99d`) para volver a preguntar una vez a todos (finalidad informada distinta); está pendiente de revisión y puede descartarse sin afectar el resto (evaluación en la sección 11).
 
 ## 2. Hechos técnicos comprobados (separados de las decisiones jurídicas)
 | Afirmación de la política | Evidencia |
@@ -32,7 +32,7 @@ Este documento reemplaza a la versión anterior de `PRIVACIDAD_REVISION.md` y es
 | Sentry sin datos personales automáticos | `sendDefaultPii: false` (server y edge) |
 | Upstash guarda la IP en los contadores de límite | clave `rl:{ip}:{acción}` con ventana de hasta 15 minutos (`lib/security/ratelimit.ts`) |
 | Turnstile funciona aunque se rechacen las cookies opcionales | verificación esencial; carga siempre (CSP y pruebas) |
-| Mapas de Google y videos de YouTube (modo `youtube-nocookie.com`) se cargan sin depender del consentimiento | `PropertyMap.tsx`, `lib/properties/format.ts` |
+| **Único contenido incrustado de terceros: dos mapas de Google Maps** (ficha de propiedad y de desarrollo). Los videos y recorridos son enlaces. Antes se cargaban al abrir la página; ahora esperan un clic o el consentimiento de publicidad | `ConsentGatedEmbed.tsx`, `lib/embed-consent.ts`, tests `tests/privacy/embed-consent.test.ts` y `tests/2clics/ui.test.ts` |
 | GA4: datos de eventos 2 meses, datos de usuario 14 meses | Admin API de GA4 (`dataRetentionSettings`) |
 | **La elección de cookies se guarda solo en el navegador** (cookie `gi_consent`); no hay registro del consentimiento en el servidor | `lib/consent.ts`. Relevante para la política de consentimiento de Google en el EEE/Reino Unido (exige conservar registros): punto 8 de la sección 4 |
 
@@ -49,16 +49,16 @@ este sitio web es:
 **García Inversiones Inmobiliarias**
 
 Nombre legal o titular responsable y CUIT:
-**[A CONFIRMAR: razón social o titular, y CUIT]**
+**[A CONFIRMAR (grupo B): razón social o titular, y CUIT]**
 
-Domicilio: **[A CONFIRMAR: domicilio legal o de contacto]**
+Domicilio: **[A CONFIRMAR (grupo B): domicilio legal o de contacto]**
 
 Sitio web:
 [www.garciainversionesinmobiliarias.com.ar](https://www.garciainversionesinmobiliarias.com.ar)
 
 Correo de contacto:
 [contacto@garciainversiones.com.ar](mailto:contacto@garciainversiones.com.ar)
-**[A CONFIRMAR: comprobar que esta casilla esté operativa para solicitudes de privacidad]**
+**[A CONFIRMAR (grupo B): comprobar que esta casilla esté operativa para solicitudes de privacidad]**
 
 Ubicación: Buenos Aires, Argentina
 
@@ -262,7 +262,7 @@ privacidad. García utiliza la información que nos proporcionás en la
 conversación para responder tu consulta y gestionar el seguimiento comercial
 correspondiente. Hoy esas conversaciones se mantienen en la aplicación de
 WhatsApp Business de García.
-**[A CONFIRMAR: confirmar si las conversaciones se incorporan o se incorporarán a otros sistemas (CRM) y, en ese caso, informarlo aquí]**
+**[A CONFIRMAR (grupo B): confirmar si las conversaciones se incorporan o se incorporarán a otros sistemas (CRM) y, en ese caso, informarlo aquí]**
 
 ## 7. No vendemos tus datos
 
@@ -340,13 +340,13 @@ El derecho de acceso es gratuito y puede ejercerse a intervalos no inferiores a
 seis meses, salvo que acredites un interés legítimo. Responderemos las solicitudes
 de acceso dentro de los diez (10) días corridos de recibido tu reclamo, y las de
 rectificación, actualización o supresión dentro de los cinco (5) días hábiles.
-**[A CONFIRMAR: validar estos plazos (arts. 14 y 16 de la Ley 25.326, según el texto vigente) y el procedimiento interno para cumplirlos]**
+**[A CONFIRMAR (grupo C): validar estos plazos (arts. 14 y 16 de la Ley 25.326, según el texto vigente) y el procedimiento interno para cumplirlos]**
 
 La Agencia de Acceso a la Información Pública (AAIP) es el órgano de control de
 la Ley N.° 25.326 y tiene la atribución de atender las denuncias y reclamos de
 quienes resulten afectados en sus derechos. Podés comunicarte con ella en
 [www.argentina.gob.ar/aaip/datospersonales](https://www.argentina.gob.ar/aaip/datospersonales)
-. **[A CONFIRMAR: leyenda exacta exigida por la normativa vigente, y datos de contacto de la AAIP]**
+. **[A CONFIRMAR (grupo C): leyenda exacta exigida por la normativa vigente, y datos de contacto de la AAIP]**
 
 ## 10. Cookies
 
@@ -379,12 +379,13 @@ Podés cambiar tu elección o retirar tu consentimiento en cualquier momento des
 cookies de medición y la información de origen de visita guardada en tu
 dispositivo.
 
-Algunas páginas muestran contenido de terceros (mapas de Google Maps, videos de
-YouTube en modo de privacidad ampliada, recorridos virtuales). Al mostrarse,
-esos servicios pueden recibir tu dirección IP y datos de tu navegador y, según el
-caso, usar sus propias cookies, conforme a sus políticas, independientemente de tu elección sobre las
-cookies opcionales de este sitio.
-**[A CONFIRMAR: decidir si estos contenidos deben cargarse solo con consentimiento o si basta con esta información]**
+Algunas páginas de propiedades y desarrollos incluyen un mapa de Google Maps. El mapa no
+se carga al abrir la página: aparece un aviso con el botón «Cargar mapa» y solo
+se muestra cuando lo pedís, o automáticamente si aceptaste las cookies de
+publicidad. Al cargarse, Google puede recibir tu dirección IP y datos de tu
+navegador y, según el caso, usar sus propias cookies, conforme a sus políticas.
+El enlace «Abrir en Google Maps» abre el sitio de Google en otra pestaña. Los
+videos y recorridos virtuales son enlaces: no se cargan dentro de esta web.
 
 También podés configurar tu navegador para bloquear o eliminar las cookies. Tené
 en cuenta que deshabilitar ciertas cookies puede afectar la funcionalidad del
@@ -404,18 +405,18 @@ Las funciones del sitio se ejecutan en Washington D. C., Estados Unidos.
 **Supabase (base de datos):** guarda las suscripciones al
 newsletter y los registros técnicos de origen de las consultas y de clics a
 WhatsApp (sin tu nombre, correo ni teléfono). Ubicación:
-**[A CONFIRMAR: región del proyecto de Supabase]**
+**[A CONFIRMAR (grupo B): región del proyecto de Supabase]**
 
 -
 **Resend (correo electrónico):** procesa los avisos internos de
 cada consulta, que incluyen los datos que ingresaste (nombre, correo, teléfono
-y mensaje). Ubicación: **[A CONFIRMAR: región de envío y almacenamiento de Resend]**
+y mensaje). Los envíos se realizan desde la región de São Paulo (Brasil); según el proveedor, los datos de su cuenta se alojan en los Estados Unidos.
 
 -
 **2Clics (CRM):** recibe los datos de tus consultas para su
 seguimiento comercial y, cuando aceptaste las cookies correspondientes, una nota
 con el origen de la consulta. Ubicación y condiciones:
-**[A CONFIRMAR: ubicación del tratamiento y contrato de 2Clics]**
+**[A CONFIRMAR (grupo B): ubicación del tratamiento y contrato de 2Clics]**
 
 -
 **Cloudflare (verificación anti-spam y DNS):** recibe señales
@@ -424,12 +425,12 @@ técnicas de tu navegador (como la dirección IP) al verificar los formularios.
 -
 **Upstash (límite de solicitudes):** procesa de forma temporal la
 dirección IP asociada a contadores para limitar abusos. Ubicación:
-**[A CONFIRMAR: región de la base de Upstash]**
+**[A CONFIRMAR (grupo B): región de la base de Upstash]**
 
 -
 **Sentry (monitoreo de errores):** recibe información técnica de
 errores del servidor; está configurado sin el envío automático de datos
-personales. Ubicación: **[A CONFIRMAR: región de la organización de Sentry]**
+personales. Ubicación: **[A CONFIRMAR (grupo B): región de la organización de Sentry]**
 
 -
 **Google y Meta:** analítica, publicidad y WhatsApp, según las
@@ -437,7 +438,7 @@ secciones 6 y 10.
 
 Algunos de estos proveedores tratan información fuera de la Argentina, en
 particular en los Estados Unidos.
-**[A CONFIRMAR: redacción sobre las transferencias internacionales y su base jurídica (art. 12 de la Ley 25.326: nivel adecuado, cláusulas contractuales modelo aprobadas por la AAIP u otra), según la documentación de cada proveedor; no afirmar garantías que no estén documentadas]**
+**[A CONFIRMAR (grupo C): redacción sobre las transferencias internacionales y su base jurídica (art. 12 de la Ley 25.326: nivel adecuado, cláusulas contractuales modelo aprobadas por la AAIP u otra), según la documentación de cada proveedor; no afirmar garantías que no estén documentadas]**
 
 ## 12. Conservación de los datos
 
@@ -453,19 +454,19 @@ momento (ver sección 10).
 -
 **Registros técnicos de clics hacia WhatsApp (nuestra base de datos):**
 hasta 90 días y luego se eliminan automáticamente.
-**[A CONFIRMAR: plazo de 90 días en estudio; no publicar como compromiso hasta aprobar la política y activar la eliminación automática]**
+**[A CONFIRMAR (grupo C): plazo de 90 días en estudio; no publicar como compromiso hasta aprobar la política y activar la eliminación automática]**
 
 -
 **Registros de origen de consultas por formulario y suscripciones al newsletter:**
-**[A CONFIRMAR: plazo de conservación]**
+**[A CONFIRMAR (grupo C): plazo de conservación]**
 
 -
 **Contactos y negocios en nuestro CRM:**
-**[A CONFIRMAR: plazo de conservación (decisión comercial y jurídica)]**
+**[A CONFIRMAR (grupo C): plazo de conservación (decisión comercial y jurídica)]**
 
 -
 **Conversaciones de WhatsApp Business y correos de consulta:**
-**[A CONFIRMAR: plazo de conservación (decisión comercial y jurídica)]**
+**[A CONFIRMAR (grupo C): plazo de conservación (decisión comercial y jurídica)]**
 
 Los proveedores de analítica, publicidad y alojamiento conservan la información
 que reciben según sus propias políticas.
@@ -491,17 +492,14 @@ tus datos personales, podés contactarnos por los siguientes medios:
 **Sitio web:**
 [www.garciainversionesinmobiliarias.com.ar](https://www.garciainversionesinmobiliarias.com.ar)
 
-
----
-
 ## 4. Cuestiones que debe validar el asesor jurídico (lista breve; ninguna está resuelta)
 1. **Responsable:** razón social/titular, CUIT, domicilio y correo operativo (sección 7).
-2. **Consentimiento:** si el consentimiento de **analítica** alcanza para el registro básico del clic (referencia + activo + página); y si ampliar la descripción de las finalidades en el banner **sin volver a pedir** el consentimiento a quienes ya eligieron es suficiente (no se subió `CONSENT_VERSION`).
+2. **Consentimiento:** si el consentimiento de **analítica** alcanza para el registro básico del clic (referencia + activo + página); y si ampliar la descripción de las finalidades en el banner **sin volver a pedir** el consentimiento a quienes ya eligieron es suficiente (la versión 2 está preparada aparte; ver sección 11).
 3. **Transferencias internacionales:** según la AAIP, EE. UU. **no figura** entre los países con nivel adecuado; hay que definir la base de cada transferencia (art. 12, Ley 25.326; cláusulas modelo aprobadas por Res. AAIP 198/2023 y su presentación en 30 días, con redacciones distintas en dos páginas de la AAIP) y qué contratos de tratamiento de datos (DPA) aceptó realmente García con cada proveedor (sección 6). Hoy **no hay documentación en el repositorio** que respalde ninguna.
 4. **Registro de bases de datos (arts. 21 y 24):** si la base de consultas/newsletter debe inscribirse ante la AAIP; las páginas de la AAIP no mencionan newsletters ni listas de contacto de sitios web.
 5. **Plazos y leyenda:** vigencia de los plazos de los arts. 14 (10 días corridos) y 16 (5 días hábiles) en el texto actualizado de la ley y de cualquier reforma; leyenda exacta sobre la AAIP (no se leyó la Disposición DNPDP 10/2008).
 6. **Conservación:** plazos de la sección 5 (90 días de los clics es solo una propuesta de trabajo) y su fundamento.
-7. **Contenidos incrustados** (mapas, videos, recorridos) que cargan antes del consentimiento: informar (texto actual) o cargarlos solo con consentimiento.
+7. **Mapas de Google:** confirmar que el criterio implementado (carga con clic, o automática solo con consentimiento de publicidad) es suficiente.
 8. **Otras jurisdicciones:** si las campañas dirigidas a la UE/España o a EE. UU. exigen información o condiciones adicionales (sección 9), incluida la exigencia de Google de **conservar registros del consentimiento** (hoy solo hay cookie).
 9. **WhatsApp:** roles de García (responsable) y de WhatsApp/Meta (encargado, según los términos del WhatsApp Business App vigentes desde el 2026-09-23) y redacción si en el futuro las conversaciones se incorporan al CRM o se analizan con IA (no implementado; requeriría texto y validación aparte).
 10. **Google y Meta:** cómo describir su condición (responsable, corresponsable o encargado según la jurisdicción) y la frase «no vendemos tus datos» frente al uso propio que ambos hacen de los datos de medición.
@@ -540,14 +538,14 @@ Información tomada de las páginas **públicas** de cada proveedor (leídas el 
 |---|---|---|---|---|
 | **Vercel** | alojamiento y entrega; IP, páginas solicitadas, registros | procesamiento principal en EE. UU. (la documentación admite «cualquier lugar del mundo»); García: funciones en Washington D. C. (verificado) | EU SCC + marcos DPF; **el DPA rige para planes Pro/Enterprise: García está hoy en Hobby** | que el DPA aplique al pasar a Pro |
 | **Supabase** | base de datos: newsletter y registros técnicos | la región se elige por proyecto; default no indicado; García: **no verificada** | SCC (con anexos UK/Suiza); DPF no indicado; el DPA forma parte de los términos | región del proyecto; subencargados |
-| **Resend** | envío de los avisos de consulta (nombre, correo, teléfono, mensaje) | datos de cuenta y registros **siempre en EE. UU.**; la región de envío se elige por dominio; García: **no verificada** | SCC + DPF; DPA incorporado a los términos | región de envío; 22 subencargados listados |
+| **Resend** | envío de los avisos de consulta (nombre, correo, teléfono, mensaje) | datos de cuenta y registros **siempre en EE. UU.** (según el proveedor); región de envío del dominio de García: **São Paulo, Brasil** (verificada en el DNS de Cloudflare) | SCC + DPF; DPA incorporado a los términos | 22 subencargados listados |
 | **Upstash** | contadores de límite con la IP | región elegible por base; García: **no verificada** | DPF y SCC (política); el PDF del DPA no pudo leerse | región; DPA |
 | **Sentry** | errores técnicos (sin datos personales por defecto) | EE. UU. (Iowa) o UE (Fráncfort), **elegido al crear la organización y no modificable**; García: **no verificada** | DPF (+ SCC de respaldo); **el DPA NO es automático: hay que aceptarlo** | región y **si se aceptó el DPA** |
 | **Cloudflare** | Turnstile (IP, huella TLS, navegador, clave y origen); DNS | metadatos en EE. UU. y Europa; sin retención ni ubicación indicadas para Turnstile | SCC + DPF; DPA incorporado al acuerdo *self-serve* | retención de Turnstile |
 | **Google** (GTM, GA4, Ads) | solo con consentimiento: datos de uso, IP, identificadores de cookies | «cualquier país donde Google o sus subencargados operen» | SCC / DPF según el producto | condiciones de Analytics (no se leyeron); registros del consentimiento (EEE/UK) |
 | **Meta** (Pixel, WhatsApp) | Pixel solo con consentimiento; WhatsApp si la persona inicia la conversación | no indicada | términos de Business Tools y adenda de transferencias (no leída); en la UE/UK Meta es corresponsable de ciertos datos | términos de procesamiento de datos de Meta (no se pudieron leer); aviso y consentimiento verificable en la UE |
 | **2Clics** | CRM: nombre, correo, teléfono, mensaje y nota de origen | **no verificada** (su sitio no fue accesible desde esta sesión) | **no verificado** | ubicación, contrato y subencargados |
-| **Contenidos incrustados** (Google Maps, YouTube, Vimeo/otros) | IP y datos del navegador al mostrarse | del proveedor | del proveedor | decisión de consentimiento previo (punto 7) |
+| **Google Maps (mapas incrustados)** | IP y datos del navegador, solo al cargarse el mapa (clic o consentimiento de publicidad) | del proveedor | del proveedor | criterio de carga (punto 7) |
 
 ## 7. Datos del responsable que faltan confirmar
 - **Razón social o titular responsable y CUIT** — no figuran en el repositorio ni en la política vigente.
@@ -571,6 +569,33 @@ Información tomada de las páginas **públicas** de cada proveedor (leídas el 
 ## 10. Cómo publicar (cuando el contenido esté validado)
 1. El asesor valida el texto y se completan **todos** los `[A CONFIRMAR]` (datos del responsable, ubicaciones, plazos, redacción de transferencias).
 2. Quitar los `Pendiente` y la nota de borrador de `app/privacidad/page.tsx` y actualizar la fecha.
-3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 17 pendientes, a propósito).
+3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 15 pendientes —grupos B y C—, a propósito).
 4. Decidir la activación de la conservación (sección 5) **antes** de publicar el compromiso de 90 días.
 5. Integrar por PR con CI y verificar la página, el banner y el registro de clics en producción.
+
+## 11. Cierre de rama: lo que está terminado y lo que falta
+
+### 11.1 Los 17 pendientes, clasificados
+- **Grupo A — técnicos (resueltos en el código, 2):** (1) contenidos incrustados: solo hay dos mapas de Google Maps y ahora se cargan con un clic o con consentimiento de publicidad; el texto se corrigió (antes mencionaba, por error, videos y recorridos incrustados); (2) región de envío de Resend: São Paulo (DNS).
+- **Grupo B — datos que debe aportar García (9):** razón social/titular y CUIT; domicilio; casilla de correo operativa (`contacto@garciainversiones.com.ar`: enviar un mensaje de prueba); si las conversaciones de WhatsApp pasarán al CRM; región de Supabase (panel); región de Upstash (panel); región de Sentry y si se aceptó su DPA (panel); ubicación y contrato de 2Clics (consulta al proveedor).
+- **Grupo C — criterio jurídico (6):** transferencias internacionales (base y redacción); plazos y leyenda de la AAIP; plazo de 90 días de clics de WhatsApp; plazo de formularios/newsletter; plazo del CRM; plazo de conversaciones de WhatsApp y correos.
+- El registro de bases de datos (arts. 21 y 24) y la ley aplicable a campañas en UE/EE. UU. no son pendientes dentro del texto sino preguntas del grupo C (sección 4).
+
+### 11.2 Conservación
+- Criterio propuesto: 90 días para clics de WhatsApp **sin mensaje asociado**. Mecanismo terminado, **deshabilitado**, con 19 tests (incluido un control estático: solo toca `lead_attribution` y `retention_audit`, un único `delete`, mismas tres condiciones en conteo y borrado, sin referencias a 2Clics ni WhatsApp Business).
+- Verificación en producción (solo lectura, 2026-11-11): 3 filas en total (`prueba` 1, `whatsapp_click` 2); **0 alcanzadas** por la regla de 90 días (todas del 2026-11-11). Nada se borró.
+- No hay eliminación automática para 2Clics ni WhatsApp Business. El plazo de 24 meses para prospectos sigue como propuesta pendiente de decisión comercial y jurídica.
+- Activación: pasos de la sección 5; requiere aprobación formal del plazo y una corrida de prueba (`?dry=1`) en el entorno elegido.
+
+### 11.3 Evaluación de `CONSENT_VERSION` = 2 (commit separado, pendiente de revisión)
+- **Efecto:** la cookie `gi_consent` v1 deja de valer; todos los visitantes vuelven a ver el banner **una vez**. Hasta que elijan, GTM/GA4/Pixel no cargan (el snippet inicial compara la versión).
+- **Por qué:** la descripción de las finalidades cambió (registro del clic hacia WhatsApp); informar una finalidad distinta y pedir consentimiento de nuevo es el criterio más conservador.
+- **Costo:** pérdida temporal de medición de quienes no vuelvan a aceptar; hoy el tráfico es bajo, antes de campañas es el mejor momento.
+- **Limpieza:** si el visitante tenía una cookie v1 y ahora no concede todo, se borran las cookies de medición y la atribución guardadas (tests incluidos).
+- **Cómo descartarlo:** revertir el commit `f4ee99d`; el resto de la rama no depende de él.
+
+### 11.4 Transferencias y garantías que el asesor debe validar
+Ver tabla de la sección 6. Resumen de lo **documentado por los proveedores** (no es prueba de que García lo haya aceptado): Vercel (EE. UU.; DPA solo Pro/Enterprise, García en Hobby); Supabase (SCC; región a confirmar); Resend (cuenta en EE. UU., SCC + DPF); Upstash (DPF/SCC; DPA no leído); Sentry (DPF; el DPA hay que aceptarlo; región fija al crear la organización); Cloudflare (SCC + DPF); Google y Meta (términos propios y exigencias de consentimiento); 2Clics (sin datos). EE. UU. no figura entre los países con nivel adecuado según la AAIP.
+
+### 11.5 Qué falta para publicar
+1. Datos del grupo B de García. 2. Validación jurídica del grupo C. 3. Decidir `CONSENT_VERSION` 2 y la activación de la conservación. 4. Quitar `Pendiente` y la nota de borrador; `PRIVACY_PUBLISH_CHECK=1 npm test` en verde. 5. PR con CI y verificación en producción. Nada de esto se hizo: la rama no está publicada ni integrada.

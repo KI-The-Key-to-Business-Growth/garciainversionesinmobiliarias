@@ -89,8 +89,13 @@ describe('política de privacidad: consistencia con el funcionamiento real', () 
 });
 
 describe('política de privacidad: control de publicación (borrador sin validar)', () => {
-  const pending = (page.match(/<Pendiente>/g) ?? []).length;
+  const pending = (page.match(/<Pendiente grupo="[BC]">/g) ?? []).length;
   const draftNote = page.includes('BORRADOR PARA REVISIÓN JURÍDICA');
+
+  it('todo pendiente lleva grupo B (datos de García) o C (criterio jurídico); ninguno sin clasificar', () => {
+    expect((page.match(/<Pendiente>/g) ?? []).length).toBe(0);
+    expect((page.match(/<Pendiente grupo="[^BC"]*"/g) ?? []).length).toBe(0);
+  });
 
   it('mientras haya puntos «[A CONFIRMAR]» el borrador lo dice, y no al revés', () => {
     expect(pending > 0).toBe(draftNote);

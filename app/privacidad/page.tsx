@@ -20,8 +20,14 @@ export const metadata: Metadata = {
 // docs/ai/PRIVACIDAD_REVISION.md (hechos técnicos comprobados frente a decisiones jurídicas).
 // Al validarse el texto: quitar los `Pendiente`, esta nota y actualizar la fecha de arriba.
 
-function Pendiente({ children }: { children: ReactNode }) {
-  return <span data-privacy-pending="true">[A CONFIRMAR: {children}]</span>;
+// grupo B = dato que debe aportar García; grupo C = criterio jurídico (asesor). Los pendientes de
+// grupo A (técnicos) se resolvieron en el código y ya no figuran.
+function Pendiente({ children, grupo }: { children: ReactNode; grupo: 'B' | 'C' }) {
+  return (
+    <span data-privacy-pending="true" data-privacy-group={grupo}>
+      [A CONFIRMAR: {children}]
+    </span>
+  );
 }
 
 const INDEX = [
@@ -81,10 +87,10 @@ export default function PrivacidadPage() {
                     </p>
                     <p>
                       Nombre legal o titular responsable y CUIT:{' '}
-                      <Pendiente>razón social o titular, y CUIT</Pendiente>
+                      <Pendiente grupo="B">razón social o titular, y CUIT</Pendiente>
                     </p>
                     <p>
-                      Domicilio: <Pendiente>domicilio legal o de contacto</Pendiente>
+                      Domicilio: <Pendiente grupo="B">domicilio legal o de contacto</Pendiente>
                     </p>
                     <p>
                       Sitio web:{' '}
@@ -97,7 +103,7 @@ export default function PrivacidadPage() {
                       <a href="mailto:contacto@garciainversiones.com.ar">
                         contacto@garciainversiones.com.ar
                       </a>{' '}
-                      <Pendiente>comprobar que esta casilla esté operativa para solicitudes de privacidad</Pendiente>
+                      <Pendiente grupo="B">comprobar que esta casilla esté operativa para solicitudes de privacidad</Pendiente>
                     </p>
                     <p>Ubicación: Buenos Aires, Argentina</p>
                   </div>
@@ -358,7 +364,7 @@ export default function PrivacidadPage() {
                       conversación para responder tu consulta y gestionar el seguimiento comercial
                       correspondiente. Hoy esas conversaciones se mantienen en la aplicación de
                       WhatsApp Business de García.{' '}
-                      <Pendiente>
+                      <Pendiente grupo="B">
                         confirmar si las conversaciones se incorporan o se incorporarán a otros
                         sistemas (CRM) y, en ese caso, informarlo aquí
                       </Pendiente>
@@ -458,7 +464,7 @@ export default function PrivacidadPage() {
                     seis meses, salvo que acredites un interés legítimo. Responderemos las solicitudes
                     de acceso dentro de los diez (10) días corridos de recibido tu reclamo, y las de
                     rectificación, actualización o supresión dentro de los cinco (5) días hábiles.{' '}
-                    <Pendiente>
+                    <Pendiente grupo="C">
                       validar estos plazos (arts. 14 y 16 de la Ley 25.326, según el texto vigente) y
                       el procedimiento interno para cumplirlos
                     </Pendiente>
@@ -474,7 +480,7 @@ export default function PrivacidadPage() {
                     >
                       www.argentina.gob.ar/aaip/datospersonales
                     </a>
-                    . <Pendiente>leyenda exacta exigida por la normativa vigente, y datos de contacto de la AAIP</Pendiente>
+                    . <Pendiente grupo="C">leyenda exacta exigida por la normativa vigente, y datos de contacto de la AAIP</Pendiente>
                   </p>
                 </section>
 
@@ -515,15 +521,13 @@ export default function PrivacidadPage() {
                     dispositivo.
                   </p>
                   <p>
-                    Algunas páginas muestran contenido de terceros (mapas de Google Maps, videos de
-                    YouTube en modo de privacidad ampliada, recorridos virtuales). Al mostrarse,
-                    esos servicios pueden recibir tu dirección IP y datos de tu navegador y, según el
-                    caso, usar sus propias cookies, conforme a sus políticas, independientemente de tu elección sobre las
-                    cookies opcionales de este sitio.{' '}
-                    <Pendiente>
-                      decidir si estos contenidos deben cargarse solo con consentimiento o si basta
-                      con esta información
-                    </Pendiente>
+                    Algunas páginas de propiedades y desarrollos incluyen un mapa de Google Maps. El mapa no
+                    se carga al abrir la página: aparece un aviso con el botón «Cargar mapa» y solo
+                    se muestra cuando lo pedís, o automáticamente si aceptaste las cookies de
+                    publicidad. Al cargarse, Google puede recibir tu dirección IP y datos de tu
+                    navegador y, según el caso, usar sus propias cookies, conforme a sus políticas.
+                    El enlace «Abrir en Google Maps» abre el sitio de Google en otra pestaña. Los
+                    videos y recorridos virtuales son enlaces: no se cargan dentro de esta web.
                   </p>
                   <p>
                     También podés configurar tu navegador para bloquear o eliminar las cookies. Tené
@@ -548,18 +552,18 @@ export default function PrivacidadPage() {
                       <strong>Supabase (base de datos):</strong> guarda las suscripciones al
                       newsletter y los registros técnicos de origen de las consultas y de clics a
                       WhatsApp (sin tu nombre, correo ni teléfono). Ubicación:{' '}
-                      <Pendiente>región del proyecto de Supabase</Pendiente>
+                      <Pendiente grupo="B">región del proyecto de Supabase</Pendiente>
                     </li>
                     <li>
                       <strong>Resend (correo electrónico):</strong> procesa los avisos internos de
                       cada consulta, que incluyen los datos que ingresaste (nombre, correo, teléfono
-                      y mensaje). Ubicación: <Pendiente>región de envío y almacenamiento de Resend</Pendiente>
+                      y mensaje). Los envíos se realizan desde la región de São Paulo (Brasil); según el proveedor, los datos de su cuenta se alojan en los Estados Unidos.
                     </li>
                     <li>
                       <strong>2Clics (CRM):</strong> recibe los datos de tus consultas para su
                       seguimiento comercial y, cuando aceptaste las cookies correspondientes, una nota
                       con el origen de la consulta. Ubicación y condiciones:{' '}
-                      <Pendiente>ubicación del tratamiento y contrato de 2Clics</Pendiente>
+                      <Pendiente grupo="B">ubicación del tratamiento y contrato de 2Clics</Pendiente>
                     </li>
                     <li>
                       <strong>Cloudflare (verificación anti-spam y DNS):</strong> recibe señales
@@ -568,12 +572,12 @@ export default function PrivacidadPage() {
                     <li>
                       <strong>Upstash (límite de solicitudes):</strong> procesa de forma temporal la
                       dirección IP asociada a contadores para limitar abusos. Ubicación:{' '}
-                      <Pendiente>región de la base de Upstash</Pendiente>
+                      <Pendiente grupo="B">región de la base de Upstash</Pendiente>
                     </li>
                     <li>
                       <strong>Sentry (monitoreo de errores):</strong> recibe información técnica de
                       errores del servidor; está configurado sin el envío automático de datos
-                      personales. Ubicación: <Pendiente>región de la organización de Sentry</Pendiente>
+                      personales. Ubicación: <Pendiente grupo="B">región de la organización de Sentry</Pendiente>
                     </li>
                     <li>
                       <strong>Google y Meta:</strong> analítica, publicidad y WhatsApp, según las
@@ -583,7 +587,7 @@ export default function PrivacidadPage() {
                   <p>
                     Algunos de estos proveedores tratan información fuera de la Argentina, en
                     particular en los Estados Unidos.{' '}
-                    <Pendiente>
+                    <Pendiente grupo="C">
                       redacción sobre las transferencias internacionales y su base jurídica (art. 12
                       de la Ley 25.326: nivel adecuado, cláusulas contractuales modelo aprobadas por
                       la AAIP u otra), según la documentación de cada proveedor; no afirmar garantías
@@ -608,22 +612,22 @@ export default function PrivacidadPage() {
                     <li>
                       <strong>Registros técnicos de clics hacia WhatsApp (nuestra base de datos):</strong>{' '}
                       hasta 90 días y luego se eliminan automáticamente.{' '}
-                      <Pendiente>
+                      <Pendiente grupo="C">
                         plazo de 90 días en estudio; no publicar como compromiso hasta aprobar la
                         política y activar la eliminación automática
                       </Pendiente>
                     </li>
                     <li>
                       <strong>Registros de origen de consultas por formulario y suscripciones al newsletter:</strong>{' '}
-                      <Pendiente>plazo de conservación</Pendiente>
+                      <Pendiente grupo="C">plazo de conservación</Pendiente>
                     </li>
                     <li>
                       <strong>Contactos y negocios en nuestro CRM:</strong>{' '}
-                      <Pendiente>plazo de conservación (decisión comercial y jurídica)</Pendiente>
+                      <Pendiente grupo="C">plazo de conservación (decisión comercial y jurídica)</Pendiente>
                     </li>
                     <li>
                       <strong>Conversaciones de WhatsApp Business y correos de consulta:</strong>{' '}
-                      <Pendiente>plazo de conservación (decisión comercial y jurídica)</Pendiente>
+                      <Pendiente grupo="C">plazo de conservación (decisión comercial y jurídica)</Pendiente>
                     </li>
                   </ul>
                   <p>
