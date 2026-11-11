@@ -4,11 +4,15 @@ import { useEffect } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { recordWhatsAppClick } from '@/actions/whatsapp-click';
 import { getAttributionPayload } from '@/lib/attribution-client';
+import { getStoredConsent } from '@/lib/consent-client';
+import { hasAnyConsent } from '@/lib/consent';
+import { WHATSAPP_CLICK_REQUIRES_CONSENT } from '@/lib/whatsapp-policy';
 import { getWhatsAppAssetContext, type WhatsAppAssetContext } from '@/lib/whatsapp-context';
 import {
   buildWhatsAppHref,
   buildWhatsAppMessage,
   getSessionRef,
+  isEffectiveWhatsAppClick,
   isGarciaWhatsAppHref,
   markRefRegistered,
   wasRefRegistered,
@@ -98,15 +102,21 @@ function prepareLink(link: HTMLAnchorElement): { ref: string; context: WhatsAppA
 }
 
 // Registra el clic una sola vez por referencia y sesión. Un clic NO confirma un mensaje enviado.
+// Solo se llama desde un clic real (izquierdo o central): copiar el enlace o abrir el menú
+// contextual solo prepara el texto y no registra nada. Sin consentimiento no se llama al servidor
+// y la referencia queda sin marcar, por si el visitante acepta y vuelve a tocar el enlace.
 function registerClick(ref: string, context: WhatsAppAssetContext | null): void {
   const storage = safeSessionStorage();
   if (wasRefRegistered(storage, ref)) return;
+  const consent = getStoredConsent();
+  if (WHATSAPP_CLICK_REQUIRES_CONSENT && !hasAnyConsent(consent)) return;
   markRefRegistered(storage, ref);
   void recordWhatsAppClick({
     ref,
     page_location: window.location.href,
     property_id: context?.propertyId,
     attribution: getAttributionPayload(),
+    consent: consent ? { analytics: consent.analytics, marketing: consent.marketing } : undefined,
   }).catch(() => {
     /* best-effort: nunca debe afectar la navegación hacia WhatsApp */
   });
@@ -124,6 +134,9 @@ export default function WhatsAppTracking() {
     }
 
     function onClick(event: MouseEvent) {
+      // Solo cuentan los clics reales: izquierdo (click) o central (auxclick, botón 1). El botón derecho
+      // (menú contextual, «copiar enlace») no es un clic: el navegador solo prepara el texto.
+      if (!isEffectiveWhatsAppClick(event.type, event.button)) return;
       const link = findLink(event);
       if (!link) return;
 

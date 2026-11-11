@@ -53,7 +53,7 @@ describe('recordWhatsAppClick', () => {
   });
 
   it('registra el clic como whatsapp_click con la referencia como event_id y el activo por IDs reales', async () => {
-    const result = await recordWhatsAppClick({ ref: REF.toLowerCase(), page_location: DOMUS_URL, property_id: 236682 });
+    const result = await recordWhatsAppClick({ ref: REF.toLowerCase(), page_location: DOMUS_URL, property_id: 236682, consent: { analytics: true, marketing: false } });
     expect(result).toEqual({ ok: true });
     expect(recordLeadAttribution).toHaveBeenCalledTimes(1);
     const row = recordLeadAttribution.mock.calls[0][0] as Record<string, unknown>;
@@ -65,6 +65,10 @@ describe('recordWhatsAppClick', () => {
       property_app_id: 236682,
       development_slug: 'domus-brickell-center',
       asset_key: 'dev:domus-brickell-center',
+      consent_analytics: true,
+      consent_marketing: false,
+      campaign_id: null,
+      fbclid: null,
       page_path: '/desarrollos/domus-brickell-center',
     });
     // Un clic no es un mensaje recibido: las columnas de recepción no se escriben (quedan NULL)
@@ -82,17 +86,29 @@ describe('recordWhatsAppClick', () => {
     expect(row).toMatchObject({ utm_source: 'meta', campaign_id: '111', adset_id: '222', ad_id: '333', fbclid: 'abc', consent_marketing: true });
   });
 
-  it('sin consentimiento no atribuye campañas: solo el registro operativo', async () => {
-    await recordWhatsAppClick({ ref: REF, page_location: DOMUS_URL, attribution: '' });
+  it('SIN consentimiento no guarda nada (política vigente): ni payload vacío, ni consentimiento en falso', async () => {
+    const cases = [
+      { ref: REF, page_location: DOMUS_URL },
+      { ref: REF, page_location: DOMUS_URL, attribution: '' },
+      { ref: REF, page_location: DOMUS_URL, consent: { analytics: false, marketing: false } },
+      { ref: REF, page_location: DOMUS_URL, attribution: attr({ analytics: false, marketing: false }, { utm_source: 'meta', fbclid: 'abc' }) },
+    ];
+    for (const input of cases) {
+      expect(await recordWhatsAppClick(input)).toEqual({ ok: true, skipped: 'no_consent' });
+    }
+    expect(recordLeadAttribution).not.toHaveBeenCalled();
+  });
+
+  it('con consentimiento declarado pero sin touch de atribución guarda solo el registro operativo', async () => {
+    await recordWhatsAppClick({ ref: REF, page_location: DOMUS_URL, attribution: '', consent: { analytics: true, marketing: true } });
     const row = recordLeadAttribution.mock.calls[0][0] as Record<string, unknown>;
     expect(row).toMatchObject({
       event_id: REF,
       lead_type: 'whatsapp_click',
-      consent_analytics: false,
-      consent_marketing: false,
+      consent_analytics: true,
+      consent_marketing: true,
       utm_source: null,
       campaign_id: null,
-      adset_id: null,
       ad_id: null,
       fbclid: null,
       fbp: null,
@@ -113,7 +129,7 @@ describe('recordWhatsAppClick', () => {
   });
 
   it('página general sin activo: asset_key ausente (consulta general/institucional)', async () => {
-    await recordWhatsAppClick({ ref: REF, page_location: 'https://www.garciainversionesinmobiliarias.com.ar/' });
+    await recordWhatsAppClick({ ref: REF, page_location: 'https://www.garciainversionesinmobiliarias.com.ar/', consent: { analytics: true, marketing: false } });
     const row = recordLeadAttribution.mock.calls[0][0] as Record<string, unknown>;
     expect(row).not.toHaveProperty('asset_key');
     expect(row).toMatchObject({ development_slug: null, property_app_id: null });
@@ -122,7 +138,7 @@ describe('recordWhatsAppClick', () => {
   it('limita la cantidad de registros por IP', async () => {
     let rejected = 0;
     for (let i = 0; i < 45; i++) {
-      const r = await recordWhatsAppClick({ ref: `GI-${'ABCDEFGH'.slice(0, 5)}${'23456789'[i % 8]}`, page_location: DOMUS_URL });
+      const r = await recordWhatsAppClick({ ref: `GI-${'ABCDEFGH'.slice(0, 5)}${'23456789'[i % 8]}`, page_location: DOMUS_URL, consent: { analytics: true, marketing: false } });
       if (!r.ok) rejected++;
     }
     expect(rejected).toBe(5);
@@ -146,5 +162,20 @@ describe('resolveAssetKey (convención única para todo García)', () => {
 
   it('una inversión inexistente no genera clave inventada', () => {
     expect(resolveAssetKey({ asset: {}, pageLocation: `${base}/invertir/no-existe-xyz` })).toBeNull();
+  });
+});
+
+describe('compatibilidad con los formularios actuales', () => {
+  it('las filas de los formularios no incluyen las columnas nuevas (siguen funcionando aunque el SQL no esté aplicado)', async () => {
+    const { buildLeadAttributionRow } = await import('@/lib/attribution-server');
+    const row = buildLeadAttributionRow({
+      eventId: 'form_submit_1',
+      leadType: 'consulta_general',
+      formName: 'Formulario principal',
+      crmStatus: 'sent',
+      attribution: null,
+      asset: {},
+    });
+    for (const column of ['asset_key', 'wa_message_received_at', 'wa_match_method']) expect(row).not.toHaveProperty(column);
   });
 });

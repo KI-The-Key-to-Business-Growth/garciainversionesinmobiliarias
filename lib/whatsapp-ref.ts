@@ -122,3 +122,12 @@ export function markRefRegistered(storage: StorageLike | null | undefined, ref: 
     /* sin storage */
   }
 }
+
+// ¿Este evento del navegador es un clic efectivo sobre el enlace? `click` (botón principal) y
+// `auxclick` con el botón central. El botón derecho (menú contextual, copiar enlace) y cualquier otro
+// botón NO cuentan: copiar un enlace no es un clic ni un mensaje.
+export function isEffectiveWhatsAppClick(type: string, button: number): boolean {
+  if (type === 'click') return button === 0;
+  if (type === 'auxclick') return button === 1;
+  return false;
+}

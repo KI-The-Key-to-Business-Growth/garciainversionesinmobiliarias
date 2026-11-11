@@ -7,6 +7,7 @@ import {
   extractWhatsAppRef,
   generateWhatsAppRef,
   getSessionRef,
+  isEffectiveWhatsAppClick,
   isGarciaWhatsAppHref,
   isValidWhatsAppRef,
   markRefRegistered,
@@ -148,5 +149,44 @@ describe('contexto del activo', () => {
     expect(getWhatsAppAssetContext()).toBe(b);
     clearWhatsAppAssetContext(b);
     expect(getWhatsAppAssetContext()).toBeNull();
+  });
+});
+
+describe('sin datos personales hacia GA4 y Meta', () => {
+  it('el evento click_whatsapp conserva la referencia como event_id y descarta teléfono y claves personales', async () => {
+    const { stripPii } = await import('@/lib/analytics');
+    const payload = stripPii({
+      event_id: 'GI-7K3F2Q',
+      button_location: 'floating',
+      button_text: 'WhatsApp',
+      page_path: '/desarrollos/domus-brickell-center',
+      whatsapp_number: '5491167240353',
+      phone: '+54 9 11 6724-0353',
+      email: 'ana@example.com',
+      message: 'Hola, quiero información. Ref: GI-7K3F2Q',
+      property_id: '236682',
+    });
+    expect(payload).toMatchObject({ event_id: 'GI-7K3F2Q', button_location: 'floating', property_id: '236682' });
+    for (const key of ['whatsapp_number', 'phone', 'email', 'message']) expect(payload).not.toHaveProperty(key);
+  });
+
+  it('la referencia es aleatoria: no contiene datos del activo ni de la persona', () => {
+    const refs = Array.from({ length: 200 }, () => generateWhatsAppRef());
+    const joined = refs.join('').toLowerCase();
+    expect(joined).not.toContain('domus');
+    // Dos referencias para el mismo activo y sesión distinta no se parecen (sin patrón derivable)
+    expect(new Set(refs.map((r) => r.slice(3, 5))).size).toBeGreaterThan(50);
+  });
+});
+
+describe('qué cuenta como clic efectivo', () => {
+  it('cuentan el clic izquierdo y el central; copiar el enlace (botón derecho) y los demás eventos no', () => {
+    expect(isEffectiveWhatsAppClick('click', 0)).toBe(true);
+    expect(isEffectiveWhatsAppClick('auxclick', 1)).toBe(true);
+    expect(isEffectiveWhatsAppClick('auxclick', 2)).toBe(false); // botón derecho
+    expect(isEffectiveWhatsAppClick('auxclick', 3)).toBe(false);
+    expect(isEffectiveWhatsAppClick('contextmenu', 2)).toBe(false);
+    expect(isEffectiveWhatsAppClick('pointerdown', 0)).toBe(false);
+    expect(isEffectiveWhatsAppClick('focusin', 0)).toBe(false);
   });
 });
