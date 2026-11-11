@@ -1,4 +1,5 @@
 import React from 'react';
+import ConsentGatedEmbed from '@/components/consent/ConsentGatedEmbed';
 import { compactText, formatLocation, formatPublicDetailValue } from '@/lib/2clics/format';
 import type { PublicLocation } from '@/lib/2clics/types';
 
@@ -160,14 +161,7 @@ export default function PropertyMap({
 
       {useEmbed ? (
         <>
-          <iframe
-            className="twoclics-map-frame"
-            title={`Mapa de ${title}`}
-            src={embedUrl}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            allowFullScreen
-          />
+          <ConsentGatedEmbed className="twoclics-map-frame" title={`Mapa de ${title}`} src={embedUrl} />
           <a className="twoclics-map-link" href={searchUrl} target="_blank" rel="noopener">
             Abrir en Google Maps ↗
           </a>

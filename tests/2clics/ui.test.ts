@@ -860,7 +860,8 @@ describe('2Clics property map', () => {
 
     expect(html).toContain('Ubicaci');
     expect(html).toContain('Ubicaci');
-    expect(html).toContain('<iframe');
+    expect(html).not.toContain('<iframe');
+    expect(html).toContain('data-consent-embed="blocked"');
     expect(html).toContain('https://www.google.com/maps?q=Recoleta%2C%20CABA%2C%20Buenos%20Aires&amp;output=embed');
     expect(html).toContain('Abrir en Google Maps');
     expect(html).toContain('https://www.google.com/maps/search/');
@@ -898,7 +899,8 @@ describe('2Clics property map', () => {
       }),
     );
 
-    expect(html).toContain('<iframe');
+    expect(html).not.toContain('<iframe');
+    expect(html).toContain('data-consent-embed="blocked"');
     expect(html).toContain('maps/embed/v1/place');
     expect(html).toContain('Abrir en Google Maps');
     expect(html).not.toContain('Ver ubicaci');

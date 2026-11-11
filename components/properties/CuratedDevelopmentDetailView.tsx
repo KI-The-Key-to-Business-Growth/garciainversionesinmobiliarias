@@ -1,4 +1,5 @@
 import React from 'react';
+import ConsentGatedEmbed from '@/components/consent/ConsentGatedEmbed';
 import Image from 'next/image';
 import Link from 'next/link';
 import PropertyInquiryPanel from '@/components/properties/PropertyInquiryPanel';
@@ -406,14 +407,7 @@ function renderLocationMap(map: DevelopmentLocationMap | undefined, displayName:
   const note = useCoordinates || map.addressIsExact ? null : 'Ubicación aproximada';
   return (
     <div className="project-location-map">
-      <iframe
-        className="project-location-frame"
-        title={`Mapa de ${displayName}`}
-        src={embedUrl}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        allowFullScreen
-      />
+      <ConsentGatedEmbed className="project-location-frame" title={`Mapa de ${displayName}`} src={embedUrl} />
       {addressLine ? <p className="project-location-address">{addressLine}</p> : null}
       {note ? <p className="project-location-note">{note}</p> : null}
       <a className="project-location-link" href={searchUrl} target="_blank" rel="noopener">
