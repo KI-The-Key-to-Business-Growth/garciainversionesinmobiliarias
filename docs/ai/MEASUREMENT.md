@@ -91,10 +91,10 @@ Actualizados en `/privacidad` (secciones 6 y 10) y requieren validación legal: 
 
 ## 7. Pendientes / límites conocidos
 
-- Queda una fila de prueba en `lead_attribution` (id 1, `event_id = '__prueba_esquema__'`, sin datos personales); borrarla a mano en el SQL Editor.
+- Quedan **3 filas de prueba** en `lead_attribution`, sin datos personales: `id = 1` (`__prueba_esquema__`, esquema) e `id = 2` y `id = 3` (`whatsapp_click`, pruebas de producción del 2026-11-11). El entorno de trabajo **rechaza las sentencias `DELETE`**; hay que borrarlas a mano en el SQL Editor (sentencia en la sección 9).
 - WhatsApp: no hay atribución de la conversación (app Business, sin Cloud API). Solo el clic, con la última campaña guardada.
 - No hay Conversions API: el Pixel es 100% navegador; quien rechaza cookies no se mide (esperado en este modelo). `event_id` ya queda listo para deduplicar con una futura CAPI.
-- Validación legal de `/privacidad` pendiente (ver `PRIVACIDAD_REVISION.md`); la implementación técnica no equivale a validación jurídica.
+- Validación legal de `/privacidad` pendiente (ver `PRIVACIDAD_REVISION.md`); la implementación técnica no equivale a validación jurídica. **El texto de `/privacidad` todavía NO menciona el enlace de WhatsApp con referencia**: el texto propuesto está en `PRIVACIDAD_REVISION.md`, sin publicar.
 - Con «solo analítica» salen pings de Consent Mode de Google (`googlesyndication.com/ccm`, `google.com/g/collect`) sin cookies de publicidad; no son de Meta.
 - `Lead` y `Subscribe` sin prueba de extremo a extremo; se verificarán con la primera consulta real.
 
@@ -105,3 +105,37 @@ Propiedad `properties/540362403` (cuenta 396907112), flujo web `15013850233` = `
 - **Dimensiones personalizadas (alcance Evento), creadas por API:** `property_id` (customDimensions/16321385661), `development_slug` (16322000090), `lead_type` (16321926854), `form_name` (16321993248), `market` (16322036733), `button_location` (16321915066). Sin dimensión para `event_id` (es técnico; llega como `evnid`).
 - **Eventos clave:** se mantiene `generate_lead` como referencia de consultas completadas. Se retiró la clasificación de `click_whatsapp`, `newsletter_signup` y `select_property` (siguen registrándose). `purchase`, `qualify_lead` y `close_convert_lead` no se tocaron: sin eventos registrados y sin implementación en la web ni en GTM v8 (se crearon por defecto el 2026-06-05).
 - La conversión que Meta usa para optimizar es independiente: `Lead` (pendiente de prueba controlada con la web actual).
+
+## 9. Referencia de WhatsApp y registro del clic (publicado 2026-11-11)
+
+**Qué hace.** Todo enlace al número de García sale con un mensaje que incluye el activo y una referencia: «Hola, quiero información sobre {activo}. Ref: GI-XXXXXXXXXXXXX» (sin activo: «Hola, me interesa recibir asesoramiento inmobiliario. Ref: …»). Funciona para desarrollos (Domus, Benavídez), propiedades individuales, oportunidades de inversión y páginas generales, actuales y futuras: el activo sale de los IDs y slugs reales (`PropertyViewTracker` + `lib/attribution-server.ts`), nunca del nombre de una campaña.
+
+**Referencia.** `GI-` + 13 símbolos de un alfabeto de 32 sin I/O/0/1 = **65 bits**, generados solo con `crypto.getRandomValues` (sin respaldo con `Math.random`: si no existe, no se crea referencia). Una por sesión del navegador y activo: tocar el mismo botón varias veces no duplica registros. No deriva de datos personales, del activo ni de la hora. `lib/whatsapp-ref.ts` (generación, validación, `extractWhatsAppRef` para usarla después con cualquier integración).
+
+**Registro del clic.** Acción de servidor `actions/whatsapp-click.ts`: una fila en `lead_attribution` con `lead_type = 'whatsapp_click'` y `event_id` = referencia (clave única = sin duplicados), `asset_key` (`dev:<slug>` · `prop:<propertyId>` · `inv:<slug>`; vacío = consulta general). Solo clic izquierdo o central: **copiar el enlace o abrir el menú contextual no cuenta**. Límite de 40 registros cada 15 minutos por IP. En Preview/Development no escribe.
+
+**Política de consentimiento (restrictiva, por defecto; `lib/whatsapp-policy.ts`).**
+- Sin consentimiento aplicable: **no se persiste nada** (el mensaje igual sale con el activo y la referencia).
+- Consentimiento solo de analítica: registro básico (referencia, activo, página, estado de consentimiento), **sin** UTM, campaña, conjunto, anuncio, identificadores de clic, cookies de Meta, toques ni sesión.
+- Consentimiento de publicidad: además, la atribución de campaña.
+- La variante «registro operativo sin consentimiento» existe pero está **desactivada** (`WHATSAPP_CLICK_REQUIRES_CONSENT = true`) y no se activa sin revisión jurídica.
+- **Una referencia que no se persistió no permite recuperar después su origen**: un mensaje que la traiga se tratará como «sin origen identificable».
+- A GA4 y Meta solo viaja `event_id` (la referencia), tipo de botón y datos de página; el teléfono y el texto del mensaje se descartan (`stripPii`). `click_whatsapp` sigue siendo una **intención de contacto**, no una consulta recibida ni un lead.
+
+**Clic ≠ mensaje recibido.** `wa_message_received_at` y `wa_match_method` (`ref` | `probable`) quedan en `NULL` («NO MEDIDO TODAVÍA») hasta que una integración autorizada los complete. La web nunca los escribe.
+
+**Base de datos (aplicado en Supabase el 2026-11-11, migración `whatsapp_ref`).** Columnas `asset_key`, `wa_message_received_at`, `wa_match_method` (+ restricción `lead_attribution_wa_match_method_chk`) e índices `idx_lead_attribution_asset` (parcial) y `idx_lead_attribution_type_created`. Verificado: RLS activo, 0 políticas, 0 permisos para `anon`/`authenticated` (tampoco por columna), solo `postgres` y `service_role`; la fila existente no se modificó. La retención de 90 días **sigue siendo solo una propuesta**.
+
+**Verificación en producción (2026-11-11).** Rechazar cookies y hacer clic: 0 llamadas y 0 filas. Copiar el enlace: 0 filas. Solo analítica + clic: 1 fila sin campaña ni identificadores. Publicidad + clic: 1 fila con UTM, IDs de campaña/conjunto/anuncio, `fbclid` y sesión. Referencia en el mensaje = `event_id` de la fila.
+
+**Limpieza de filas de prueba (hacer a mano; el entorno bloquea `DELETE`):**
+```sql
+delete from lead_attribution
+ where (id = 1 and event_id = '__prueba_esquema__')
+    or (lead_type = 'whatsapp_click' and event_id in ('GI-8ZZPBDQCW9EGB', 'GI-U9SAAZQYWM3QV'));
+-- después: select count(*) from lead_attribution;   -- esperado: 0
+```
+
+## 10. Fuentes y cabecera de la home (publicado 2026-11-11)
+- **Fuentes locales** (`app/fonts/`, `next/font/local`): Jost y Cormorant Garamond con los mismos archivos que servía producción (mismos hashes de contenido), SIL OFL 1.1 incluida. Elimina la consulta a Google en el build (que provocó el fallo intermitente del CI: `loader.js: exec(url)[1]`). PR #9, CI real en verde.
+- **Cabecera de la home:** en Vercel la home hidrata con la ruta canónica `/index` y `usePathname()` devolvía `/index`, por lo que el header no flotaba (hero a 92 px). `lib/home-path.ts` (`isHomePathname`: solo `/` y `/index`) restaura el diseño previsto. Además, un velo con el azul de la marca (`.site-header--floating::before`) devuelve el contraste AA al menú sobre el cielo (de 2,0–2,8:1 a 5,7–8,8:1); se desvanece al desplazarse. Las demás rutas no cambian.

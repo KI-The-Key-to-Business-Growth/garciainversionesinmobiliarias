@@ -48,3 +48,29 @@ Verificadas técnicamente (se pueden sostener con el código actual): no se acti
 7. Correo de contacto de privacidad indicado (`contacto@garciainversiones.com.ar`) y la fecha de actualización.
 8. Que la afirmación "No vendemos tus datos" (sección 7, sin cambios) siga siendo exacta con Meta/Google Ads activos.
 9. Un detalle técnico a conocer: mientras no se aplique el cambio de GTM, la afirmación de que no se envían datos personales se sostiene por el código del sitio, pero Meta recibe además datos propios de su navegador (IP, user agent) como cualquier Pixel.
+
+---
+
+# Texto PROPUESTO para el enlace de WhatsApp con referencia (2026-11-11) — NO publicado
+
+**Estado:** la funcionalidad ya está en producción con la configuración restrictiva (el clic solo se registra con consentimiento), pero **`/privacidad` todavía no la menciona**. Este texto está preparado para revisión; **no es una validación jurídica, no se publicó y no cambia ninguna política vigente**. La implementación técnica no equivale a validación legal.
+
+## Texto propuesto (agregar en la sección 6, después de «Origen de la visita»)
+
+> **Enlaces de WhatsApp.** Cuando tocás un botón o enlace de WhatsApp de este sitio, el mensaje que se abre en tu aplicación ya incluye el nombre de la propiedad, del desarrollo o de la oportunidad que estabas mirando y una referencia técnica aleatoria (por ejemplo, «Ref: GI-XXXXXXXXXXXXX») que no contiene tus datos personales. Si aceptaste las cookies de analítica o de publicidad, guardamos esa referencia junto con la propiedad o el desarrollo y la página desde la que tocaste el enlace, para saber qué propiedades generan consultas; si además aceptaste las cookies de publicidad, la asociamos con el origen de tu visita (por ejemplo, la campaña o el anuncio). Si no aceptaste ninguna, no guardamos nada. Tocar el enlace no equivale a enviarnos un mensaje: la conversación se desarrolla en WhatsApp, un servicio de Meta Platforms, y se rige por sus propias condiciones. No enviamos tu nombre, correo ni teléfono a Google Analytics ni a Meta a través de estas herramientas.
+
+## Qué dice el sistema hoy (verificado técnicamente)
+- Sin consentimiento aplicable no se persiste nada; el mensaje igual lleva el activo y la referencia.
+- Solo analítica: registro básico (referencia, activo, página, estado de consentimiento), sin campaña, anuncio, identificadores de clic, cookies de Meta, toques ni sesión.
+- Publicidad: además, la atribución de campaña.
+- Copiar el enlace no se registra. A GA4 y Meta solo viaja la referencia como identificador del evento.
+- Una referencia que no se guardó no permite recuperar después su origen.
+
+## Aspectos que REQUIEREN validación jurídica (no están resueltos)
+1. **Base y alcance del consentimiento:** si el consentimiento de **analítica** alcanza para registrar el clic básico (referencia + activo + página) o debe exigirse el de **publicidad** también para ese registro.
+2. **Registro sin consentimiento:** la variante «registro operativo mínimo sin consentimiento» existe en el código pero está **desactivada**; su eventual uso requiere decisión y aprobación jurídica expresas.
+3. **Finalidad y redacción:** si el registro del clic debe constar como finalidad separada, y el texto exacto propuesto arriba.
+4. **Retención:** el texto **no declara ningún plazo a propósito**. La retención de 90 días de los identificadores sigue siendo **solo una propuesta** (no una política aprobada ni un requisito legal) y la sección 6 vigente solo habla de 90 días para «origen de la visita». Definir el plazo de este registro antes de publicar el texto.
+5. **Tratamiento por WhatsApp/Meta:** mención de que el mensaje pasa por un servicio de Meta y posibles transferencias internacionales (punto 3 de la lista anterior).
+6. **Mensajes con la referencia en el teléfono de la persona que atiende:** el chat queda en la aplicación de WhatsApp Business de García; su tratamiento como datos de terceros no se resuelve con este texto.
+7. **Futuro (fuera de esta publicación):** recibir y analizar mensajes con IA requiere un texto y una validación aparte; no se implementó.
