@@ -5,7 +5,7 @@
 **Cómo leerlo.** «Hecho verificado» = comprobado en el código, en producción o en la página oficial citada. «Propuesta» = decisión nuestra, **no** una obligación legal confirmada. «Pregunta» = lo que necesitamos que el asesor resuelva.
 
 ## Contexto
-- Responsable: **Fabiana García, persona humana**, nombre comercial García Inversiones Inmobiliarias. Matrícula profesional, CUIT y domicilio: pendientes de confirmación y de autorización para publicarse.
+- Responsable: **Fabiana García, persona humana**, nombre comercial García Inversiones Inmobiliarias; matrícula CMCPSI 6378 (a contrastar con el colegio profesional); domicilio legal en Tigre, Buenos Aires, **autorizado a publicarse** con la aclaración de que no es oficina ni atención al público; correo de privacidad `fabiana@garciainversiones.com.ar` (existencia y control de la casilla: a comprobar). **CUIT: pendiente.**
 - Sitio argentino de inmobiliaria con propiedades en Buenos Aires y Miami; se prevén campañas en Meta y Google (incluidas personas fuera de la Argentina).
 - Datos que se tratan: formularios de consulta (nombre, correo, teléfono, mensaje), newsletter, clics hacia WhatsApp (registro técnico sin datos personales directos), medición con consentimiento (GA4, Pixel de Meta, Google Ads).
 - Marco leído en fuentes oficiales (AAIP/Infoleg): Ley 25.326, arts. 4 inc. 7, 5, 6, 12, 14, 16, 21, 24, 27. El texto leído puede no reflejar reformas posteriores.
@@ -32,8 +32,8 @@
 - **Preguntas:** ¿son razonables esos plazos y su fundamento? ¿Qué plazo corresponde a formularios, newsletter, correos de consulta, CRM y WhatsApp (incluida documentación comercial)? ¿Qué hacer con filas de clics vinculadas luego a un mensaje?
 
 ## 5. Tratamiento de contactos comerciales
-- **Hecho:** las consultas llegan por correo (Resend) y al CRM 2Clics con una nota de origen cuando hubo consentimiento de publicidad; las conversaciones de WhatsApp se mantienen en la aplicación WhatsApp Business (García responsable; WhatsApp encargado según sus términos vigentes desde 2026-09-23). No se decidió si pasarán al CRM ni si se usará IA.
-- **Preguntas:** base de licitud para el seguimiento comercial y el newsletter; mecanismo de baja; si hay que informar de otro modo a quien escribe por WhatsApp; condiciones para una eventual incorporación al CRM.
+- **Hecho:** las consultas llegan por correo (Resend) y al CRM 2Clics con una nota de origen cuando hubo consentimiento de publicidad; las conversaciones de WhatsApp se mantienen en la aplicación WhatsApp Business, atendida personalmente por la titular (García responsable; WhatsApp encargado según sus términos vigentes desde 2026-09-23). Las consultas relevantes se cargan **manualmente** en 2Clics hasta que exista una integración oficial autorizada; no se leen conversaciones de forma automática ni se usa IA.
+- **Preguntas:** base de licitud para el seguimiento comercial y el newsletter; mecanismo de baja; si el registro manual de consultas de WhatsApp en el CRM requiere informar de otro modo a quien escribe; condiciones para una futura integración oficial.
 
 ## 6. Normativa aplicable a campañas internacionales
 - **Hecho:** Google exige consentimiento para cookies y personalización en el EEE, Reino Unido y Suiza y conservar registros; los términos de Meta exigen aviso y consentimiento verificable antes de sus cookies en la UE.
@@ -41,7 +41,10 @@
 
 ## 7. Texto definitivo de derechos
 - **En el borrador:** acceso gratuito cada 6 meses; respuesta en 10 días corridos (art. 14) y 5 días hábiles para rectificación, actualización o supresión (art. 16); datos de la AAIP.
-- **Preguntas:** ¿siguen vigentes esos plazos? ¿Cuál es la leyenda exacta exigida y cómo identificar a un responsable persona humana? ¿Debe figurar la matrícula profesional o el domicilio, y con qué alcance?
+- **Preguntas:** ¿siguen vigentes esos plazos? ¿Cuál es la leyenda exacta exigida? ¿Es **obligatorio exhibir el CUIT** en esta política? ¿Es adecuada la identificación como persona humana con matrícula y domicilio legal (con la aclaración de que no es atención al público)?
 
 ## Lo que no necesita criterio jurídico (ya resuelto)
 Contenidos incrustados (solo mapas, ya con carga controlada), región de envío de correo, funcionamiento del mecanismo de borrado y verificaciones técnicas.
+
+## Pendientes fuera del criterio jurídico (a cargo de García)
+Casilla `fabiana@…` verificada; matrícula contrastada con el colegio; región y DPA de Supabase, Upstash y Sentry (falta acceso a sus paneles); solicitud a 2Clics sobre ubicación del tratamiento, condiciones contractuales y protección de datos (texto en `PRIVACIDAD_REVISION.md`, sección 12.2). No se infirió ningún dato.

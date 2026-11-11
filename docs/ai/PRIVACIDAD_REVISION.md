@@ -49,20 +49,26 @@ este sitio web es:
 **Fabiana García**, persona humana, que opera bajo el nombre
 comercial **García Inversiones Inmobiliarias**.
 
-Matrícula profesional y CUIT:
-**[A CONFIRMAR (grupo B): número de matrícula (verificar en el colegio profesional) y CUIT, desde documentación oficial]**
+Matrícula profesional: CMCPSI 6378.
+**[A CONFIRMAR (grupo B): contrastar la matrícula con el registro del colegio profesional]**
 
-Domicilio:
-**[A CONFIRMAR (grupo B): domicilio, solo cuando la titular confirme expresamente que puede figurar públicamente]**
+CUIT:
+**[A CONFIRMAR (grupo C): CUIT, desde documentación oficial, y si el asesor considera obligatorio exhibirlo en esta política]**
+
+Domicilio legal: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
+Provincia de Buenos Aires, Argentina.
+
+El domicilio informado corresponde exclusivamente al domicilio legal de la
+titular. No constituye una oficina comercial ni un establecimiento de atención
+al público. Las consultas y reuniones se coordinan previamente a través de
+nuestros canales oficiales de contacto.
 
 Sitio web:
 [www.garciainversionesinmobiliarias.com.ar](https://www.garciainversionesinmobiliarias.com.ar)
 
 Correo de contacto:
-[contacto@garciainversiones.com.ar](mailto:contacto@garciainversiones.com.ar)
-**[A CONFIRMAR (grupo B): definir y verificar la casilla para solicitudes de privacidad (existencia, recepción y acceso efectivo de la titular)]**
-
-Ubicación: Buenos Aires, Argentina
+[fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
+**[A CONFIRMAR (grupo B): comprobar la escritura exacta de la casilla, que recibe mensajes y que está bajo el control de la titular]**
 
 ## 2. Datos que recopilamos
 
@@ -173,7 +179,7 @@ Novedades sobre propiedades destacadas y nuevas oportunidades de inversión.
 
 La suscripción es completamente voluntaria. Podés darte de baja en cualquier
 momento escribiéndonos a
-[contacto@garciainversiones.com.ar](mailto:contacto@garciainversiones.com.ar)
+[fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
 con el asunto "Baja newsletter".
 
 ## 6. Herramientas de analítica y publicidad
@@ -262,9 +268,10 @@ iniciar la conversación, esta se realiza mediante WhatsApp, un servicio de
 Meta, que trata la información conforme a sus propias condiciones y política de
 privacidad. García utiliza la información que nos proporcionás en la
 conversación para responder tu consulta y gestionar el seguimiento comercial
-correspondiente. Hoy esas conversaciones se mantienen en la aplicación de
-WhatsApp Business de García.
-**[A CONFIRMAR (grupo B): confirmar si las conversaciones se incorporan o se incorporarán a otros sistemas (CRM) y, en ese caso, informarlo aquí]**
+correspondiente. Esas conversaciones se mantienen en la aplicación de
+WhatsApp Business, atendida personalmente por la titular. Las consultas
+comerciales relevantes se registran manualmente en el CRM 2Clics; no se leen
+ni se procesan las conversaciones de forma automática.
 
 ## 7. No vendemos tus datos
 
@@ -335,7 +342,7 @@ circunstancias.
 **Revocar** el consentimiento otorgado en cualquier momento.
 
 Para ejercer cualquiera de estos derechos, escribinos a
-[contacto@garciainversiones.com.ar](mailto:contacto@garciainversiones.com.ar)
+[fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
 indicando tu solicitud y los datos necesarios para identificarte.
 
 El derecho de acceso es gratuito y puede ejercerse a intervalos no inferiores a
@@ -486,7 +493,7 @@ Para cualquier consulta, solicitud o reclamo relacionado con el tratamiento de
 tus datos personales, podés contactarnos por los siguientes medios:
 
 **Email:**
-[contacto@garciainversiones.com.ar](mailto:contacto@garciainversiones.com.ar)
+[fabiana@garciainversiones.com.ar](mailto:fabiana@garciainversiones.com.ar)
 
 **WhatsApp:**
 [+54 9 11 6724-0353](https://wa.me/5491167240353)
@@ -571,7 +578,7 @@ Información tomada de las páginas **públicas** de cada proveedor (leídas el 
 ## 10. Cómo publicar (cuando el contenido esté validado)
 1. El asesor valida el texto y se completan **todos** los `[A CONFIRMAR]` (datos del responsable, ubicaciones, plazos, redacción de transferencias).
 2. Quitar los `Pendiente` y la nota de borrador de `app/privacidad/page.tsx` y actualizar la fecha.
-3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 15 pendientes —grupos B y C—, a propósito).
+3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 14 pendientes —grupos B y C—, a propósito).
 4. Decidir la activación de la conservación (sección 5) **antes** de publicar el compromiso de 90 días.
 5. Integrar por PR con CI y verificar la página, el banner y el registro de clics en producción.
 
@@ -602,37 +609,29 @@ Ver tabla de la sección 6. Resumen de lo **documentado por los proveedores** (n
 ### 11.5 Qué falta para publicar
 1. Datos del grupo B de García. 2. Validación jurídica del grupo C. 3. Decidir `CONSENT_VERSION` 2 y la activación de la conservación. 4. Quitar `Pendiente` y la nota de borrador; `PRIVACY_PUBLISH_CHECK=1 npm test` en verde. 5. PR con CI y verificación en producción. Nada de esto se hizo: la rama no está publicada ni integrada.
 
-## 12. Actualización con los datos informados por Fabiana (2026-11-11)
+## 12. Estado actual tras las confirmaciones de Fabiana (2026-11-11)
+*(Reemplaza las listas de las secciones 7 y 11.1 en lo que se refiere al responsable y a WhatsApp/CRM.)*
 
-### 12.1 Responsable (incorporado al borrador, sin publicar)
-- Titular: **Fabiana García, persona humana**, nombre comercial García Inversiones Inmobiliarias (el borrador ya no la presenta como sociedad).
-- Matrícula profesional (informada: CMCPSI 6378): **verificar en el colegio profesional** antes de publicar; sigue como `[A CONFIRMAR]`.
-- CUIT: **pendiente**, desde documentación oficial; no se inventa.
-- Domicilio: lo informó Fabiana, pero **no se copió al repositorio ni a la página** hasta que confirme expresamente que puede figurar públicamente.
-- Correo: propuesto `fabiana@garciainversiones.com.ar`, **no confirmado** y no usado en la página (sigue `contacto@garciainversiones.com.ar`, también a verificar). Debe comprobarse existencia, recepción y acceso efectivo de la titular.
-- Decisiones técnicas confirmadas por García: `CONSENT_VERSION = 2`, modelo restrictivo, mapas con carga controlada, 90 días como propuesta para clics de WhatsApp, mecanismo desactivado, sin borrado automático en 2Clics ni WhatsApp Business, 24 meses para prospectos solo como propuesta.
+### 12.1 Incorporado al borrador
+- **Titular:** Fabiana García, persona humana; nombre comercial García Inversiones Inmobiliarias; matrícula CMCPSI 6378.
+- **Domicilio legal:** Hipólito Yrigoyen 1470, El Talar (CP 1618), Tigre, Buenos Aires (publicación **autorizada**), con la aclaración de que no es una oficina comercial ni un establecimiento de atención al público.
+- **Correo:** `fabiana@garciainversiones.com.ar` reemplazó al anterior en toda la política (identificación, derechos, contacto).
+- **WhatsApp y CRM:** las conversaciones se mantienen en WhatsApp Business, atendidas por la titular; las consultas relevantes se cargan **manualmente** en 2Clics; no se leen conversaciones de forma automática. El pendiente correspondiente se eliminó.
+- **Decisiones técnicas ya aprobadas (no se reabren):** `CONSENT_VERSION = 2`, modelo restrictivo, mapas con carga controlada, 90 días como propuesta para referencias técnicas de WhatsApp, mecanismo de borrado preparado y desactivado, sin borrado automático en 2Clics ni WhatsApp Business.
 
-### 12.2 Verificación técnica de proveedores: qué se pudo cerrar y qué no
-Se intentó desde las herramientas autorizadas de esta sesión; **no hay sesión iniciada en los paneles de Supabase, Upstash ni Sentry**, y las variables de Vercel son *sensibles* (sus valores no se pueden leer). Por eso **no se confirmó** ninguna región ni ningún acuerdo aceptado; no se afirma nada que no esté comprobado.
+### 12.2 Lista final y breve de lo que sigue pendiente (14 marcadores en la página)
+**Verificaciones que no se dan por hechas (grupo B):**
+1. **Casilla** `fabiana@garciainversiones.com.ar`: comprobar escritura exacta, que recibe mensajes y que Fabiana la controla (mensaje de prueba enviado y respondido por ella).
+2. **Matrícula CMCPSI 6378:** contrastar con el registro del colegio profesional.
+3. **Supabase:** región del proyecto `ljpolupsgwtreinuxrdo` y DPA. Falta: acceso al panel (*Project Settings → General*; *Legal*). Hoy solo hay indicios por rango de IP; no se infiere.
+4. **Upstash:** región de la base y DPA. Falta: acceso al panel de la base.
+5. **Sentry:** región de la organización (US/UE) y si el DPA fue aceptado. Falta: acceso a *Settings → Legal & Compliance*.
+6. **2Clics:** solicitud al proveedor (texto abajo).
 
-| Proveedor | Cerrado | Sigue sin confirmar (dónde mirar) |
-|---|---|---|
-| Vercel | funciones en Washington D. C.; plan Hobby (DPA solo Pro/Enterprise) | ninguno hasta contratar Pro |
-| Resend | envío desde São Paulo (DNS); cuenta en EE. UU. según el proveedor | DPA incorporado a los términos: sin acción propia |
-| Cloudflare | Turnstile y DNS; DPA incorporado al acuerdo | — |
-| Supabase | proyecto `ljpolupsgwtreinuxrdo`; indicios de AWS São Paulo por rango de IP (inferencia) | región exacta: *Project Settings → General* y *Legal → DPA* |
-| Upstash | clave de límite con IP, ventana ≤ 15 min | región de la base: panel de la base; DPA |
-| Sentry | `sendDefaultPii: false` | región de la organización (US/UE) y si se aceptó el DPA: *Settings → Legal & Compliance* |
-| 2Clics | uso: contactos, mensajes y nota de origen | ubicación del tratamiento, contrato/DPA, subencargados y retención: pedirlos al proveedor |
+> Solicitud a 2Clics: «Para la política de privacidad de García Inversiones Inmobiliarias necesitamos que nos confirmen por escrito: (a) en qué país y región se almacenan y procesan los datos de nuestras cuentas (contactos, mensajes, notas); (b) las condiciones contractuales aplicables, incluido el acuerdo de tratamiento de datos o cláusulas de protección de datos; (c) si intervienen subencargados y en qué países; (d) qué plazos de conservación y mecanismos de eliminación ofrece la plataforma; y (e) cómo se atienden los pedidos de acceso, rectificación y supresión.»
 
-### 12.3 Lista final de datos que debe aportar Fabiana (grupo B)
-1. CUIT (constancia de ARCA/AFIP) y confirmación de la matrícula profesional.
-2. Autorización expresa para publicar el domicilio (y cuál: el de Tigre u otro).
-3. Casilla para privacidad: confirmar `fabiana@garciainversiones.com.ar` o la que corresponda, y que ella la recibe y accede (mensaje de prueba).
-4. Si las conversaciones de WhatsApp se incorporarán al CRM.
-5. Región de Supabase, Upstash y Sentry, y si el DPA está aceptado (capturas de los paneles; las hace quien tiene el acceso).
-6. Ubicación del tratamiento y contrato de 2Clics (consulta al proveedor).
+**Criterio jurídico (grupo C, ver `PRIVACIDAD_ASESOR_JURIDICO.md`):** exhibición del CUIT; transferencias internacionales; plazos y leyenda de derechos/AAIP; plazo de 90 días de clics de WhatsApp; plazos de formularios/newsletter, CRM y conversaciones.
 
-### 12.4 Rama para PR
-- Rama `privacy/review-draft`, sin push ni merge. Revisión jurídica: `docs/ai/PRIVACIDAD_ASESOR_JURIDICO.md`.
-- Para publicar: completar la lista anterior, validación del asesor, quitar `Pendiente` y la nota de borrador, `PRIVACY_PUBLISH_CHECK=1 npm test` en verde y PR con CI. Hasta entonces el control sigue bloqueando la publicación y el borrado automático sigue desactivado.
+### 12.3 Rama
+- `privacy/review-draft`, sin push ni merge; revisión jurídica en `docs/ai/PRIVACIDAD_ASESOR_JURIDICO.md`.
+- Para publicar: cerrar la lista anterior, validación del asesor, quitar `Pendiente` y la nota de borrador, `PRIVACY_PUBLISH_CHECK=1 npm test` en verde, PR con CI. Hasta entonces el control bloquea la publicación y el borrado automático sigue desactivado.

@@ -75,9 +75,9 @@ describe('política de privacidad: consistencia con el funcionamiento real', () 
     for (const id of ids) expect(page, id).toContain(`id="${id}"`);
   });
 
-  it('el correo de contacto es el mismo en toda la política (no se reemplazó por uno inventado)', () => {
+  it('el correo de contacto es el indicado por la titular y es el mismo en toda la política', () => {
     const emails = new Set([...page.matchAll(/[\w.+-]+@[\w-]+\.[\w.-]+/g)].map((m) => m[0]));
-    expect([...emails]).toEqual(['contacto@garciainversiones.com.ar']);
+    expect([...emails]).toEqual(['fabiana@garciainversiones.com.ar']);
   });
 
   it('el banner y el panel de cookies describen lo mismo que la política', () => {

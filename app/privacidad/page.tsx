@@ -87,18 +87,25 @@ export default function PrivacidadPage() {
                       comercial <strong>García Inversiones Inmobiliarias</strong>.
                     </p>
                     <p>
-                      Matrícula profesional y CUIT:{' '}
-                      <Pendiente grupo="B">
-                        número de matrícula (verificar en el colegio profesional) y CUIT, desde
-                        documentación oficial
+                      Matrícula profesional: CMCPSI 6378.{' '}
+                      <Pendiente grupo="B">contrastar la matrícula con el registro del colegio profesional</Pendiente>
+                    </p>
+                    <p>
+                      CUIT:{' '}
+                      <Pendiente grupo="C">
+                        CUIT, desde documentación oficial, y si el asesor considera obligatorio
+                        exhibirlo en esta política
                       </Pendiente>
                     </p>
                     <p>
-                      Domicilio:{' '}
-                      <Pendiente grupo="B">
-                        domicilio, solo cuando la titular confirme expresamente que puede figurar
-                        públicamente
-                      </Pendiente>
+                      Domicilio legal: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
+                      Provincia de Buenos Aires, Argentina.
+                    </p>
+                    <p>
+                      El domicilio informado corresponde exclusivamente al domicilio legal de la
+                      titular. No constituye una oficina comercial ni un establecimiento de atención
+                      al público. Las consultas y reuniones se coordinan previamente a través de
+                      nuestros canales oficiales de contacto.
                     </p>
                     <p>
                       Sitio web:{' '}
@@ -108,15 +115,14 @@ export default function PrivacidadPage() {
                     </p>
                     <p>
                       Correo de contacto:{' '}
-                      <a href="mailto:contacto@garciainversiones.com.ar">
-                        contacto@garciainversiones.com.ar
+                      <a href="mailto:fabiana@garciainversiones.com.ar">
+                        fabiana@garciainversiones.com.ar
                       </a>{' '}
                       <Pendiente grupo="B">
-                        definir y verificar la casilla para solicitudes de privacidad (existencia, recepción y
-                        acceso efectivo de la titular)
+                        comprobar la escritura exacta de la casilla, que recibe mensajes y que está bajo el
+                        control de la titular
                       </Pendiente>
                     </p>
-                    <p>Ubicación: Buenos Aires, Argentina</p>
                   </div>
                 </section>
 
@@ -246,8 +252,8 @@ export default function PrivacidadPage() {
                   <p>
                     La suscripción es completamente voluntaria. Podés darte de baja en cualquier
                     momento escribiéndonos a{' '}
-                    <a href="mailto:contacto@garciainversiones.com.ar">
-                      contacto@garciainversiones.com.ar
+                    <a href="mailto:fabiana@garciainversiones.com.ar">
+                      fabiana@garciainversiones.com.ar
                     </a>{' '}
                     con el asunto &quot;Baja newsletter&quot;.
                   </p>
@@ -373,12 +379,10 @@ export default function PrivacidadPage() {
                       Meta, que trata la información conforme a sus propias condiciones y política de
                       privacidad. García utiliza la información que nos proporcionás en la
                       conversación para responder tu consulta y gestionar el seguimiento comercial
-                      correspondiente. Hoy esas conversaciones se mantienen en la aplicación de
-                      WhatsApp Business de García.{' '}
-                      <Pendiente grupo="B">
-                        confirmar si las conversaciones se incorporan o se incorporarán a otros
-                        sistemas (CRM) y, en ese caso, informarlo aquí
-                      </Pendiente>
+                      correspondiente. Esas conversaciones se mantienen en la aplicación de
+                      WhatsApp Business, atendida personalmente por la titular. Las consultas
+                      comerciales relevantes se registran manualmente en el CRM 2Clics; no se leen
+                      ni se procesan las conversaciones de forma automática.
                     </p>
                   </div>
                 </section>
@@ -465,8 +469,8 @@ export default function PrivacidadPage() {
                   </ul>
                   <p>
                     Para ejercer cualquiera de estos derechos, escribinos a{' '}
-                    <a href="mailto:contacto@garciainversiones.com.ar">
-                      contacto@garciainversiones.com.ar
+                    <a href="mailto:fabiana@garciainversiones.com.ar">
+                      fabiana@garciainversiones.com.ar
                     </a>{' '}
                     indicando tu solicitud y los datos necesarios para identificarte.
                   </p>
@@ -666,8 +670,8 @@ export default function PrivacidadPage() {
                   <div className="privacy-card">
                     <p>
                       <strong>Email:</strong>{' '}
-                      <a href="mailto:contacto@garciainversiones.com.ar">
-                        contacto@garciainversiones.com.ar
+                      <a href="mailto:fabiana@garciainversiones.com.ar">
+                        fabiana@garciainversiones.com.ar
                       </a>
                     </p>
                     <p>
