@@ -143,7 +143,9 @@ export default function ConsentManager() {
                 <strong>Analítica</strong>
                 <p>
                   Google Analytics 4 (vía Google Tag Manager): nos ayuda a entender qué páginas y propiedades
-                  se visitan y cómo mejorar el sitio. También permite guardar el origen de la visita.
+                  se visitan y cómo mejorar el sitio. También permite guardar el origen de la visita en tu
+                  navegador y registrar qué propiedad o desarrollo generó un clic hacia WhatsApp, sin tus
+                  datos personales ni datos de campañas.
                 </p>
               </div>
               <label className="consent-switch">
@@ -162,7 +164,8 @@ export default function ConsentManager() {
                 <strong>Publicidad y medición de campañas</strong>
                 <p>
                   Meta Pixel y Google Ads: miden qué anuncios generan consultas y permiten mostrarte
-                  publicidad más relevante. También guardan los identificadores de clic de los anuncios.
+                  publicidad más relevante. También guardan los identificadores de clic de los anuncios y
+                  permiten asociar los clics hacia WhatsApp con la campaña de origen.
                 </p>
               </div>
               <label className="consent-switch">

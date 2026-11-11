@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppFloat from '@/components/layout/WhatsAppFloat';
@@ -11,6 +12,18 @@ export const metadata: Metadata = {
   alternates: { canonical: '/privacidad' },
 };
 
+// ── ESTADO DE ESTE TEXTO ─────────────────────────────────────────────────────
+// BORRADOR PARA REVISIÓN JURÍDICA. NO está validado por un profesional ni debe presentarse como
+// aprobado. Cada dato que no se pudo comprobar figura como «[A CONFIRMAR: …]» (componente
+// `Pendiente`). El texto NO puede publicarse mientras queden pendientes: ver el control de
+// publicación en tests/privacy/privacy-page.test.ts (PRIVACY_PUBLISH_CHECK=1) y
+// docs/ai/PRIVACIDAD_REVISION.md (hechos técnicos comprobados frente a decisiones jurídicas).
+// Al validarse el texto: quitar los `Pendiente`, esta nota y actualizar la fecha de arriba.
+
+function Pendiente({ children }: { children: ReactNode }) {
+  return <span data-privacy-pending="true">[A CONFIRMAR: {children}]</span>;
+}
+
 const INDEX = [
   ['identificacion', 'Identificación del responsable'],
   ['datos-recopilados', 'Datos que recopilamos'],
@@ -22,6 +35,8 @@ const INDEX = [
   ['seguridad', 'Seguridad'],
   ['derechos', 'Tus derechos'],
   ['cookies', 'Cookies'],
+  ['proveedores', 'Proveedores y transferencias internacionales'],
+  ['conservacion', 'Conservación de los datos'],
   ['cambios', 'Cambios en esta política'],
   ['contacto-privacidad', 'Contacto'],
 ];
@@ -65,6 +80,13 @@ export default function PrivacidadPage() {
                       <strong>García Inversiones Inmobiliarias</strong>
                     </p>
                     <p>
+                      Nombre legal o titular responsable y CUIT:{' '}
+                      <Pendiente>razón social o titular, y CUIT</Pendiente>
+                    </p>
+                    <p>
+                      Domicilio: <Pendiente>domicilio legal o de contacto</Pendiente>
+                    </p>
+                    <p>
                       Sitio web:{' '}
                       <a href="https://www.garciainversionesinmobiliarias.com.ar">
                         www.garciainversionesinmobiliarias.com.ar
@@ -74,7 +96,8 @@ export default function PrivacidadPage() {
                       Correo de contacto:{' '}
                       <a href="mailto:contacto@garciainversiones.com.ar">
                         contacto@garciainversiones.com.ar
-                      </a>
+                      </a>{' '}
+                      <Pendiente>comprobar que esta casilla esté operativa para solicitudes de privacidad</Pendiente>
                     </p>
                     <p>Ubicación: Buenos Aires, Argentina</p>
                   </div>
@@ -107,6 +130,19 @@ export default function PrivacidadPage() {
                       herramientas de analítica (ver sección 6), como páginas visitadas, duración de
                       la sesión y origen del tráfico.
                     </li>
+                    <li>
+                      <strong>Datos técnicos de conexión:</strong> como la dirección IP, el tipo de
+                      navegador y de dispositivo, que reciben nuestros proveedores de alojamiento, de
+                      seguridad y de medición cuando se carga el sitio (ver sección 11).
+                    </li>
+                    <li>
+                      <strong>Referencia técnica de WhatsApp:</strong> cuando seleccionás un enlace de
+                      WhatsApp de nuestro sitio, según lo que hayas aceptado (ver sección 6).
+                    </li>
+                    <li>
+                      <strong>Conversaciones de WhatsApp:</strong> si decidís iniciar una conversación,
+                      la información que nos proporcionás en ella.
+                    </li>
                   </ul>
                   <p>
                     No solicitamos intencionalmente datos sensibles (según la legislación vigente)
@@ -124,7 +160,7 @@ export default function PrivacidadPage() {
                   <ul className="privacy-list">
                     <li>
                       Responder consultas comerciales e inmobiliarias enviadas a través de los
-                      formularios del sitio.
+                      formularios del sitio o de WhatsApp.
                     </li>
                     <li>
                       Enviar información sobre propiedades, oportunidades de inversión y novedades
@@ -137,6 +173,11 @@ export default function PrivacidadPage() {
                       herramienta.
                     </li>
                     <li>Medir la efectividad de nuestras campañas publicitarias.</li>
+                    <li>
+                      Conocer qué propiedades, desarrollos u oportunidades generan consultas a través
+                      de los enlaces de WhatsApp, únicamente según tu consentimiento (ver sección 6).
+                    </li>
+                    <li>Proteger el sitio y los formularios frente a spam y usos automatizados.</li>
                   </ul>
                 </section>
 
@@ -160,6 +201,12 @@ export default function PrivacidadPage() {
                       de tu interés.
                     </li>
                   </ul>
+                  <p>
+                    Para proteger los formularios del spam, usamos una verificación de Cloudflare
+                    (Turnstile) que analiza señales técnicas de tu navegador, como la dirección IP,
+                    para distinguir a las personas de los programas automáticos. Esta verificación
+                    funciona aunque rechaces las cookies opcionales.
+                  </p>
                   <p>
                     No utilizaremos tus datos de contacto para enviarte comunicaciones no
                     relacionadas con tu consulta sin tu consentimiento previo.
@@ -225,8 +272,9 @@ export default function PrivacidadPage() {
                     <h3>Meta Pixel</h3>
                     <p>
                       Podemos utilizar Meta Pixel para medir la efectividad de anuncios en Facebook
-                      e Instagram, crear audiencias y mostrar publicidad relevante. Para más
-                      información, consultá la{' '}
+                      e Instagram, crear audiencias y mostrar publicidad relevante. Meta puede usar
+                      la información que recibe también para sus propios fines, conforme a su
+                      política. Para más información, consultá la{' '}
                       <a
                         href="https://www.facebook.com/privacy/policy/"
                         target="_blank"
@@ -255,14 +303,18 @@ export default function PrivacidadPage() {
                   </div>
                   <p>
                     Estas herramientas utilizan <strong>cookies</strong> propias y de terceros para
-                    su funcionamiento.{' '}
-                    <strong>
-                      No se activan hasta que las aceptás
-                    </strong>{' '}
-                    en el aviso de cookies, y podés rechazarlas o retirar tu consentimiento en
-                    cualquier momento (ver sección 10). No enviamos tu nombre, correo electrónico ni
-                    teléfono a Google Analytics, Google Tag Manager ni Meta a través de estas
-                    herramientas.
+                    su funcionamiento. <strong>No se activan hasta que las aceptás</strong> en el
+                    aviso de cookies, y podés rechazarlas o retirar tu consentimiento en cualquier
+                    momento (ver sección 10).
+                  </p>
+                  <p>
+                    Los datos que escribís en nuestros formularios (nombre, correo electrónico,
+                    teléfono y mensaje) no se incorporan a los eventos que enviamos a Google
+                    Analytics, Google Tag Manager ni Meta. Sin embargo, cuando estas herramientas se
+                    cargan, sus proveedores reciben por sí mismos datos técnicos del navegador y de
+                    la conexión, como la dirección IP, el tipo de navegador y de dispositivo y los
+                    identificadores de sus propias cookies, y los tratan conforme a sus propias
+                    políticas.
                   </p>
                   <div className="privacy-tool-block">
                     <h3>Origen de la visita</h3>
@@ -276,20 +328,65 @@ export default function PrivacidadPage() {
                       cookies opcionales, no guardamos esta información.
                     </p>
                   </div>
+                  <div className="privacy-tool-block" id="whatsapp-origen">
+                    <h3>Enlaces de WhatsApp y origen de consultas</h3>
+                    <p>
+                      Cuando seleccionás un enlace de WhatsApp de nuestro sitio, se prepara un
+                      mensaje relacionado con la propiedad, el desarrollo o la oportunidad que
+                      estabas consultando. El mensaje incluye una referencia técnica aleatoria que no
+                      incorpora directamente tu nombre, teléfono ni correo electrónico.
+                    </p>
+                    <p>
+                      Si aceptaste las cookies de analítica o de publicidad, podemos registrar esa
+                      referencia junto con la propiedad o el desarrollo consultado y la página desde
+                      la cual accediste al enlace. Si aceptaste las cookies de publicidad, además
+                      podemos asociar esa interacción con información sobre el origen de tu visita y
+                      la campaña publicitaria correspondiente, incluidos identificadores técnicos de
+                      publicidad (por ejemplo, identificadores de clic y del navegador). Si aceptaste
+                      solo las de analítica, no guardamos datos de campañas ni identificadores
+                      publicitarios en ese registro.
+                    </p>
+                    <p>
+                      Si rechazaste ambas opciones, no conservamos ese registro de clic. Copiar el
+                      enlace sin abrirlo tampoco genera un registro.
+                    </p>
+                    <p>
+                      Seleccionar un enlace no significa que hayas enviado un mensaje. Si decidís
+                      iniciar la conversación, esta se realiza mediante WhatsApp, un servicio de
+                      Meta, que trata la información conforme a sus propias condiciones y política de
+                      privacidad. García utiliza la información que nos proporcionás en la
+                      conversación para responder tu consulta y gestionar el seguimiento comercial
+                      correspondiente. Hoy esas conversaciones se mantienen en la aplicación de
+                      WhatsApp Business de García.{' '}
+                      <Pendiente>
+                        confirmar si las conversaciones se incorporan o se incorporarán a otros
+                        sistemas (CRM) y, en ese caso, informarlo aquí
+                      </Pendiente>
+                    </p>
+                  </div>
                 </section>
 
                 <section id="no-venta" className="privacy-section">
                   <h2>7. No vendemos tus datos</h2>
                   <p>
-                    García Inversiones Inmobiliarias <strong>no vende, alquila ni cede</strong> tus
-                    datos personales a terceros con fines comerciales propios de esos terceros. Tus
-                    datos podrán ser compartidos únicamente en los siguientes supuestos:
+                    García Inversiones Inmobiliarias <strong>no vende</strong> tus datos personales de
+                    contacto (nombre, correo electrónico, teléfono) ni el contenido de tus consultas.
+                    Tus datos podrán ser compartidos únicamente en los siguientes supuestos:
                   </p>
                   <ul className="privacy-list">
                     <li>
                       <strong>Proveedores de servicios:</strong> empresas que nos asisten en la
-                      operación del sitio (plataformas de email, CRM, hosting), bajo acuerdos de
-                      confidencialidad y únicamente para prestar el servicio contratado.
+                      operación del sitio (alojamiento, base de datos, correo electrónico, CRM,
+                      seguridad), únicamente para prestar el servicio contratado. Los detallamos en la
+                      sección 11.
+                    </li>
+                    <li>
+                      <strong>Plataformas de medición y publicidad:</strong> solo si aceptaste las
+                      cookies correspondientes. Reciben datos técnicos y de uso, no tus datos de
+                      contacto, y pueden tratarlos conforme a sus propias políticas (ver sección 6).
+                    </li>
+                    <li>
+                      <strong>WhatsApp (Meta):</strong> si iniciás una conversación con nosotros.
                     </li>
                     <li>
                       <strong>Obligación legal:</strong> cuando una autoridad competente lo requiera
@@ -334,7 +431,8 @@ export default function PrivacidadPage() {
                       <strong>Acceder</strong> a los datos personales que tenemos sobre vos.
                     </li>
                     <li>
-                      <strong>Rectificar</strong> datos incorrectos o incompletos.
+                      <strong>Rectificar y actualizar</strong> datos incorrectos, incompletos o
+                      desactualizados.
                     </li>
                     <li>
                       <strong>Suprimir</strong> tus datos personales (derecho al olvido), en los
@@ -353,11 +451,30 @@ export default function PrivacidadPage() {
                     <a href="mailto:contacto@garciainversiones.com.ar">
                       contacto@garciainversiones.com.ar
                     </a>{' '}
-                    indicando tu solicitud. Responderemos en un plazo razonable.
+                    indicando tu solicitud y los datos necesarios para identificarte.
                   </p>
                   <p>
-                    La Agencia de Acceso a la Información Pública (AAIP) es el organismo de control
-                    en materia de datos personales en Argentina.
+                    El derecho de acceso es gratuito y puede ejercerse a intervalos no inferiores a
+                    seis meses, salvo que acredites un interés legítimo. Responderemos las solicitudes
+                    de acceso dentro de los diez (10) días corridos de recibido tu reclamo, y las de
+                    rectificación, actualización o supresión dentro de los cinco (5) días hábiles.{' '}
+                    <Pendiente>
+                      validar estos plazos (arts. 14 y 16 de la Ley 25.326, según el texto vigente) y
+                      el procedimiento interno para cumplirlos
+                    </Pendiente>
+                  </p>
+                  <p>
+                    La Agencia de Acceso a la Información Pública (AAIP) es el órgano de control de
+                    la Ley N.° 25.326 y tiene la atribución de atender las denuncias y reclamos de
+                    quienes resulten afectados en sus derechos. Podés comunicarte con ella en{' '}
+                    <a
+                      href="https://www.argentina.gob.ar/aaip/datospersonales"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      www.argentina.gob.ar/aaip/datospersonales
+                    </a>
+                    . <Pendiente>leyenda exacta exigida por la normativa vigente, y datos de contacto de la AAIP</Pendiente>
                   </p>
                 </section>
 
@@ -371,15 +488,18 @@ export default function PrivacidadPage() {
                   <ul className="privacy-list">
                     <li>
                       <strong>Funcionamiento del sitio:</strong> cookies técnicas necesarias para
-                      que el sitio funcione correctamente.
+                      que el sitio funcione correctamente, incluida una cookie propia donde guardamos
+                      tu elección sobre las cookies por hasta 180 días.
                     </li>
                     <li>
                       <strong>Analítica (opcional):</strong> cookies de Google Analytics para medir
-                      el uso del sitio de forma estadística y agregada.
+                      el uso del sitio de forma estadística y agregada, y registro de los clics hacia
+                      WhatsApp según lo descripto en la sección 6.
                     </li>
                     <li>
                       <strong>Publicidad (opcional):</strong> cookies de Google Ads y Meta Pixel para medir
-                      conversiones y mostrar anuncios relevantes.
+                      conversiones y mostrar anuncios relevantes, y asociación de los clics hacia
+                      WhatsApp con la campaña de origen.
                     </li>
                   </ul>
                   <p>
@@ -395,14 +515,125 @@ export default function PrivacidadPage() {
                     dispositivo.
                   </p>
                   <p>
+                    Algunas páginas muestran contenido de terceros (mapas de Google Maps, videos de
+                    YouTube en modo de privacidad ampliada, recorridos virtuales). Al mostrarse,
+                    esos servicios pueden recibir tu dirección IP y datos de tu navegador y, según el
+                    caso, usar sus propias cookies, conforme a sus políticas, independientemente de tu elección sobre las
+                    cookies opcionales de este sitio.{' '}
+                    <Pendiente>
+                      decidir si estos contenidos deben cargarse solo con consentimiento o si basta
+                      con esta información
+                    </Pendiente>
+                  </p>
+                  <p>
                     También podés configurar tu navegador para bloquear o eliminar las cookies. Tené
                     en cuenta que deshabilitar ciertas cookies puede afectar la funcionalidad del
                     sitio.
                   </p>
                 </section>
 
+                <section id="proveedores" className="privacy-section">
+                  <h2>11. Proveedores y transferencias internacionales</h2>
+                  <p>
+                    Para operar este sitio nos apoyamos en los siguientes proveedores. Cada uno
+                    recibe solo la información necesaria para su función:
+                  </p>
+                  <ul className="privacy-list">
+                    <li>
+                      <strong>Vercel (alojamiento):</strong> recibe los datos de conexión (como la
+                      dirección IP y las páginas solicitadas) y los registros técnicos del servicio.
+                      Las funciones del sitio se ejecutan en Washington D. C., Estados Unidos.
+                    </li>
+                    <li>
+                      <strong>Supabase (base de datos):</strong> guarda las suscripciones al
+                      newsletter y los registros técnicos de origen de las consultas y de clics a
+                      WhatsApp (sin tu nombre, correo ni teléfono). Ubicación:{' '}
+                      <Pendiente>región del proyecto de Supabase</Pendiente>
+                    </li>
+                    <li>
+                      <strong>Resend (correo electrónico):</strong> procesa los avisos internos de
+                      cada consulta, que incluyen los datos que ingresaste (nombre, correo, teléfono
+                      y mensaje). Ubicación: <Pendiente>región de envío y almacenamiento de Resend</Pendiente>
+                    </li>
+                    <li>
+                      <strong>2Clics (CRM):</strong> recibe los datos de tus consultas para su
+                      seguimiento comercial y, cuando aceptaste las cookies correspondientes, una nota
+                      con el origen de la consulta. Ubicación y condiciones:{' '}
+                      <Pendiente>ubicación del tratamiento y contrato de 2Clics</Pendiente>
+                    </li>
+                    <li>
+                      <strong>Cloudflare (verificación anti-spam y DNS):</strong> recibe señales
+                      técnicas de tu navegador (como la dirección IP) al verificar los formularios.
+                    </li>
+                    <li>
+                      <strong>Upstash (límite de solicitudes):</strong> procesa de forma temporal la
+                      dirección IP asociada a contadores para limitar abusos. Ubicación:{' '}
+                      <Pendiente>región de la base de Upstash</Pendiente>
+                    </li>
+                    <li>
+                      <strong>Sentry (monitoreo de errores):</strong> recibe información técnica de
+                      errores del servidor; está configurado sin el envío automático de datos
+                      personales. Ubicación: <Pendiente>región de la organización de Sentry</Pendiente>
+                    </li>
+                    <li>
+                      <strong>Google y Meta:</strong> analítica, publicidad y WhatsApp, según las
+                      secciones 6 y 10.
+                    </li>
+                  </ul>
+                  <p>
+                    Algunos de estos proveedores tratan información fuera de la Argentina, en
+                    particular en los Estados Unidos.{' '}
+                    <Pendiente>
+                      redacción sobre las transferencias internacionales y su base jurídica (art. 12
+                      de la Ley 25.326: nivel adecuado, cláusulas contractuales modelo aprobadas por
+                      la AAIP u otra), según la documentación de cada proveedor; no afirmar garantías
+                      que no estén documentadas
+                    </Pendiente>
+                  </p>
+                </section>
+
+                <section id="conservacion" className="privacy-section">
+                  <h2>12. Conservación de los datos</h2>
+                  <p>
+                    Conservamos los datos solo durante el tiempo necesario para las finalidades
+                    descriptas, y los eliminamos o anonimizamos cuando dejan de ser necesarios. Los
+                    plazos dependen de dónde se guarda cada dato:
+                  </p>
+                  <ul className="privacy-list">
+                    <li>
+                      <strong>En tu navegador:</strong> el origen de tu visita, por hasta 90 días, y
+                      tu elección sobre las cookies, por hasta 180 días. Podés borrarlos en cualquier
+                      momento (ver sección 10).
+                    </li>
+                    <li>
+                      <strong>Registros técnicos de clics hacia WhatsApp (nuestra base de datos):</strong>{' '}
+                      hasta 90 días y luego se eliminan automáticamente.{' '}
+                      <Pendiente>
+                        plazo de 90 días en estudio; no publicar como compromiso hasta aprobar la
+                        política y activar la eliminación automática
+                      </Pendiente>
+                    </li>
+                    <li>
+                      <strong>Registros de origen de consultas por formulario y suscripciones al newsletter:</strong>{' '}
+                      <Pendiente>plazo de conservación</Pendiente>
+                    </li>
+                    <li>
+                      <strong>Contactos y negocios en nuestro CRM:</strong>{' '}
+                      <Pendiente>plazo de conservación (decisión comercial y jurídica)</Pendiente>
+                    </li>
+                    <li>
+                      <strong>Conversaciones de WhatsApp Business y correos de consulta:</strong>{' '}
+                      <Pendiente>plazo de conservación (decisión comercial y jurídica)</Pendiente>
+                    </li>
+                  </ul>
+                  <p>
+                    Los proveedores de analítica, publicidad y alojamiento conservan la información
+                    que reciben según sus propias políticas.
+                  </p>
+                </section>
+
                 <section id="cambios" className="privacy-section">
-                  <h2>11. Cambios en esta política</h2>
+                  <h2>13. Cambios en esta política</h2>
                   <p>
                     Podemos actualizar esta Política de Privacidad periódicamente para reflejar
                     cambios en nuestras prácticas, en las herramientas que utilizamos o en la
@@ -412,7 +643,7 @@ export default function PrivacidadPage() {
                 </section>
 
                 <section id="contacto-privacidad" className="privacy-section">
-                  <h2>12. Contacto</h2>
+                  <h2>14. Contacto</h2>
                   <p>
                     Para cualquier consulta, solicitud o reclamo relacionado con el tratamiento de
                     tus datos personales, podés contactarnos por los siguientes medios:
