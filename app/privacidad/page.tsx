@@ -87,9 +87,13 @@ export default function PrivacidadPage() {
                       comercial <strong>García Inversiones Inmobiliarias</strong>.
                     </p>
                     <p>
-                      Matrícula profesional: CMCPSI 6378.{' '}
-                      <Pendiente grupo="B">contrastar la matrícula con el registro del colegio profesional</Pendiente>
+                      Denominación legal completa:{' '}
+                      <Pendiente grupo="B">
+                        nombre completo según documento de identidad o constancia fiscal (el padrón
+                        profesional la registra como «María Fabiana García»)
+                      </Pendiente>
                     </p>
+                    <p>Matrícula profesional: CMCPSI 6378.</p>
                     <p>
                       CUIT:{' '}
                       <Pendiente grupo="C">
@@ -98,13 +102,17 @@ export default function PrivacidadPage() {
                       </Pendiente>
                     </p>
                     <p>
-                      Domicilio legal: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
-                      Provincia de Buenos Aires, Argentina.
+                      Domicilio: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
+                      Provincia de Buenos Aires, Argentina.{' '}
+                      <Pendiente grupo="C">
+                        cómo denominarlo (legal, de contacto o constituido); el padrón profesional
+                        publica otro domicilio
+                      </Pendiente>
                     </p>
                     <p>
-                      El domicilio informado corresponde exclusivamente al domicilio legal de la
-                      titular. No constituye una oficina comercial ni un establecimiento de atención
-                      al público. Las consultas y reuniones se coordinan previamente a través de
+                      El domicilio informado es el que la titular indica a los fines de esta política.
+                      No constituye una oficina comercial ni un establecimiento de atención al
+                      público. Las consultas y reuniones se coordinan previamente a través de
                       nuestros canales oficiales de contacto.
                     </p>
                     <p>

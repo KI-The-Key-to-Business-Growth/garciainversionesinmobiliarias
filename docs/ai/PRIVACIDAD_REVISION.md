@@ -49,18 +49,21 @@ este sitio web es:
 **Fabiana García**, persona humana, que opera bajo el nombre
 comercial **García Inversiones Inmobiliarias**.
 
+Denominación legal completa:
+**[A CONFIRMAR (grupo B): nombre completo según documento de identidad o constancia fiscal (el padrón profesional la registra como «María Fabiana García»)]**
+
 Matrícula profesional: CMCPSI 6378.
-**[A CONFIRMAR (grupo B): contrastar la matrícula con el registro del colegio profesional]**
 
 CUIT:
 **[A CONFIRMAR (grupo C): CUIT, desde documentación oficial, y si el asesor considera obligatorio exhibirlo en esta política]**
 
-Domicilio legal: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
+Domicilio: Hipólito Yrigoyen 1470, El Talar (CP 1618), Partido de Tigre,
 Provincia de Buenos Aires, Argentina.
+**[A CONFIRMAR (grupo C): cómo denominarlo (legal, de contacto o constituido); el padrón profesional publica otro domicilio]**
 
-El domicilio informado corresponde exclusivamente al domicilio legal de la
-titular. No constituye una oficina comercial ni un establecimiento de atención
-al público. Las consultas y reuniones se coordinan previamente a través de
+El domicilio informado es el que la titular indica a los fines de esta política.
+No constituye una oficina comercial ni un establecimiento de atención al
+público. Las consultas y reuniones se coordinan previamente a través de
 nuestros canales oficiales de contacto.
 
 Sitio web:
@@ -578,7 +581,7 @@ Información tomada de las páginas **públicas** de cada proveedor (leídas el 
 ## 10. Cómo publicar (cuando el contenido esté validado)
 1. El asesor valida el texto y se completan **todos** los `[A CONFIRMAR]` (datos del responsable, ubicaciones, plazos, redacción de transferencias).
 2. Quitar los `Pendiente` y la nota de borrador de `app/privacidad/page.tsx` y actualizar la fecha.
-3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 14 pendientes —grupos B y C—, a propósito).
+3. `PRIVACY_PUBLISH_CHECK=1 npm test` debe pasar (hoy falla con 15 pendientes —grupos B y C—, a propósito).
 4. Decidir la activación de la conservación (sección 5) **antes** de publicar el compromiso de 90 días.
 5. Integrar por PR con CI y verificar la página, el banner y el registro de clics en producción.
 
@@ -613,25 +616,28 @@ Ver tabla de la sección 6. Resumen de lo **documentado por los proveedores** (n
 *(Reemplaza las listas de las secciones 7 y 11.1 en lo que se refiere al responsable y a WhatsApp/CRM.)*
 
 ### 12.1 Incorporado al borrador
-- **Titular:** Fabiana García, persona humana; nombre comercial García Inversiones Inmobiliarias; matrícula CMCPSI 6378.
-- **Domicilio legal:** Hipólito Yrigoyen 1470, El Talar (CP 1618), Tigre, Buenos Aires (publicación **autorizada**), con la aclaración de que no es una oficina comercial ni un establecimiento de atención al público.
-- **Correo:** `fabiana@garciainversiones.com.ar` reemplazó al anterior en toda la política (identificación, derechos, contacto).
-- **WhatsApp y CRM:** las conversaciones se mantienen en WhatsApp Business, atendidas por la titular; las consultas relevantes se cargan **manualmente** en 2Clics; no se leen conversaciones de forma automática. El pendiente correspondiente se eliminó.
+- **Titular:** Fabiana García, persona humana; nombre comercial García Inversiones Inmobiliarias. **Matrícula CMCPSI 6378: comprobada** en el padrón oficial de colegiados activos (https://cmcpsi.org.ar/colegiados/padron), a nombre de «María Fabiana García». La denominación legal exacta queda sujeta a su documento de identidad o constancia fiscal.
+- **Domicilio:** Hipólito Yrigoyen 1470, El Talar (CP 1618), Tigre, Buenos Aires, autorizado por Fabiana, con la aclaración de que no es oficina ni atención al público. El padrón profesional publica **otro domicilio (Nordelta)**: no se reemplazó uno por otro; queda para el asesor cómo denominar el de El Talar (legal, de contacto o constituido). La página dice «Domicilio» a secas.
+- **Correo:** `fabiana@garciainversiones.com.ar` en toda la política; falta verificar su funcionamiento efectivo.
+- **WhatsApp y CRM:** conversaciones en WhatsApp Business atendidas por la titular; consultas relevantes cargadas **manualmente** en 2Clics; sin lectura automática.
 - **Decisiones técnicas ya aprobadas (no se reabren):** `CONSENT_VERSION = 2`, modelo restrictivo, mapas con carga controlada, 90 días como propuesta para referencias técnicas de WhatsApp, mecanismo de borrado preparado y desactivado, sin borrado automático en 2Clics ni WhatsApp Business.
 
-### 12.2 Lista final y breve de lo que sigue pendiente (14 marcadores en la página)
-**Verificaciones que no se dan por hechas (grupo B):**
-1. **Casilla** `fabiana@garciainversiones.com.ar`: comprobar escritura exacta, que recibe mensajes y que Fabiana la controla (mensaje de prueba enviado y respondido por ella).
-2. **Matrícula CMCPSI 6378:** contrastar con el registro del colegio profesional.
-3. **Supabase:** región del proyecto `ljpolupsgwtreinuxrdo` y DPA. Falta: acceso al panel (*Project Settings → General*; *Legal*). Hoy solo hay indicios por rango de IP; no se infiere.
-4. **Upstash:** región de la base y DPA. Falta: acceso al panel de la base.
-5. **Sentry:** región de la organización (US/UE) y si el DPA fue aceptado. Falta: acceso a *Settings → Legal & Compliance*.
-6. **2Clics:** solicitud al proveedor (texto abajo).
+### Impedimentos reales para publicar
+1. **Validación jurídica** de los puntos de este resumen (transferencias, conservación, derechos y leyenda de la AAIP, consentimiento, campañas internacionales, registro de bases).
+2. **CUIT:** obtenerlo de documentación oficial y decidir con el asesor si debe exhibirse.
+3. **Denominación legal completa:** nombre según documento de identidad o constancia fiscal (el padrón profesional registra «María Fabiana García»).
+4. **Casilla `fabiana@garciainversiones.com.ar`:** comprobar escritura exacta, recepción y control efectivo (mensaje de prueba enviado y respondido por Fabiana).
+5. **Denominación del domicilio** de El Talar (legal, de contacto o constituido): el padrón profesional publica otro domicilio (Nordelta) y no se reemplazó uno por otro.
 
-> Solicitud a 2Clics: «Para la política de privacidad de García Inversiones Inmobiliarias necesitamos que nos confirmen por escrito: (a) en qué país y región se almacenan y procesan los datos de nuestras cuentas (contactos, mensajes, notas); (b) las condiciones contractuales aplicables, incluido el acuerdo de tratamiento de datos o cláusulas de protección de datos; (c) si intervienen subencargados y en qué países; (d) qué plazos de conservación y mecanismos de eliminación ofrece la plataforma; y (e) cómo se atienden los pedidos de acceso, rectificación y supresión.»
+### Información complementaria (no impide publicar por sí sola)
+- **Regiones y DPA de Supabase, Upstash y Sentry:** falta acceso a sus paneles (Supabase: Project Settings → General y Legal; Upstash: panel de la base; Sentry: Settings → Legal & Compliance). Si el asesor decide que la política no debe nombrar regiones, se quitan esos marcadores; si debe nombrarlas, pasan a ser impedimento.
+- **2Clics:** respuesta del proveedor a la solicitud (texto en `PRIVACIDAD_REVISION.md`, sección 12.2). Mientras no conteste, la política no afirma ubicación ni garantías de 2Clics.
+- Verificación de la matrícula: **ya comprobada** en el padrón oficial (https://cmcpsi.org.ar/colegiados/padron): CMCPSI 6378 figura activa a nombre de María Fabiana García. No se compara aún con documentación de identidad o fiscal.
 
-**Criterio jurídico (grupo C, ver `PRIVACIDAD_ASESOR_JURIDICO.md`):** exhibición del CUIT; transferencias internacionales; plazos y leyenda de derechos/AAIP; plazo de 90 días de clics de WhatsApp; plazos de formularios/newsletter, CRM y conversaciones.
+> **Solicitud a 2Clics:** «Para la política de privacidad de García Inversiones Inmobiliarias necesitamos que nos confirmen por escrito: (a) en qué país y región se almacenan y procesan los datos de nuestras cuentas (contactos, mensajes, notas); (b) las condiciones contractuales aplicables, incluido el acuerdo de tratamiento de datos o cláusulas de protección de datos; (c) si intervienen subencargados y en qué países; (d) qué plazos de conservación y mecanismos de eliminación ofrece la plataforma; y (e) cómo se atienden los pedidos de acceso, rectificación y supresión.» Hasta recibir respuesta no se da por verificada ninguna garantía.
 
-### 12.3 Rama
-- `privacy/review-draft`, sin push ni merge; revisión jurídica en `docs/ai/PRIVACIDAD_ASESOR_JURIDICO.md`.
-- Para publicar: cerrar la lista anterior, validación del asesor, quitar `Pendiente` y la nota de borrador, `PRIVACY_PUBLISH_CHECK=1 npm test` en verde, PR con CI. Hasta entonces el control bloquea la publicación y el borrado automático sigue desactivado.
+### 12.3 Criterio jurídico (grupo C)
+Ver `PRIVACIDAD_ASESOR_JURIDICO.md`.
+
+### 12.4 Rama
+`privacy/review-draft`, sin push ni merge. Para publicar: cerrar los impedimentos de 12.1, validación del asesor, quitar `Pendiente` y la nota de borrador, `PRIVACY_PUBLISH_CHECK=1 npm test` en verde, PR con CI. Hasta entonces el control bloquea la publicación y el borrado automático sigue desactivado.

@@ -5,7 +5,7 @@
 **Cómo leerlo.** «Hecho verificado» = comprobado en el código, en producción o en la página oficial citada. «Propuesta» = decisión nuestra, **no** una obligación legal confirmada. «Pregunta» = lo que necesitamos que el asesor resuelva.
 
 ## Contexto
-- Responsable: **Fabiana García, persona humana**, nombre comercial García Inversiones Inmobiliarias; matrícula CMCPSI 6378 (a contrastar con el colegio profesional); domicilio legal en Tigre, Buenos Aires, **autorizado a publicarse** con la aclaración de que no es oficina ni atención al público; correo de privacidad `fabiana@garciainversiones.com.ar` (existencia y control de la casilla: a comprobar). **CUIT: pendiente.**
+- Responsable: **Fabiana García, persona humana**, nombre comercial García Inversiones Inmobiliarias; matrícula CMCPSI 6378, **comprobada** en el padrón oficial del colegio (a nombre de «María Fabiana García»; denominación legal exacta pendiente de documentación de identidad o fiscal). Domicilio en El Talar, Tigre, autorizado a publicarse como domicilio informado por la titular, sin atención al público; **el padrón del colegio publica otro domicilio (Nordelta)**. Correo `fabiana@garciainversiones.com.ar` (funcionamiento a comprobar). **CUIT: pendiente.**
 - Sitio argentino de inmobiliaria con propiedades en Buenos Aires y Miami; se prevén campañas en Meta y Google (incluidas personas fuera de la Argentina).
 - Datos que se tratan: formularios de consulta (nombre, correo, teléfono, mensaje), newsletter, clics hacia WhatsApp (registro técnico sin datos personales directos), medición con consentimiento (GA4, Pixel de Meta, Google Ads).
 - Marco leído en fuentes oficiales (AAIP/Infoleg): Ley 25.326, arts. 4 inc. 7, 5, 6, 12, 14, 16, 21, 24, 27. El texto leído puede no reflejar reformas posteriores.
@@ -41,10 +41,20 @@
 
 ## 7. Texto definitivo de derechos
 - **En el borrador:** acceso gratuito cada 6 meses; respuesta en 10 días corridos (art. 14) y 5 días hábiles para rectificación, actualización o supresión (art. 16); datos de la AAIP.
-- **Preguntas:** ¿siguen vigentes esos plazos? ¿Cuál es la leyenda exacta exigida? ¿Es **obligatorio exhibir el CUIT** en esta política? ¿Es adecuada la identificación como persona humana con matrícula y domicilio legal (con la aclaración de que no es atención al público)?
+- **Preguntas:** ¿siguen vigentes esos plazos? ¿Cuál es la leyenda exacta exigida? ¿Es **obligatorio exhibir el CUIT** en esta política? ¿Es adecuada la identificación como persona humana con matrícula y domicilio (con la aclaración de que no es atención al público)? ¿Cómo debe denominarse el domicilio de El Talar (legal, de contacto o constituido) existiendo otro publicado en el padrón profesional?
 
 ## Lo que no necesita criterio jurídico (ya resuelto)
 Contenidos incrustados (solo mapas, ya con carga controlada), región de envío de correo, funcionamiento del mecanismo de borrado y verificaciones técnicas.
 
-## Pendientes fuera del criterio jurídico (a cargo de García)
-Casilla `fabiana@…` verificada; matrícula contrastada con el colegio; región y DPA de Supabase, Upstash y Sentry (falta acceso a sus paneles); solicitud a 2Clics sobre ubicación del tratamiento, condiciones contractuales y protección de datos (texto en `PRIVACIDAD_REVISION.md`, sección 12.2). No se infirió ningún dato.
+## Qué impide publicar y qué es complementario
+### Impedimentos reales para publicar
+1. **Validación jurídica** de los puntos de este resumen (transferencias, conservación, derechos y leyenda de la AAIP, consentimiento, campañas internacionales, registro de bases).
+2. **CUIT:** obtenerlo de documentación oficial y decidir con el asesor si debe exhibirse.
+3. **Denominación legal completa:** nombre según documento de identidad o constancia fiscal (el padrón profesional registra «María Fabiana García»).
+4. **Casilla `fabiana@garciainversiones.com.ar`:** comprobar escritura exacta, recepción y control efectivo (mensaje de prueba enviado y respondido por Fabiana).
+5. **Denominación del domicilio** de El Talar (legal, de contacto o constituido): el padrón profesional publica otro domicilio (Nordelta) y no se reemplazó uno por otro.
+
+### Información complementaria (no impide publicar por sí sola)
+- **Regiones y DPA de Supabase, Upstash y Sentry:** falta acceso a sus paneles (Supabase: Project Settings → General y Legal; Upstash: panel de la base; Sentry: Settings → Legal & Compliance). Si el asesor decide que la política no debe nombrar regiones, se quitan esos marcadores; si debe nombrarlas, pasan a ser impedimento.
+- **2Clics:** respuesta del proveedor a la solicitud (texto en `PRIVACIDAD_REVISION.md`, sección 12.2). Mientras no conteste, la política no afirma ubicación ni garantías de 2Clics.
+- Verificación de la matrícula: **ya comprobada** en el padrón oficial (https://cmcpsi.org.ar/colegiados/padron): CMCPSI 6378 figura activa a nombre de María Fabiana García. No se compara aún con documentación de identidad o fiscal.
