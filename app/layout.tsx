@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { Jost, Cormorant_Garamond } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { CANONICAL_BASE_URL } from '@/lib/env';
 import { INSTITUTIONAL_OPEN_GRAPH, INSTITUTIONAL_TWITTER } from '@/lib/share-metadata';
@@ -9,20 +9,26 @@ import ConsentManager from '@/components/consent/ConsentManager';
 import AttributionCapture from '@/components/tracking/AttributionCapture';
 import { buildGtmBootstrap } from '@/lib/gtm';
 
-// Fuentes self-hosted vía next/font (sin request a Google, con métricas de
-// fallback automáticas que evitan layout shift / CLS).
-const jost = Jost({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
+// Fuentes self-hosted vía next/font/local (sin request a Google en el build ni en runtime).
+// Jost y Cormorant Garamond: mismas fuentes variables (subconjunto latin, licencia SIL OFL 1.1) que se
+// servían con next/font/google; los archivos y sus licencias están en app/fonts/. Con next/font/google
+// el build consulta a Google y a veces falla (loader.js: `exec(url)[1]` sobre una URL sin extensión).
+// Pesos 300–600 y, en Cormorant, normal + cursiva: los mismos que usa el sitio. Los únicos caracteres
+// del sitio fuera de latin son símbolos (→ ☰ ✓ ▾ ↗) que estas familias nunca cubrieron.
+const jost = localFont({
+  src: [{ path: './fonts/Jost-latin-variable.woff2', style: 'normal', weight: '300 600' }],
   variable: '--font-jost',
   display: 'swap',
+  adjustFontFallback: 'Arial',
 });
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
-  style: ['normal', 'italic'],
+const cormorant = localFont({
+  src: [
+    { path: './fonts/CormorantGaramond-latin-normal-variable.woff2', style: 'normal', weight: '300 600' },
+    { path: './fonts/CormorantGaramond-latin-italic-variable.woff2', style: 'italic', weight: '300 600' },
+  ],
   variable: '--font-cormorant',
   display: 'swap',
+  adjustFontFallback: 'Times New Roman',
 });
 
 export const metadata: Metadata = {
