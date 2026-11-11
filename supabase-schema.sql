@@ -242,5 +242,5 @@ ALTER TABLE lead_attribution ADD COLUMN IF NOT EXISTS wa_match_method TEXT;
 ALTER TABLE lead_attribution DROP CONSTRAINT IF EXISTS lead_attribution_wa_match_method_chk;
 ALTER TABLE lead_attribution ADD CONSTRAINT lead_attribution_wa_match_method_chk
   CHECK (wa_match_method IS NULL OR wa_match_method IN ('ref', 'probable'));
-CREATE INDEX IF NOT EXISTS idx_lead_attribution_asset        ON lead_attribution (asset_key);
+CREATE INDEX IF NOT EXISTS idx_lead_attribution_asset        ON lead_attribution (asset_key) WHERE asset_key IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_lead_attribution_type_created ON lead_attribution (lead_type, created_at DESC);
