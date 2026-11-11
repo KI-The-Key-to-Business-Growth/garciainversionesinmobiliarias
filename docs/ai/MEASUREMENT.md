@@ -97,3 +97,11 @@ Actualizados en `/privacidad` (secciones 6 y 10) y requieren validación legal: 
 - Validación legal de `/privacidad` pendiente (ver `PRIVACIDAD_REVISION.md`); la implementación técnica no equivale a validación jurídica.
 - Con «solo analítica» salen pings de Consent Mode de Google (`googlesyndication.com/ccm`, `google.com/g/collect`) sin cookies de publicidad; no son de Meta.
 - `Lead` y `Subscribe` sin prueba de extremo a extremo; se verificarán con la primera consulta real.
+
+## 8. Configuración autorizada de GA4 (2026-11-11)
+
+Propiedad `properties/540362403` (cuenta 396907112), flujo web `15013850233` = `G-YD6FJKCK3M`. Acceso por la cuenta de servicio de GTM (Editor solo de esta propiedad; `tools/ga4/ga4.mjs`; sin secretos en el repo).
+
+- **Dimensiones personalizadas (alcance Evento), creadas por API:** `property_id` (customDimensions/16321385661), `development_slug` (16322000090), `lead_type` (16321926854), `form_name` (16321993248), `market` (16322036733), `button_location` (16321915066). Sin dimensión para `event_id` (es técnico; llega como `evnid`).
+- **Eventos clave:** se mantiene `generate_lead` como referencia de consultas completadas. Se retiró la clasificación de `click_whatsapp`, `newsletter_signup` y `select_property` (siguen registrándose). `purchase`, `qualify_lead` y `close_convert_lead` no se tocaron: sin eventos registrados y sin implementación en la web ni en GTM v8 (se crearon por defecto el 2026-06-05).
+- La conversión que Meta usa para optimizar es independiente: `Lead` (pendiente de prueba controlada con la web actual).
