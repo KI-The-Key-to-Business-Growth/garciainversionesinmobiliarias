@@ -94,11 +94,16 @@ function safeSessionStorage(): Storage | null {
 function prepareLink(link: HTMLAnchorElement): { ref: string; context: WhatsAppAssetContext | null } | null {
   if (!isGarciaWhatsAppHref(link.href)) return null;
   const context = getWhatsAppAssetContext();
-  const ref = getSessionRef(safeSessionStorage(), context?.key ?? 'general');
-  const href = buildWhatsAppHref(link.href, buildWhatsAppMessage({ label: context?.label, ref }));
-  if (link.href !== href) link.href = href;
-  link.dataset.waRef = ref;
-  return { ref, context };
+  try {
+    const ref = getSessionRef(safeSessionStorage(), context?.key ?? 'general');
+    const href = buildWhatsAppHref(link.href, buildWhatsAppMessage({ label: context?.label, ref }));
+    if (link.href !== href) link.href = href;
+    link.dataset.waRef = ref;
+    return { ref, context };
+  } catch {
+    // Sin generador criptográfico no se crea referencia: el enlace sale como estaba y no se registra clic.
+    return null;
+  }
 }
 
 // Registra el clic una sola vez por referencia y sesión. Un clic NO confirma un mensaje enviado.

@@ -18,7 +18,7 @@ import { recordWhatsAppClick } from '@/actions/whatsapp-click';
 import { _resetRateLimit } from '@/lib/security/ratelimit';
 import { resolveAssetKey } from '@/lib/attribution-server';
 
-const REF = 'GI-7K3F2Q';
+const REF = 'GI-7K3F2QPXM4HVD';
 const DOMUS_URL = 'https://www.garciainversionesinmobiliarias.com.ar/desarrollos/domus-brickell-center';
 
 function attr(consent: { analytics: boolean; marketing: boolean }, last: Record<string, string | number> = {}): string {
@@ -40,7 +40,7 @@ beforeEach(() => {
 
 describe('recordWhatsAppClick', () => {
   it('rechaza referencias con formato inválido sin tocar Supabase', async () => {
-    for (const ref of ['', 'GI-123', 'hola', 'GI-7K3F2I', '<script>']) {
+    for (const ref of ['', 'GI-123', 'hola', 'GI-7K3F2Q', 'GI-7K3F2QPXM4HVI', 'GI-7K3F2QPXM4HV', '<script>']) {
       expect(await recordWhatsAppClick({ ref, page_location: DOMUS_URL })).toEqual({ ok: false });
     }
     expect(recordLeadAttribution).not.toHaveBeenCalled();
@@ -118,14 +118,31 @@ describe('recordWhatsAppClick', () => {
     });
   });
 
-  it('si el payload declara rechazo de marketing descarta los identificadores de clic', async () => {
+  it('solo analítica (sin publicidad): guarda el registro básico y NINGUNA atribución publicitaria', async () => {
     await recordWhatsAppClick({
       ref: REF,
       page_location: DOMUS_URL,
-      attribution: attr({ analytics: true, marketing: false }, { utm_source: 'meta', fbclid: 'abc', gclid: 'xyz' }),
+      attribution: attr({ analytics: true, marketing: false }, { utm_source: 'meta', utm_medium: 'paid_social', campaign_id: '111', ad_id: '333', fbclid: 'abc', gclid: 'xyz' }),
     });
     const row = recordLeadAttribution.mock.calls[0][0] as Record<string, unknown>;
-    expect(row).toMatchObject({ consent_marketing: false, fbclid: null, gclid: null, fbp: null });
+    expect(row).toMatchObject({
+      event_id: REF,
+      asset_key: 'dev:domus-brickell-center',
+      consent_analytics: true,
+      consent_marketing: false,
+      utm_source: null,
+      utm_medium: null,
+      campaign_id: null,
+      adset_id: null,
+      ad_id: null,
+      fbclid: null,
+      gclid: null,
+      fbp: null,
+      fbc: null,
+      session_id: null,
+      first_touch: null,
+      last_touch: null,
+    });
   });
 
   it('página general sin activo: asset_key ausente (consulta general/institucional)', async () => {
@@ -138,7 +155,7 @@ describe('recordWhatsAppClick', () => {
   it('limita la cantidad de registros por IP', async () => {
     let rejected = 0;
     for (let i = 0; i < 45; i++) {
-      const r = await recordWhatsAppClick({ ref: `GI-${'ABCDEFGH'.slice(0, 5)}${'23456789'[i % 8]}`, page_location: DOMUS_URL, consent: { analytics: true, marketing: false } });
+      const r = await recordWhatsAppClick({ ref: `GI-ABCDEFGHJKLM${'23456789'[i % 8]}`, page_location: DOMUS_URL, consent: { analytics: true, marketing: false } });
       if (!r.ok) rejected++;
     }
     expect(rejected).toBe(5);

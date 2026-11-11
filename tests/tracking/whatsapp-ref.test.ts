@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildWhatsAppHref,
   buildWhatsAppMessage,
@@ -11,6 +11,7 @@ import {
   isGarciaWhatsAppHref,
   isValidWhatsAppRef,
   markRefRegistered,
+  WA_REF_ENTROPY_BITS,
   WA_REF_EXACT,
   WHATSAPP_NUMBER,
   wasRefRegistered,
@@ -33,44 +34,72 @@ function memoryStorage() {
 describe('referencia de WhatsApp', () => {
   it('genera referencias GI-XXXXXX válidas, sin caracteres ambiguos y sin repetirse en una muestra grande', () => {
     const seen = new Set<string>();
-    for (let i = 0; i < 5000; i++) {
+    for (let i = 0; i < 20000; i++) {
       const ref = generateWhatsAppRef();
       expect(ref).toMatch(WA_REF_EXACT);
+      expect(ref).toHaveLength(16); // «GI-» + 13 símbolos: sigue siendo corta
       expect(ref.slice(3)).not.toMatch(/[IO01]/);
       seen.add(ref);
     }
-    expect(seen.size).toBe(5000);
+    expect(seen.size).toBe(20000);
+  });
+
+  it('tiene al menos 64 bits de entropía y usa los 32 símbolos de forma uniforme', () => {
+    expect(WA_REF_ENTROPY_BITS).toBeGreaterThanOrEqual(64);
+    const counts = new Map<string, number>();
+    const N = 4000; // 52.000 símbolos: esperado ≈ 1.625 por símbolo
+    for (let i = 0; i < N; i++) for (const ch of generateWhatsAppRef().slice(3)) counts.set(ch, (counts.get(ch) ?? 0) + 1);
+    expect(counts.size).toBe(32);
+    for (const n of counts.values()) {
+      expect(n).toBeGreaterThan(1400);
+      expect(n).toBeLessThan(1850);
+    }
+  });
+
+  it('usa siempre el generador criptográfico y no se degrada si no existe', () => {
+    const original = globalThis.crypto;
+    const spy = vi.spyOn(globalThis.crypto, 'getRandomValues');
+    generateWhatsAppRef();
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });
+    try {
+      expect(() => generateWhatsAppRef()).toThrow(/crypto/);
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', { value: original, configurable: true });
+    }
   });
 
   it('es determinista con una fuente aleatoria dada y usa los 32 símbolos', () => {
     const bytes = (n: number) => Uint8Array.from({ length: n }, (_, i) => i * 37);
     expect(generateWhatsAppRef(bytes)).toBe(generateWhatsAppRef(bytes));
     const all = new Set<string>();
-    for (let b = 0; b < 256; b++) all.add(generateWhatsAppRef(() => new Uint8Array(6).fill(b)).slice(3, 4));
+    for (let b = 0; b < 256; b++) all.add(generateWhatsAppRef(() => new Uint8Array(13).fill(b)).slice(3, 4));
     expect(all.size).toBe(32);
   });
 
   it('valida el formato exacto', () => {
-    expect(isValidWhatsAppRef('GI-7K3F2Q')).toBe(true);
-    for (const bad of ['GI-7K3F2', 'gi-7k3f2q', 'GI-7K3F2QX', 'GI-7K3F2I', 'XX-7K3F2Q', '', null, undefined, 12345]) {
+    expect(isValidWhatsAppRef('GI-7K3F2QPXM4HVD')).toBe(true);
+    for (const bad of ['GI-7K3F2Q', 'gi-7k3f2qpxm4hvd', 'GI-7K3F2QPXM4HVDX', 'GI-7K3F2QPXM4HVI', 'GI-7K3F2QPXM4HV', 'XX-7K3F2QPXM4HVD', '', null, undefined, 12345]) {
       expect(isValidWhatsAppRef(bad)).toBe(false);
     }
   });
 
   it('recupera la referencia dentro de un mensaje aunque la persona edite el resto o use minúsculas', () => {
-    expect(extractWhatsAppRef('Hola, quiero información sobre Domus Brickell Center. Ref: GI-7K3F2Q')).toBe('GI-7K3F2Q');
-    expect(extractWhatsAppRef('buenas, me pasan precios?? ref gi-7k3f2q gracias')).toBe('GI-7K3F2Q');
+    expect(extractWhatsAppRef('Hola, quiero información sobre Domus Brickell Center. Ref: GI-7K3F2QPXM4HVD')).toBe('GI-7K3F2QPXM4HVD');
+    expect(extractWhatsAppRef('buenas, me pasan precios?? ref gi-7k3f2qpxm4hvd gracias')).toBe('GI-7K3F2QPXM4HVD');
     expect(extractWhatsAppRef('Hola, quiero precios')).toBeNull(); // sin referencia = sin origen identificable
     expect(extractWhatsAppRef('GI-7K3F2')).toBeNull();
+    expect(extractWhatsAppRef('Ref: GI-7K3F2Q')).toBeNull(); // referencia de 6: ya no es válida
     expect(extractWhatsAppRef(null)).toBeNull();
   });
 
   it('arma el mensaje con el activo y la referencia; sin activo conserva el texto actual', () => {
-    expect(buildWhatsAppMessage({ label: 'Domus Brickell Center', ref: 'GI-7K3F2Q' })).toBe(
-      'Hola, quiero información sobre Domus Brickell Center. Ref: GI-7K3F2Q',
+    expect(buildWhatsAppMessage({ label: 'Domus Brickell Center', ref: 'GI-7K3F2QPXM4HVD' })).toBe(
+      'Hola, quiero información sobre Domus Brickell Center. Ref: GI-7K3F2QPXM4HVD',
     );
-    expect(buildWhatsAppMessage({ ref: 'GI-7K3F2Q' })).toBe(`${DEFAULT_WHATSAPP_TEXT} Ref: GI-7K3F2Q`);
-    expect(buildWhatsAppMessage({ label: '   ', ref: 'GI-7K3F2Q' })).toBe(`${DEFAULT_WHATSAPP_TEXT} Ref: GI-7K3F2Q`);
+    expect(buildWhatsAppMessage({ ref: 'GI-7K3F2QPXM4HVD' })).toBe(`${DEFAULT_WHATSAPP_TEXT} Ref: GI-7K3F2QPXM4HVD`);
+    expect(buildWhatsAppMessage({ label: '   ', ref: 'GI-7K3F2QPXM4HVD' })).toBe(`${DEFAULT_WHATSAPP_TEXT} Ref: GI-7K3F2QPXM4HVD`);
   });
 
   it('limpia el nombre del activo (marcado, saltos de línea, largo)', () => {
@@ -89,9 +118,9 @@ describe('referencia de WhatsApp', () => {
 
     const other = 'https://wa.me/5491100000000?text=Hola';
     expect(buildWhatsAppHref(other, 'x')).toBe(other);
-    const href = buildWhatsAppHref(own, 'Hola, quiero información. Ref: GI-7K3F2Q');
+    const href = buildWhatsAppHref(own, 'Hola, quiero información. Ref: GI-7K3F2QPXM4HVD');
     expect(href.startsWith(`https://wa.me/${WHATSAPP_NUMBER}?text=`)).toBe(true);
-    expect(decodeURIComponent(href.split('text=')[1])).toBe('Hola, quiero información. Ref: GI-7K3F2Q');
+    expect(decodeURIComponent(href.split('text=')[1])).toBe('Hola, quiero información. Ref: GI-7K3F2QPXM4HVD');
     // idempotente: volver a prepararlo reemplaza el texto sin acumular parámetros
     expect(buildWhatsAppHref(href, 'otro texto')).toBe(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('otro texto')}`);
   });
@@ -128,11 +157,11 @@ describe('referencia por sesión y activo', () => {
 
   it('recuerda qué referencias ya se registraron (evita llamadas repetidas)', () => {
     const storage = memoryStorage();
-    expect(wasRefRegistered(storage, 'GI-7K3F2Q')).toBe(false);
-    markRefRegistered(storage, 'GI-7K3F2Q');
-    expect(wasRefRegistered(storage, 'GI-7K3F2Q')).toBe(true);
-    expect(wasRefRegistered(storage, 'GI-AAAAAA')).toBe(false);
-    expect(wasRefRegistered(null, 'GI-7K3F2Q')).toBe(false);
+    expect(wasRefRegistered(storage, 'GI-7K3F2QPXM4HVD')).toBe(false);
+    markRefRegistered(storage, 'GI-7K3F2QPXM4HVD');
+    expect(wasRefRegistered(storage, 'GI-7K3F2QPXM4HVD')).toBe(true);
+    expect(wasRefRegistered(storage, 'GI-AAAAAAAAAAAAA')).toBe(false);
+    expect(wasRefRegistered(null, 'GI-7K3F2QPXM4HVD')).toBe(false);
   });
 });
 
@@ -156,17 +185,17 @@ describe('sin datos personales hacia GA4 y Meta', () => {
   it('el evento click_whatsapp conserva la referencia como event_id y descarta teléfono y claves personales', async () => {
     const { stripPii } = await import('@/lib/analytics');
     const payload = stripPii({
-      event_id: 'GI-7K3F2Q',
+      event_id: 'GI-7K3F2QPXM4HVD',
       button_location: 'floating',
       button_text: 'WhatsApp',
       page_path: '/desarrollos/domus-brickell-center',
       whatsapp_number: '5491167240353',
       phone: '+54 9 11 6724-0353',
       email: 'ana@example.com',
-      message: 'Hola, quiero información. Ref: GI-7K3F2Q',
+      message: 'Hola, quiero información. Ref: GI-7K3F2QPXM4HVD',
       property_id: '236682',
     });
-    expect(payload).toMatchObject({ event_id: 'GI-7K3F2Q', button_location: 'floating', property_id: '236682' });
+    expect(payload).toMatchObject({ event_id: 'GI-7K3F2QPXM4HVD', button_location: 'floating', property_id: '236682' });
     for (const key of ['whatsapp_number', 'phone', 'email', 'message']) expect(payload).not.toHaveProperty(key);
   });
 
@@ -176,6 +205,7 @@ describe('sin datos personales hacia GA4 y Meta', () => {
     expect(joined).not.toContain('domus');
     // Dos referencias para el mismo activo y sesión distinta no se parecen (sin patrón derivable)
     expect(new Set(refs.map((r) => r.slice(3, 5))).size).toBeGreaterThan(50);
+    expect(refs.every((r) => !/^GI-(.){3}/.test(r))).toBe(true);
   });
 });
 

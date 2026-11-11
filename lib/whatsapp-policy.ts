@@ -9,3 +9,10 @@
 //
 // Cambiarlo es una decisión legal y de negocio: no cambiar sin aprobación expresa.
 export const WHATSAPP_CLICK_REQUIRES_CONSENT = true;
+
+// true (vigente): la atribución PUBLICITARIA del clic (UTM, campaña, conjunto, anuncio, ubicación,
+//        identificadores de clic, cookies de Meta, toques de atribución, sesión) se guarda SOLO con
+//        consentimiento de publicidad. Con consentimiento solo de analítica se guarda el registro
+//        básico (referencia, activo, página y estado de consentimiento), sin campaña.
+// false: se aplican las reglas generales de atribución (analítica permite UTM e IDs de campaña).
+export const WHATSAPP_ATTRIBUTION_REQUIRES_MARKETING_CONSENT = true;

@@ -1,19 +1,29 @@
 // ── Referencia técnica de WhatsApp (Ref) ─────────────────────────────────────
-// Referencia corta, aleatoria y NO personal que viaja dentro del mensaje preparado de WhatsApp
-// («… Ref: GI-7K3F2Q») y se registra en `lead_attribution` (event_id = Ref) al tocar el enlace.
+// Referencia aleatoria y NO personal que viaja dentro del mensaje preparado de WhatsApp
+// («… Ref: GI-7K3F2QPXM4HVD») y se registra en `lead_attribution` (event_id = Ref) al tocar el enlace.
 // Sirve para relacionar, más adelante, un mensaje RECIBIDO con el origen guardado (WhatsApp
 // Business Platform u otra integración autorizada). Un clic NO confirma que el mensaje se envió.
 //
+// Seguridad: 13 símbolos de un alfabeto de 32 = 65 bits de entropía, generados SIEMPRE con el
+// generador criptográfico del navegador (`crypto.getRandomValues`); no hay alternativa con
+// Math.random: si no existe, no se genera referencia y el enlace queda sin ella. No es adivinable
+// ni deriva del activo, la persona, la hora o la sesión.
+//
 // Una referencia por (sesión del navegador + activo): tocar varias veces el mismo botón no duplica
 // registros, y distintos activos de una misma visita tienen referencias distintas.
+//
+// IMPORTANTE: una referencia que NO se persistió (clic sin consentimiento, o clic que nunca se
+// registró) no permite recuperar después su origen: el servidor no tiene nada contra qué
+// compararla. Un mensaje que la traiga se tratará como «sin origen identificable».
 
 export const WHATSAPP_NUMBER = '5491167240353';
 export const WA_REF_PREFIX = 'GI-';
-// 32 símbolos sin I/O/0/1 (evitan confusiones al leer o dictar). 32^6 ≈ 1.000 millones de combinaciones.
+// 32 símbolos sin I/O/0/1 (evitan confusiones al leer o dictar): 5 bits por símbolo.
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const REF_LENGTH = 6;
-export const WA_REF_EXACT = /^GI-[A-HJ-NP-Z2-9]{6}$/;
-const WA_REF_IN_TEXT = /GI-[A-HJ-NP-Z2-9]{6}/;
+const REF_LENGTH = 13; // 13 × 5 bits = 65 bits (mínimo exigido: 64)
+export const WA_REF_ENTROPY_BITS = REF_LENGTH * 5;
+export const WA_REF_EXACT = /^GI-[A-HJ-NP-Z2-9]{13}$/;
+const WA_REF_IN_TEXT = /GI-[A-HJ-NP-Z2-9]{13}/;
 
 export const DEFAULT_WHATSAPP_TEXT = 'Hola, me interesa recibir asesoramiento inmobiliario.';
 const REF_STORAGE_KEY = 'gi_wa_ref';
@@ -21,9 +31,14 @@ const REGISTERED_STORAGE_KEY = 'gi_wa_reg';
 
 type RandomBytes = (length: number) => Uint8Array;
 
+// Solo el generador criptográfico. Sin `crypto.getRandomValues` lanza: nunca se degrada a Math.random.
 function browserRandomBytes(length: number): Uint8Array {
+  const webCrypto = globalThis.crypto;
+  if (!webCrypto || typeof webCrypto.getRandomValues !== 'function') {
+    throw new Error('crypto.getRandomValues no disponible: no se genera referencia');
+  }
   const bytes = new Uint8Array(length);
-  globalThis.crypto.getRandomValues(bytes);
+  webCrypto.getRandomValues(bytes);
   return bytes;
 }
 

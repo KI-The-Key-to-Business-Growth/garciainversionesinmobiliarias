@@ -5,19 +5,24 @@ import { checkRate } from '@/lib/security/ratelimit';
 import { recordLeadAttribution } from '@/lib/db/attribution';
 import { parseSubmitAttribution } from '@/lib/attribution';
 import { hasAnyConsent } from '@/lib/consent';
-import { WHATSAPP_CLICK_REQUIRES_CONSENT } from '@/lib/whatsapp-policy';
+import {
+  WHATSAPP_ATTRIBUTION_REQUIRES_MARKETING_CONSENT,
+  WHATSAPP_CLICK_REQUIRES_CONSENT,
+} from '@/lib/whatsapp-policy';
 import { buildLeadAttributionRow, resolveAssetKey, resolveAttributionAsset } from '@/lib/attribution-server';
 import { isValidWhatsAppRef } from '@/lib/whatsapp-ref';
 import { isProductionRuntime } from '@/lib/runtime-env';
 
 // ── Server Action: registro del clic en un enlace de WhatsApp ────────────────
 // Guarda UNA fila en `lead_attribution` (sin datos personales): lead_type `whatsapp_click`, event_id =
-// referencia «GI-XXXXXX» que viaja en el mensaje preparado. Un clic NO confirma que el mensaje se
+// referencia «GI-XXXXXXXXXXXXX» que viaja en el mensaje preparado. Un clic NO confirma que el mensaje se
 // haya enviado: el estado «mensaje recibido» queda vacío (NO MEDIDO TODAVÍA) hasta que una
 // integración autorizada lo confirme. La clave única de `event_id` evita duplicados.
 // Política vigente (lib/whatsapp-policy.ts): SIN consentimiento no se guarda nada; con consentimiento
-// la atribución de campaña respeta las reglas existentes (click ids y cookies de Meta solo con
-// publicidad). Copiar el enlace NO es un clic: el navegador solo prepara el texto.
+// solo de analítica se guarda el registro básico SIN atribución publicitaria; la atribución de campaña
+// (UTM, IDs de campaña, click ids, cookies de Meta) solo con consentimiento de publicidad. Copiar el
+// enlace NO es un clic: el navegador solo prepara el texto. Una referencia no persistida no permite
+// recuperar después su origen (ver lib/whatsapp-ref.ts).
 
 export type WhatsAppClickInput = {
   ref: string;
@@ -52,14 +57,17 @@ export async function recordWhatsAppClick(input: WhatsAppClickInput): Promise<Wh
     : { analytics: input.consent?.analytics === true, marketing: input.consent?.marketing === true };
   if (WHATSAPP_CLICK_REQUIRES_CONSENT && !hasAnyConsent(declaredConsent)) return { ok: true, skipped: 'no_consent' };
   const pageLocation = typeof input.page_location === 'string' ? input.page_location.slice(0, 500) : undefined;
-  const asset = resolveAttributionAsset({ propertyAppId: input.property_id, pageLocation, attribution });
+  // Política restrictiva: sin consentimiento de PUBLICIDAD no se guarda atribución publicitaria.
+  const storedAttribution =
+    WHATSAPP_ATTRIBUTION_REQUIRES_MARKETING_CONSENT && !declaredConsent.marketing ? null : attribution;
+  const asset = resolveAttributionAsset({ propertyAppId: input.property_id, pageLocation, attribution: storedAttribution });
 
   const row = buildLeadAttributionRow({
       eventId: ref,
       leadType: 'whatsapp_click',
       formName: 'WhatsApp',
       crmStatus: 'not_applicable',
-      attribution,
+      attribution: storedAttribution,
       asset,
       pageLocation,
       assetKey: resolveAssetKey({ asset, pageLocation }),

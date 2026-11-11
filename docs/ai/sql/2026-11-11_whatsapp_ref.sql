@@ -42,6 +42,11 @@ CREATE INDEX IF NOT EXISTS idx_lead_attribution_type_created ON lead_attribution
 --  * Errores: cada sentencia es idempotente (IF NOT EXISTS / DROP IF EXISTS); si se corta a la mitad, se
 --    puede volver a ejecutar completo. Si falta una columna, la web registra el error y sigue: el insert
 --    es best-effort con tope de 2 s y nunca rompe un formulario.
+--  * Referencias ampliadas: la referencia de WhatsApp pasó a «GI-» + 13 símbolos (16 caracteres, 65 bits).
+--    `event_id` es TEXT sin límite de largo (la web lo recorta a 100): compatible. Las referencias NO se
+--    reutilizan con los `event_id` de los formularios (prefijos distintos: «GI-…» frente a `form_submit_…`,
+--    `newsletter_…`), así que no pueden chocar con registros existentes. Ninguna fila existente se
+--    modifica ni se vuelve a escribir (hoy: 1 fila de prueba).
 --  * Formularios: no envían `asset_key` ni las columnas `wa_*` (hay un test que lo garantiza), así que no
 --    dependen de este SQL.
 --  * Índices: `idx_lead_attribution_asset` (parcial) y `idx_lead_attribution_type_created`. Con el volumen
