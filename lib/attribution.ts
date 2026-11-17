@@ -45,7 +45,8 @@ const MAX_CLICK_ID = 300;
 export function cleanValue(value: unknown, max = MAX_VALUE): string {
   if (typeof value !== 'string') return '';
   // Sin caracteres de control ni marcado: los valores terminan en un CRM y en una tabla.
-  return value.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, max);
+  // trim DESPUÉS de recortar: si no, el corte puede dejar un espacio al final (no idempotente).
+  return value.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, max).trim();
 }
 
 function cleanPath(value: unknown): string {

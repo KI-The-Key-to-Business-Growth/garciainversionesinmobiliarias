@@ -18,8 +18,16 @@ const SPAM_PHRASES = [
   'seo service',
   'seo services',
   'buy backlinks',
-  'crypto',
-  'casino',
+  // Auditoría 2026-11-17: «crypto» y «casino» sueltas descartaban en silencio leads legítimos (un
+  // inversor que paga con cripto, o «cerca del Casino» en Mar del Plata/Puerto Madero). En el texto
+  // libre se mantienen solo las frases típicas de spam; las palabras sueltas siguen valiendo para
+  // nombre/email/teléfono (IDENTITY_SPAM_WORDS), donde sí son una señal fuerte.
+  'crypto invest',
+  'crypto trading',
+  'buy crypto',
+  'bitcoin trading',
+  'online casino',
+  'casino online',
   'loan offer',
   'payday loan',
   'viagra',
@@ -31,7 +39,19 @@ const SPAM_PHRASES = [
   'make money fast',
 ];
 
+// Palabras que, si aparecen en los campos de IDENTIDAD (no en el mensaje), delatan una carga automática.
+const IDENTITY_SPAM_WORDS = ['crypto', 'casino'];
+
 export function isSpamContent(body: FormBody = {}, userAgent = ''): boolean {
+  const identity = [body.nombre, body.apellido, body.name, body.email, body.telefono, body.phone]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  if (IDENTITY_SPAM_WORDS.some((w) => identity.includes(w))) {
+    console.warn('[spam] Palabra de spam en los datos de contacto');
+    return true;
+  }
+
   const combined = [
     body.nombre,
     body.apellido,

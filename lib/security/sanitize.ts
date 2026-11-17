@@ -17,9 +17,14 @@ export function isValidEmail(email: unknown): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
 }
 
-// Validación básica de formato de teléfono — server.js:248-250
+// Validación básica de formato de teléfono — server.js:248-250.
+// Auditoría 2026-11-17: además de los caracteres permitidos se exigen entre 6 y 15 DÍGITOS reales
+// (E.164 admite hasta 15). Antes pasaban basura como «------», «((((((» o números de 16+ dígitos.
 export function isValidPhone(phone: unknown): boolean {
-  return /^[+\d\s\-().]{6,30}$/.test(String(phone || '').trim());
+  const value = String(phone || '').trim();
+  if (!/^[+\d\s\-().]{6,30}$/.test(value)) return false;
+  const digits = value.replace(/\D/g, '').length;
+  return digits >= 6 && digits <= 15;
 }
 
 // Longitudes máximas aceptadas por campo — server.js:239-245

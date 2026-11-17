@@ -116,12 +116,24 @@ export function listMeasurementCookies(cookieString: string): string[] {
 
 // Variantes de dominio con las que Google/Meta pudieron setear la cookie: host exacto y dominios
 // padre (`.garciainversionesinmobiliarias.com.ar`, `.com.ar` no, porque el navegador lo rechaza).
+// Segundos niveles comunes bajo un ccTLD de 2 letras (com.ar, org.ar, co.uk…): juntos forman un sufijo público.
+const SECOND_LEVEL_LABELS = new Set(['com', 'net', 'org', 'gob', 'gov', 'edu', 'mil', 'int', 'tur', 'co', 'ac']);
+function isPublicSuffixVariant(labels: string[]): boolean {
+  if (labels.length === 1) return true;
+  return labels.length === 2 && labels[1].length === 2 && SECOND_LEVEL_LABELS.has(labels[0]);
+}
+
 export function cookieDomainVariants(hostname: string): string[] {
   const host = String(hostname || '').toLowerCase().replace(/\.$/, '');
   const parts = host.split('.');
   const variants = new Set<string>(['']); // sin atributo Domain
   variants.add(host);
-  for (let i = 1; i < parts.length - 1; i++) variants.add('.' + parts.slice(i).join('.'));
+  for (let i = 1; i < parts.length - 1; i++) {
+    const candidate = '.' + parts.slice(i).join('.');
+    // Auditoría 2026-11-17: no se intenta borrar en un sufijo público (`.com.ar`, `.org.ar`, `.co.uk`…):
+    // el navegador lo rechaza (así lo decía este mismo comentario, pero el código lo incluía igual).
+    if (!isPublicSuffixVariant(parts.slice(i))) variants.add(candidate);
+  }
   return [...variants];
 }
 

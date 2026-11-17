@@ -16,6 +16,10 @@ import type {
   TwoclicsPropertyListItem,
   TwoclicsPropertyType,
   TwoclicsRegion,
+  TwoclicsAmenity,
+  TwoclicsCity,
+  TwoclicsNeighborhood,
+  TwoclicsState,
 } from '@/lib/2clics/types';
 
 function str(value: unknown): string {
@@ -29,6 +33,33 @@ function num(value: unknown): number | null {
     return Number.isFinite(n) ? n : null;
   }
   return null;
+}
+
+// Lista blanca para objetos de 2Clics que se copiaban enteros: se conservan solo las claves
+// conocidas y solo valores simples. Si la API agrega campos internos mañana, no llegan al público.
+// (Auditoría 2026-11-17; cubierto por tests/qa/twoclics.qa.test.ts.)
+function copyKnown<T>(value: unknown, keys: readonly string[]): T | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const out: Record<string, unknown> = {};
+  for (const key of keys) {
+    const v = (value as Record<string, unknown>)[key];
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') out[key] = v;
+  }
+  return out as T;
+}
+
+const PROPERTY_TYPE_KEYS = ['typeId', 'name', 'appId', 'group'] as const;
+const AMENITY_KEYS = ['amenitieId', 'name', 'appId', 'type'] as const;
+const DEV_CATALOG_KEYS = ['typeId', 'statusId', 'name', 'appId', 'mlId', 'zpId', 'apId'] as const;
+
+function adaptAmenities(value: unknown): TwoclicsAmenity[] {
+  return (Array.isArray(value) ? value : [])
+    .map((item) => copyKnown<TwoclicsAmenity>(item, AMENITY_KEYS))
+    .filter((item): item is TwoclicsAmenity => item !== null);
+}
+
+function adaptLocationPart<T>(value: unknown, idKey: string): T | undefined {
+  return copyKnown<T>(value, [idKey, 'name']) ?? undefined;
 }
 
 function boolOrNull(value: unknown): boolean | null {
@@ -131,9 +162,9 @@ export function adaptPublicProperty(
   const detail = property as TwoclicsPropertyDetail;
   const metadata = parsePublicMetadata(property.meta_data);
   const location = {
-    state: property.state,
-    city: property.city,
-    neighborhood: property.neighborhood,
+    state: adaptLocationPart<TwoclicsState>(property.state, 'stateId'),
+    city: adaptLocationPart<TwoclicsCity>(property.city, 'cityId'),
+    neighborhood: adaptLocationPart<TwoclicsNeighborhood>(property.neighborhood, 'neighborhoodId'),
   };
 
   return {
@@ -165,18 +196,17 @@ export function adaptPublicProperty(
     status: str(property.status),
     statusDiffusion: str(property.statusDiffusion),
     webListing: str(property.webListing),
-    propertyType: property.propertyType || null,
+    propertyType: copyKnown<TwoclicsPropertyType>(property.propertyType, PROPERTY_TYPE_KEYS),
     location,
     images: adaptImages(property.images),
-    amenities: Array.isArray(detail.amenities) ? detail.amenities : [],
+    amenities: adaptAmenities(detail.amenities),
     metadata,
     developmentParent: adaptDevelopmentParent(detail),
   };
 }
 
 function adaptPropertyType(value: TwoclicsDevelopmentPropertyRef['propertyType']): TwoclicsPropertyType | null {
-  if (!value || typeof value !== 'object') return null;
-  return value as TwoclicsPropertyType;
+  return copyKnown<TwoclicsPropertyType>(value, PROPERTY_TYPE_KEYS);
 }
 
 export function adaptDevelopmentUnit(unit: TwoclicsDevelopmentPropertyRef): PublicDevelopmentUnit {
@@ -203,9 +233,9 @@ export function adaptPublicDevelopment(
   const detail = development as TwoclicsDevelopmentDetail;
   const metadata = parsePublicMetadata(development.meta_data);
   const location = {
-    state: development.state,
-    city: development.city,
-    neighborhood: development.neighborhood,
+    state: adaptLocationPart<TwoclicsState>(development.state, 'stateId'),
+    city: adaptLocationPart<TwoclicsCity>(development.city, 'cityId'),
+    neighborhood: adaptLocationPart<TwoclicsNeighborhood>(development.neighborhood, 'neighborhoodId'),
   };
   const title = str(development.title) ||
     metadata.title ||
@@ -226,11 +256,11 @@ export function adaptPublicDevelopment(
     url: str(development.url),
     description: metadata.description || '',
     location,
-    type: development.type || null,
-    status: development.status || null,
+    type: copyKnown<NonNullable<PublicDevelopment['type']>>(development.type, DEV_CATALOG_KEYS),
+    status: copyKnown<NonNullable<PublicDevelopment['status']>>(development.status, DEV_CATALOG_KEYS),
     images: adaptImages(development.images),
     plans: adaptImages(detail.plans),
-    amenities: Array.isArray(detail.amenities) ? detail.amenities : [],
+    amenities: adaptAmenities(detail.amenities),
     metadata,
     properties: (Array.isArray(development.properties) ? development.properties : []).map(
       adaptDevelopmentUnit,

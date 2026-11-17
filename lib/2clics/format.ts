@@ -107,7 +107,9 @@ export function formatPrice(
   hidePrice = false,
 ): string {
   if (hidePrice) return 'Consultar precio';
-  if (price === null || !Number.isFinite(price)) return '';
+  // Auditoría 2026-11-17: un precio 0 (o negativo) es un dato sin cargar en 2Clics, no un precio:
+  // antes se publicaba como «U$D 0».
+  if (price === null || !Number.isFinite(price) || price <= 0) return '';
   const formatted = new Intl.NumberFormat('es-AR', {
     maximumFractionDigits: 0,
   }).format(price);

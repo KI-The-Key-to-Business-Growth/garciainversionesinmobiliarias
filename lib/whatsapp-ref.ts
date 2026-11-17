@@ -69,7 +69,8 @@ export function cleanAssetLabel(label: string | null | undefined): string {
     .replace(/[\u0000-\u001f\u007f<>]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 70);
+    .slice(0, 70)
+    .trim();
 }
 
 export function buildWhatsAppMessage(input: { label?: string | null; ref: string }): string {
