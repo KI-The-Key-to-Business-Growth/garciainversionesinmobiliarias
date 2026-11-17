@@ -9,7 +9,7 @@ export default function Why() {
             <span className="eyebrow">Diferencial</span>
             <h2 className="section-title">¿Por qué García Inversiones?</h2>
             <p className="section-text">
-              Porque no mostramos todo. Mostramos lo que tiene sentido.
+              Compra, venta, alquiler e inversión, con criterio y acompañamiento.
             </p>
           </div>
           <div className="why-points">

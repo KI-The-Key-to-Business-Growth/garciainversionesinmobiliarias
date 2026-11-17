@@ -14,7 +14,7 @@ type Stage = { title: string; paragraphs: string[] };
 
 const STAGES: Stage[] = [
   {
-    title: 'Entendemos la propiedad y el objetivo',
+    title: 'Conocemos la propiedad y el objetivo',
     paragraphs: [
       'Conocemos el inmueble, sus características y el contexto de la venta. También entendemos qué espera lograr el propietario y si existen tiempos o condiciones que debamos considerar.',
     ],
@@ -42,8 +42,7 @@ const STAGES: Stage[] = [
   {
     title: 'Negociamos y acompañamos la operación',
     paragraphs: [
-      'Cuando aparece una propuesta concreta, acompañamos la conversación, la negociación y las distintas etapas necesarias para avanzar hacia la operación.',
-      'Nuestro trabajo no termina cuando alguien consulta.',
+      'Cuando aparece una propuesta concreta, acompañamos la conversación, la negociación y las distintas etapas necesarias para avanzar hacia el cierre.',
     ],
   },
 ];
@@ -51,7 +50,7 @@ const STAGES: Stage[] = [
 const STRATEGY_FACTORS = [
   { label: 'Propiedad', text: 'Qué tiene, cómo está, dónde se encuentra y qué la diferencia.' },
   { label: 'Mercado', text: 'Con qué alternativas compite y qué está ocurriendo en ese segmento.' },
-  { label: 'Objetivo', text: 'Qué busca conseguir el propietario y en qué contexto.' },
+  { label: 'Objetivo', text: 'Qué busca lograr el propietario y en qué plazo le gustaría vender.' },
   { label: 'Presentación', text: 'Cómo hacemos visible lo que realmente merece ser mostrado.' },
 ];
 
@@ -61,7 +60,7 @@ const INCLUDED = [
   'Preparación y comunicación según cada inmueble.',
   'Publicación y difusión en los canales correspondientes.',
   'Gestión de consultas, visitas y seguimiento.',
-  'Negociación y acompañamiento de la operación.',
+  'Negociación y acompañamiento de la operación hasta su cierre.',
 ];
 
 function stageNumber(index: number): string {
@@ -88,7 +87,7 @@ export default function SellView({ assets = {} }: { assets?: ResolvedSellAssets 
       {/* 1. Hero */}
       <section className="twoclics-catalog-hero twoclics-catalog-hero--compact sell-hero">
         <div className="container">
-          <h1>Vender una propiedad empieza por entender qué necesitás lograr.</h1>
+          <h1>Vender una propiedad.</h1>
           <p>
             Analizamos la propiedad, su contexto y tu objetivo antes de definir cómo conviene
             presentarla y salir al mercado.
@@ -101,28 +100,14 @@ export default function SellView({ assets = {} }: { assets?: ResolvedSellAssets 
         </div>
       </section>
 
-      {/* 2. Antes de publicar */}
-      <section className="sell-block">
-        <div className="container">
-          <div className="sell-lead reveal">
-            <h2>No empezamos por el aviso.</h2>
-            <div className="sell-lead-copy">
-              <p>
-                Cada venta tiene un contexto distinto. Antes de definir un precio o publicar una
-                propiedad, buscamos entender qué se está vendiendo, cuál es la situación del
-                propietario y qué espera conseguir con la operación.
-              </p>
-              <p>
-                A partir de eso analizamos cómo posicionarla, cómo presentarla y qué estrategia
-                comercial puede tener más sentido.
-              </p>
-            </div>
-          </div>
-          {propertyPhoto ? (
+      {/* 2. (retirado 17/11/2026 a pedido de Fabiana: «No empezamos por el aviso», redundante) */}
+      {propertyPhoto ? (
+        <section className="sell-block">
+          <div className="container">
             <SellPhoto asset={propertyPhoto} className="sell-photo--wide reveal" sizes="(max-width: 780px) 100vw, 1240px" />
-          ) : null}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : null}
 
       {/* 3. Cómo trabajamos — grilla 2 + 2 + 1; en mobile, carril horizontal */}
       <section className="sell-block sell-block--process">
@@ -178,18 +163,7 @@ export default function SellView({ assets = {} }: { assets?: ResolvedSellAssets 
                 La presentación no reemplaza al producto ni al precio, pero puede ayudar a que una
                 persona entienda mejor qué está viendo.
               </p>
-              <p>
-                Según el inmueble y la estrategia definida, García puede desarrollar fotografía,
-                video, tomas aéreas y piezas de comunicación para construir una presentación
-                coherente en todos los canales.
-              </p>
             </div>
-            <blockquote className="sell-quote">
-              <p>
-                No producimos contenido para hacer que una propiedad parezca algo que no es. Lo
-                usamos para mostrarla mejor.
-              </p>
-            </blockquote>
           </div>
           {productionPhotos.length ? (
             <div className={`sell-production-media sell-production-media--${productionPhotos.length} reveal`}>
@@ -225,21 +199,6 @@ export default function SellView({ assets = {} }: { assets?: ResolvedSellAssets 
         </div>
       </section>
 
-      {/* 7. Transparencia — bloque navy */}
-      <section className="sell-statement">
-        <div className="container sell-statement-inner reveal">
-          <h2>Información clara para tomar decisiones durante todo el proceso.</h2>
-          <p>
-            No podemos prometer cuánto va a tardar una venta ni asegurar de antemano cuál será el
-            resultado final.
-          </p>
-          <p className="sell-statement-strong">
-            Sí podemos analizar, explicar lo que estamos viendo, trabajar la presentación,
-            gestionar el interés y acompañar cada decisión con transparencia.
-          </p>
-        </div>
-      </section>
-
       {/* 8. Qué incluye */}
       <section className="sell-block">
         <div className="container">
@@ -261,10 +220,6 @@ export default function SellView({ assets = {} }: { assets?: ResolvedSellAssets 
           <div className="cta-band">
             <div>
               <h2>¿Estás pensando en vender una propiedad?</h2>
-              <p>
-                Conversemos primero sobre la propiedad y tu situación. Después podremos analizar
-                cuál puede ser la mejor forma de llevarla al mercado.
-              </p>
             </div>
             <Link className="btn btn-primary" href={CONTACT_HREF}>
               Hablar con García

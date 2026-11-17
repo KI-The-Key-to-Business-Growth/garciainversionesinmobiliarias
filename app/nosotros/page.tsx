@@ -23,7 +23,7 @@ export default function NosotrosPage() {
       <main>
         <section className="twoclics-catalog-hero twoclics-catalog-hero--compact">
           <div className="container">
-            <h1>Conocé García</h1>
+            <h1>Conocé García Inversiones Inmobiliarias</h1>
             <p>Quiénes somos, nuestra forma de trabajar y los mercados en los que operamos hoy.</p>
           </div>
         </section>

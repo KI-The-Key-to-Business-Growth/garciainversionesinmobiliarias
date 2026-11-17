@@ -12,7 +12,7 @@ import type { PublicImage } from '@/lib/2clics/types';
 
 export const metadata: Metadata = {
   title: 'Invertir | García Inversiones Inmobiliarias',
-  description: 'Invertir empieza por entender qué estás buscando — formas de participar en real estate que García tiene efectivamente disponibles hoy.',
+  description: 'Invertir empieza por entender al inversor — formas de participar en real estate que García tiene efectivamente disponibles hoy.',
   alternates: { canonical: '/invertir' },
 };
 
@@ -97,14 +97,14 @@ const COMPARISON_ROWS = [
 // D. Cómo analiza García una inversión — antes "No todas las inversiones son iguales" (4 puntos);
 // ampliado a 6 factores concretos, con un mensaje de cierre conceptual.
 const HOW_GARCIA_ANALYZES = [
-  { label: 'Objetivo', text: 'Qué busca la persona: crecimiento patrimonial, renta, diversificación o resguardo.' },
+  { label: 'Objetivo', text: 'Qué busca el inversor: crecimiento patrimonial, renta, diversificación o resguardo.' },
   {
     label: 'Capital y exposición',
     text: 'Cuánto capital puede destinarse y qué nivel de exposición resulta razonable dentro de su patrimonio.',
   },
   {
     label: 'Horizonte y necesidad de liquidez',
-    text: 'Cuánto tiempo puede permanecer comprometido el capital y qué disponibilidad necesita la persona.',
+    text: 'Cuánto tiempo puede permanecer comprometido el capital y qué disponibilidad necesita el inversor.',
   },
   {
     label: 'Mercado, microubicación y producto',
@@ -158,11 +158,10 @@ export default async function InvertirPage() {
       <main>
         <section className="twoclics-catalog-hero twoclics-catalog-hero--compact">
           <div className="container">
-            <h1>Invertir empieza por entender qué estás buscando.</h1>
+            <h1>Invertir empieza por entender al inversor.</h1>
             <p>
-              No todas las oportunidades inmobiliarias generan valor de la misma manera. Analizamos
-              objetivo, horizonte, liquidez, riesgo y características de cada alternativa antes de
-              recomendarla.
+              No todas las oportunidades inmobiliarias generan valor de la misma manera. Por eso
+              analizamos lo que el inversor está buscando antes de ofrecerle una oportunidad.
             </p>
           </div>
         </section>
@@ -172,11 +171,10 @@ export default async function InvertirPage() {
           <div className="container project-editorial-text-inner">
             <h2>Invertir en real estate no significa siempre comprar una propiedad.</h2>
             <p>
-              Existen distintas formas de obtener exposición al real estate. Algunas implican
-              adquirir un inmueble terminado; otras, comprar dentro de un proyecto en desarrollo; y
-              otras permiten participar económicamente en la creación de valor del propio
-              desarrollo. Cada alternativa cambia el horizonte, la liquidez, los riesgos y la forma
-              en que podría generarse el resultado.
+              Existen distintas formas de participar en real estate: adquirir un inmueble
+              terminado, comprar una unidad dentro de un desarrollo o participar económicamente en
+              un proyecto. Cada alternativa cambia los plazos, la disponibilidad del capital, los
+              riesgos y la forma en que puede generarse el resultado.
             </p>
           </div>
         </section>
@@ -244,8 +242,8 @@ export default async function InvertirPage() {
               ))}
             </div>
             <p className="invest-analysis-note">
-              No buscamos encajar a todos los clientes en una misma inversión. Primero entendemos
-              qué necesita la persona y después analizamos qué alternativas tienen sentido.
+              Primero entendemos qué necesita el inversor, qué busca y qué le interesa, y después
+              analizamos qué alternativas tienen sentido.
             </p>
           </div>
         </section>
@@ -286,7 +284,7 @@ export default async function InvertirPage() {
           <div className="container">
             <div className="cta-band">
               <div>
-                <h2>Antes de mirar una oportunidad, miramos a la persona.</h2>
+                <h2>Antes de mirar una oportunidad, miramos al inversor.</h2>
                 <p>
                   Una inversión puede ser interesante y, al mismo tiempo, no ser adecuada para
                   determinado objetivo. Nuestro trabajo es entender esa diferencia antes de avanzar.

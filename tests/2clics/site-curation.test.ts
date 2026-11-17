@@ -1227,7 +1227,8 @@ describe('/invertir (índice) — refuerzo educativo (decimoquinta pasada)', () 
     expect(invertirSource).toContain('Mercado, microubicación y producto');
     expect(invertirSource).toContain('Riesgo y variables de ejecución');
     expect(invertirSource).toContain('Estrategia de salida');
-    expect(invertirSource).toContain('No buscamos encajar a todos los clientes en una misma inversión');
+    expect(invertirSource).toContain('Primero entendemos qué necesita el inversor, qué busca y qué le interesa');
+    expect(invertirSource).not.toContain('encajar a todos los clientes');
     expect(invertirSource).not.toContain('Real estate con criterio');
   });
 
@@ -1244,8 +1245,8 @@ describe('/invertir (índice) — refuerzo educativo (decimoquinta pasada)', () 
   });
 
   it('mantiene el Hero actual (eyebrow Invertir, H1 sin cambios) y el CTA final "Hablar sobre tu objetivo"', () => {
-    expect(invertirSource).toContain('Invertir empieza por entender qué estás buscando.');
-    expect(invertirSource).toContain('Antes de mirar una oportunidad, miramos a la persona.');
+    expect(invertirSource).toContain('Invertir empieza por entender al inversor.');
+    expect(invertirSource).toContain('Antes de mirar una oportunidad, miramos al inversor.');
     expect(invertirSource).toContain('Hablar sobre tu objetivo');
   });
 });
@@ -3184,7 +3185,7 @@ describe('V2.1 — /invertir', () => {
   it('/invertir no repite el eyebrow "Invertir" sobre el H1', () => {
     const source = readFileSync('app/invertir/page.tsx', 'utf8');
     expect(source).not.toContain('<p className="eyebrow">Invertir</p>');
-    expect(source).toContain('Invertir empieza por entender qué estás buscando.');
+    expect(source).toContain('Invertir empieza por entender al inversor.');
   });
 
   it('445 N Shore mantiene su copy, datos, riesgos y condiciones', () => {
@@ -3224,7 +3225,7 @@ describe('V2.2 — /vender', () => {
     const hero = main.slice(0, main.indexOf('</section>'));
     expect(hero).not.toContain('class="eyebrow"');
     expect(main).not.toMatch(/class="eyebrow"[^>]*>\s*Vender\s*</i);
-    expect(hero).toContain('<h1>Vender una propiedad empieza por entender qué necesitás lograr.</h1>');
+    expect(hero).toContain('<h1>Vender una propiedad.</h1>');
     expect(hero).toContain('href="/contacto"');
     expect(hero).toContain('Quiero conversar sobre mi propiedad');
     expect(main).not.toContain('Vender tu propiedad');
@@ -3233,7 +3234,7 @@ describe('V2.2 — /vender', () => {
   it('Cómo trabajamos: exactamente las 5 etapas nuevas, en orden (el proceso viejo de 6 pasos no aparece)', async () => {
     const main = mainOf(await renderVender());
     const titles = [
-      'Entendemos la propiedad y el objetivo',
+      'Conocemos la propiedad y el objetivo',
       'Analizamos el mercado y definimos el posicionamiento',
       'Preparamos la propiedad para comunicarla',
       'Salimos al mercado y gestionamos el interés',
@@ -3258,10 +3259,13 @@ describe('V2.2 — /vender', () => {
       expect(main).toContain(`<dt>${label}</dt>`);
     }
     expect(main).toContain('Mostrar bien una propiedad también forma parte de venderla.');
-    expect(main).toContain('Según el inmueble y la estrategia definida');
-    expect(main).toContain('No producimos contenido para hacer que una propiedad parezca algo que no es. Lo usamos para mostrarla mejor.');
+    // Retirados el 17/11/2026 a pedido de Fabiana (redundantes con «Cómo trabajamos»).
+    expect(main).not.toContain('Según el inmueble y la estrategia definida');
+    expect(main).not.toContain('No producimos contenido para hacer que una propiedad parezca algo que no es');
+    expect(main).not.toContain('No empezamos por el aviso');
     expect(main).toContain('Cada consulta necesita seguimiento.');
-    expect(main).toContain('Información clara para tomar decisiones durante todo el proceso.');
+    expect(main).not.toContain('Información clara para tomar decisiones durante todo el proceso.');
+    expect(main).not.toContain('Nuestro trabajo no termina cuando alguien consulta');
     const included = main.slice(main.indexOf('class="sell-included'), main.indexOf('</ul>', main.indexOf('class="sell-included')));
     expect((included.match(/<li>/g) || []).length).toBe(6);
   });
