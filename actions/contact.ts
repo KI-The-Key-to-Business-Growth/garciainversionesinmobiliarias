@@ -18,7 +18,7 @@ import { recordLeadAttribution } from '@/lib/db/attribution';
 import { parseSubmitAttribution } from '@/lib/attribution';
 import { buildAttributionNote, buildLeadAttributionRow, resolveAttributionAsset } from '@/lib/attribution-server';
 import { sendEmail } from '@/lib/resend';
-import { createEventId } from '@/lib/tracking';
+import { safeEventId } from '@/lib/tracking';
 import { captureError } from '@/lib/observability';
 import { isProductionRuntime, NON_PRODUCTION_SUBMISSION_MESSAGE } from '@/lib/runtime-env';
 
@@ -122,7 +122,7 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
   const turnstile = await verifyTurnstileResult(turnstileToken, ip);
   if (turnstile !== 'ok') return { ok: false, message: turnstileFailureMessage(turnstile) };
 
-  const eventId = body.event_id || createEventId('lead');
+  const eventId = safeEventId(body.event_id, 'lead');
   const leadType = 'consulta_general';
   const crmRef = `general:${eventId}`;
 
@@ -134,7 +134,7 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
 
   // Atribución (solo si el visitante dio consentimiento; validada en el servidor, sin datos personales).
   const attribution = parseSubmitAttribution(body.attribution);
-  const asset = resolveAttributionAsset({ attribution, pageLocation: body.page_location });
+  const asset = resolveAttributionAsset({ attribution, pageLocation: typeof body.page_location === 'string' ? body.page_location.slice(0, 500) : undefined });
 
   // ── 2Clics: único destino comercial. Sin reintentos automáticos (evita duplicar negocios). ──
   const outcome = await sendGeneralInquiry(
@@ -144,7 +144,7 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
       email: finalEmail,
       message: finalMessage,
       motivo: motivoVal,
-      pageLocation: body.page_location,
+      pageLocation: typeof body.page_location === 'string' ? body.page_location.slice(0, 500) : undefined,
       eventId,
       attributionNote: buildAttributionNote(attribution, asset),
     }),
@@ -159,7 +159,7 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
       crmStatus: outcome.status,
       attribution,
       asset,
-      pageLocation: body.page_location,
+      pageLocation: typeof body.page_location === 'string' ? body.page_location.slice(0, 500) : undefined,
     }),
   );
 
@@ -200,7 +200,7 @@ export async function submitContact(formData: FormData): Promise<ActionResult> {
       <b>Teléfono:</b> ${escapeHtml(finalPhone)}<br>
       <b>Motivo:</b> ${escapeHtml(motivoVal || '(no indicado)')}<br>
       <b>Mensaje:</b> ${escapeHtml(finalMessage || '(sin mensaje)')}</p>
-      <p style="font-family:Arial;color:#999;font-size:12px">event_id: ${escapeHtml(eventId)} · página: ${escapeHtml(String(body.page_location || ''))}</p>`,
+      <p style="font-family:Arial;color:#999;font-size:12px">event_id: ${escapeHtml(eventId)} · página: ${escapeHtml(String(body.page_location || '').slice(0, 500))}</p>`,
   });
 
   await safeLog({

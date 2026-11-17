@@ -11,7 +11,7 @@ import { sendEmail } from '@/lib/resend';
 import { recordLeadAttribution } from '@/lib/db/attribution';
 import { parseSubmitAttribution } from '@/lib/attribution';
 import { buildLeadAttributionRow, resolveAttributionAsset } from '@/lib/attribution-server';
-import { createEventId } from '@/lib/tracking';
+import { safeEventId } from '@/lib/tracking';
 import { captureError } from '@/lib/observability';
 import { isProductionRuntime, NON_PRODUCTION_SUBMISSION_MESSAGE } from '@/lib/runtime-env';
 import type { ActionResult } from '@/actions/contact';
@@ -61,7 +61,7 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
   const turnstile = await verifyTurnstileResult(turnstileToken, ip);
   if (turnstile !== 'ok') return { ok: false, message: turnstileFailureMessage(turnstile) };
 
-  const eventId = body.event_id || createEventId('newsletter');
+  const eventId = safeEventId(body.event_id, 'newsletter');
 
   // Preview/Development comparten Supabase y Resend con producción: no escribir ni enviar.
   if (!isProductionRuntime()) {
@@ -80,7 +80,7 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
   try {
     const result = await dbInsertNewsletter({
       email,
-      origen: String(body.page_location || '').slice(0, 500),
+      origen: String(body.page_location || '').slice(0, 500).slice(0, 500),
       utm_source: utmSource,
       utm_medium: utmMedium,
       utm_campaign: utmCampaign,
@@ -104,8 +104,8 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
       formName: 'Newsletter',
       crmStatus: 'not_applicable',
       attribution,
-      asset: resolveAttributionAsset({ pageLocation: body.page_location, attribution }),
-      pageLocation: body.page_location,
+      asset: resolveAttributionAsset({ pageLocation: typeof body.page_location === 'string' ? body.page_location.slice(0, 500) : undefined, attribution }),
+      pageLocation: typeof body.page_location === 'string' ? body.page_location.slice(0, 500) : undefined,
     }),
   );
 
@@ -117,7 +117,7 @@ export async function submitNewsletter(formData: FormData): Promise<ActionResult
   const nlSource = escapeHtml(utmSource);
   const nlMedium = escapeHtml(utmMedium);
   const nlCampaign = escapeHtml(utmCampaign);
-  const nlPage = escapeHtml(body.page_location || '');
+  const nlPage = escapeHtml(String(body.page_location || '').slice(0, 500));
   const nlDateStr = new Date().toLocaleString('es-AR', {
     timeZone: 'America/Argentina/Buenos_Aires',
   });

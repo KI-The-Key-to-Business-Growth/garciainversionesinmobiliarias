@@ -37,3 +37,9 @@ export function pickTrackingFields(body: TrackingBody = {}): Record<string, unkn
 export function createEventId(prefix = 'server'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
+
+// Auditoría 2026-11-17: el event_id que manda el navegador se usa como clave de deduplicación y
+// se guarda/envía a terceros. Solo se acepta con el formato que generamos nosotros; si no, se crea uno.
+export function safeEventId(value: unknown, prefix = 'server'): string {
+  return typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,100}$/.test(value) ? value : createEventId(prefix);
+}

@@ -11,13 +11,17 @@ const HEADERS = securityHeaders();
 
 function allowedOrigins(): string[] {
   const base = (process.env.PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
-  const wwwVariant = base.replace('https://', 'https://www.');
+  // Auditoría 2026-11-17: antes siempre se anteponía "www." (si la base ya lo traía, quedaba
+  // "https://www.www..."). Ahora se permiten ambas variantes: con y sin www.
+  const withWww = base.replace(/^https:\/\/(?!www\.)/, 'https://www.');
+  const withoutWww = base.replace(/^https:\/\/www\./, 'https://');
   return [
     base,
-    wwwVariant,
+    withWww,
+    withoutWww,
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-    'http://localhost:3000',
-    'http://localhost:3001',
+    // Orígenes locales solo fuera de producción.
+    ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:3000', 'http://localhost:3001']),
   ].filter(Boolean) as string[];
 }
 
