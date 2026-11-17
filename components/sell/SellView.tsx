@@ -153,27 +153,19 @@ export default function SellView({ assets = {} }: { assets?: ResolvedSellAssets 
         </div>
       </section>
 
-      {/* 5. Producción y presentación */}
-      <section className={`sell-block sell-block--production${productionPhotos.length ? ' has-photos' : ''}`}>
-        <div className="container">
-          <div className="sell-production reveal">
-            <div className="sell-production-copy">
-              <h2>Mostrar bien una propiedad también forma parte de venderla.</h2>
-              <p>
-                La presentación no reemplaza al producto ni al precio, pero puede ayudar a que una
-                persona entienda mejor qué está viendo.
-              </p>
-            </div>
-          </div>
-          {productionPhotos.length ? (
+      {/* 5. (retirado el 17/11/2026 a pedido de Fabiana: el texto «Mostrar bien una propiedad también
+          forma parte de venderla» quedaba suelto, sin contexto). Solo se muestran las fotos si existen. */}
+      {productionPhotos.length ? (
+        <section className="sell-block sell-block--production has-photos">
+          <div className="container">
             <div className={`sell-production-media sell-production-media--${productionPhotos.length} reveal`}>
               {productionPhotos.map((asset) => (
                 <SellPhoto key={asset.src} asset={asset} className="sell-photo--production" sizes="(max-width: 780px) 100vw, 620px" />
               ))}
             </div>
-          ) : null}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : null}
 
       {/* 6. Gestión comercial */}
       <section className="sell-block">

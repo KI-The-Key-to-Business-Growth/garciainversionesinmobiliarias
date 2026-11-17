@@ -284,10 +284,10 @@ export default async function InvertirPage() {
           <div className="container">
             <div className="cta-band">
               <div>
-                <h2>Antes de mirar una oportunidad, miramos al inversor.</h2>
+                <h2>Antes de mirar una oportunidad, queremos conocerte.</h2>
                 <p>
-                  Una inversión puede ser interesante y, al mismo tiempo, no ser adecuada para
-                  determinado objetivo. Nuestro trabajo es entender esa diferencia antes de avanzar.
+                  Una inversión puede ser interesante y, al mismo tiempo, no ser adecuada para tu
+                  objetivo. Nuestro trabajo es entender esa diferencia antes de avanzar.
                 </p>
               </div>
               <Link className="btn btn-primary" href="/contacto">

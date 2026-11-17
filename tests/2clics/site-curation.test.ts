@@ -1246,7 +1246,7 @@ describe('/invertir (índice) — refuerzo educativo (decimoquinta pasada)', () 
 
   it('mantiene el Hero actual (eyebrow Invertir, H1 sin cambios) y el CTA final "Hablar sobre tu objetivo"', () => {
     expect(invertirSource).toContain('Invertir empieza por entender al inversor.');
-    expect(invertirSource).toContain('Antes de mirar una oportunidad, miramos al inversor.');
+    expect(invertirSource).toContain('Antes de mirar una oportunidad, queremos conocerte.');
     expect(invertirSource).toContain('Hablar sobre tu objetivo');
   });
 });
@@ -3258,7 +3258,8 @@ describe('V2.2 — /vender', () => {
     for (const label of ['Propiedad', 'Mercado', 'Objetivo', 'Presentación']) {
       expect(main).toContain(`<dt>${label}</dt>`);
     }
-    expect(main).toContain('Mostrar bien una propiedad también forma parte de venderla.');
+    // Retirado el 17/11/2026 a pedido de Fabiana (quedaba suelto, sin contexto).
+    expect(main).not.toContain('Mostrar bien una propiedad también forma parte de venderla');
     // Retirados el 17/11/2026 a pedido de Fabiana (redundantes con «Cómo trabajamos»).
     expect(main).not.toContain('Según el inmueble y la estrategia definida');
     expect(main).not.toContain('No producimos contenido para hacer que una propiedad parezca algo que no es');
