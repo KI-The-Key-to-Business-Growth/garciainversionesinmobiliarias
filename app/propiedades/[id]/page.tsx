@@ -8,6 +8,7 @@ import PropertyDetailView from '@/components/properties/PropertyDetailView';
 import { formatPublicLocation } from '@/lib/2clics/format';
 import { getPublicPropertyById, getRelatedPublicProperties } from '@/lib/2clics/listings';
 import { buildShareMetadata } from '@/lib/share-metadata';
+import { buildPropertyJsonLd, serializeJsonLd } from '@/lib/seo-jsonld';
 import {
   getDevelopmentForPropertyId,
   getInvestmentOpportunityByPropertyId,
@@ -73,11 +74,16 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
     ? await getRelatedPublicProperties(property, 8, { excludePropertyIds: getMasterCatalogExcludedPropertyIds() })
     : [];
 
+  const listingJsonLd = property ? buildPropertyJsonLd(property) : null;
+
   return (
     <>
       <main>
         {property ? (
           <>
+            {listingJsonLd ? (
+              <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(listingJsonLd) }} />
+            ) : null}
             <PropertyViewTracker
               contentType="property"
               propertyId={property.propertyId}

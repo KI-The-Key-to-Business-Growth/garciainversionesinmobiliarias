@@ -9,7 +9,8 @@ import Why from '@/components/sections/Why';
 
 export const metadata: Metadata = {
   title: 'Nosotros | García Inversiones Inmobiliarias',
-  description: 'Quiénes somos, cómo trabajamos y en qué mercados operamos hoy.',
+  description:
+    'García Inversiones Inmobiliarias: consultora boutique de real estate con propiedades seleccionadas y asesoramiento personalizado en Buenos Aires y Miami.',
   alternates: { canonical: '/nosotros' },
 };
 

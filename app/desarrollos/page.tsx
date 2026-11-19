@@ -11,7 +11,8 @@ import type { CuratedEntry } from '@/lib/desarrollos';
 
 export const metadata: Metadata = {
   title: 'Desarrollos | García Inversiones Inmobiliarias',
-  description: 'Proyectos seleccionados por García en sus mercados activos.',
+  description:
+    'Desarrollos seleccionados en Miami y Buenos Aires: Domus Brickell Center, Benavídez Village, Faena y Pacheco Central. Consultá con un asesor.',
   alternates: { canonical: '/desarrollos' },
 };
 

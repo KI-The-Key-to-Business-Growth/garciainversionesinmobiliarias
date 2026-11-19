@@ -22,36 +22,38 @@ export type DevelopmentAssetSlot = {
   kind: EditorialAssetKind;
   // De dónde sale el archivo (para quien lo incorpore al repo).
   source: string;
+  // Texto alternativo (SEO y accesibilidad): describe lo que muestra la imagen, sin promesas.
+  alt?: string;
 };
 
-export type ResolvedEditorialAsset = { src: string; kind: EditorialAssetKind };
+export type ResolvedEditorialAsset = { src: string; kind: EditorialAssetKind; alt?: string };
 export type ResolvedEditorialAssets = Record<string, ResolvedEditorialAsset[]>;
 
 export const DEVELOPMENT_ASSET_SLOTS: Record<string, DevelopmentAssetSlot[]> = {
   'benavidez-village': [
-    { target: 'hero', file: 'hero.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — render diurno de fachada/conjunto con piscina' },
-    { target: 'proyecto', file: 'exterior.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — render nocturno/dusk de fachada' },
-    { target: 'residencias', file: 'vivienda-interior.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — interior terminado (cocina/living)' },
-    { target: 'interiores', file: 'dormitorio.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — dormitorio' },
-    { target: 'vida-en-el-conjunto', file: 'amenities.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — render con piscina + conjunto' },
-    { target: 'masterplan', file: 'masterplan.jpg', kind: 'plan', source: 'New Unidades Benavidez Village.pdf — masterplan general' },
+    { target: 'hero', file: 'hero.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — render diurno de fachada/conjunto con piscina', alt: 'Render del exterior de Benavídez Village: viviendas de dos plantas con jardín y piscina' },
+    { target: 'proyecto', file: 'exterior.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — render nocturno/dusk de fachada', alt: 'Render de la fachada de una vivienda de Benavídez Village, con ventanales y balcón' },
+    { target: 'residencias', file: 'vivienda-interior.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — interior terminado (cocina/living)', alt: 'Render del interior de una vivienda de Benavídez Village, con cocina y living' },
+    { target: 'interiores', file: 'dormitorio.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — dormitorio', alt: 'Render de un dormitorio con salida a balcón en Benavídez Village' },
+    { target: 'vida-en-el-conjunto', file: 'amenities.jpg', kind: 'render', source: 'New Brochure BENAVIDEZ VILLAGE 2GARCIA.pdf — render con piscina + conjunto', alt: 'Render de las áreas comunes de Benavídez Village, con piscina y parque' },
+    { target: 'masterplan', file: 'masterplan.jpg', kind: 'plan', source: 'New Unidades Benavidez Village.pdf — masterplan general', alt: 'Plano de implantación de Benavídez Village con las viviendas y las áreas comunes' },
     // Evolución de obra — fotografías reales recientes (Benavidez_Village_Avance_Obra_Actualizado.zip,
     // carpeta oficial de Drive). La primera es el "Avance actual" principal; el resto, detalles.
-    { target: 'estado-obra', file: 'obra-exterior.jpg', kind: 'photo', source: '01_EXTERIOR_VENTANAS_IMG_1582.JPG — exterior con ventanas colocadas' },
-    { target: 'estado-obra', file: 'obra-interior-living.jpg', kind: 'photo', source: '04_INTERIOR_ABERTURA_IMG_1574.JPG — interior con abertura al jardín' },
-    { target: 'estado-obra', file: 'obra-interior-abertura.jpg', kind: 'photo', source: '03_INTERIOR_ABERTURA_IMG_1575.JPG — interior con abertura corrediza' },
-    { target: 'estado-obra', file: 'obra-interior-terminaciones.jpg', kind: 'photo', source: '05_INTERIOR_AVANCE_IMG_1581.JPG — avance de terminaciones interiores' },
+    { target: 'estado-obra', file: 'obra-exterior.jpg', kind: 'photo', source: '01_EXTERIOR_VENTANAS_IMG_1582.JPG — exterior con ventanas colocadas', alt: 'Foto real del avance de obra: exterior de las viviendas de Benavídez Village' },
+    { target: 'estado-obra', file: 'obra-interior-living.jpg', kind: 'photo', source: '04_INTERIOR_ABERTURA_IMG_1574.JPG — interior con abertura al jardín', alt: 'Foto real del avance de obra: living comedor con salida al jardín' },
+    { target: 'estado-obra', file: 'obra-interior-abertura.jpg', kind: 'photo', source: '03_INTERIOR_ABERTURA_IMG_1575.JPG — interior con abertura corrediza', alt: 'Foto real del avance de obra: interior con las aberturas colocadas' },
+    { target: 'estado-obra', file: 'obra-interior-terminaciones.jpg', kind: 'photo', source: '05_INTERIOR_AVANCE_IMG_1581.JPG — avance de terminaciones interiores', alt: 'Foto real del avance de obra: interior en etapa de terminaciones' },
   ],
   'pacheco-central': [
-    { target: 'hero', file: 'hero.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 3 (vista aérea general)' },
-    { target: 'momento-visual', file: 'parque-piscina.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 6 (piscina + parque)' },
-    { target: 'proyecto', file: 'verde.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 7 (verde / vida del proyecto)' },
-    { target: 'amenities-imagenes', file: 'gimnasio.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 8 (gimnasio)' },
-    { target: 'amenities-imagenes', file: 'sum.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 9 (SUM)' },
-    { target: 'amenities-imagenes', file: 'coworking.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 10 (coworking)' },
-    { target: 'tipologias', file: 'interior-principal.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 11 (interior principal)' },
-    { target: 'terminaciones', file: 'cocina.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 13 (cocina / terminaciones)' },
-    { target: 'masterplan', file: 'masterplan.jpg', kind: 'plan', source: 'pacheco-central-1-simple-brochure.pdf — página 19 (masterplan)' },
+    { target: 'hero', file: 'hero.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 3 (vista aérea general)', alt: 'Render de la vista aérea del conjunto Pacheco Central' },
+    { target: 'momento-visual', file: 'parque-piscina.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 6 (piscina + parque)', alt: 'Render del parque y la piscina de Pacheco Central' },
+    { target: 'proyecto', file: 'verde.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 7 (verde / vida del proyecto)', alt: 'Render de los espacios verdes de Pacheco Central' },
+    { target: 'amenities-imagenes', file: 'gimnasio.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 8 (gimnasio)', alt: 'Render del gimnasio de Pacheco Central' },
+    { target: 'amenities-imagenes', file: 'sum.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 9 (SUM)', alt: 'Render del SUM de Pacheco Central' },
+    { target: 'amenities-imagenes', file: 'coworking.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 10 (coworking)', alt: 'Render del coworking de Pacheco Central' },
+    { target: 'tipologias', file: 'interior-principal.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 11 (interior principal)', alt: 'Render del interior de una unidad de Pacheco Central' },
+    { target: 'terminaciones', file: 'cocina.jpg', kind: 'render', source: 'pacheco-central-1-simple-brochure.pdf — página 13 (cocina / terminaciones)', alt: 'Render de la cocina de una unidad de Pacheco Central' },
+    { target: 'masterplan', file: 'masterplan.jpg', kind: 'plan', source: 'pacheco-central-1-simple-brochure.pdf — página 19 (masterplan)', alt: 'Plano de implantación de Pacheco Central' },
   ],
   'remeros-beach': [
     { target: 'hero', file: 'hero-drone.jpg', kind: 'photo', source: 'Producción propia — drone del masterplan y la laguna' },
@@ -72,7 +74,7 @@ export function resolveDevelopmentAssets(slug: string, publicDir = path.join(pro
   for (const slot of DEVELOPMENT_ASSET_SLOTS[slug] || []) {
     const publicPath = developmentAssetPublicPath(slug, slot.file);
     if (!existsSync(path.join(publicDir, publicPath))) continue;
-    (resolved[slot.target] ||= []).push({ src: publicPath, kind: slot.kind });
+    (resolved[slot.target] ||= []).push({ src: publicPath, kind: slot.kind, ...(slot.alt ? { alt: slot.alt } : {}) });
   }
   return resolved;
 }

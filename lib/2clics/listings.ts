@@ -1301,6 +1301,33 @@ const getActivePublicPropertyIds = cache(async (): Promise<Set<number> | null> =
   }
 });
 
+// Fichas activas y públicas para el mapa del sitio: id + fecha real de última modificación en 2Clics.
+// Ante cualquier falla devuelve [] — el sitemap nunca debe romperse por un problema del proveedor.
+export async function getPublicPropertySitemapEntries(): Promise<Array<{ propertyId: number; modifiedDate?: string }>> {
+  if (!hasConfiguredCredentials()) return [];
+  try {
+    const cacheOptions = getTwoclicsReadCacheOptions();
+    const entries = new Map<number, string | undefined>();
+    for (const region of regionsForDetail()) {
+      for (let offset = 0; offset < 2000; offset += ACTIVE_ID_PAGE_SIZE) {
+        const response = await twoclicsClient.getProperties(region, { offset, limit: ACTIVE_ID_PAGE_SIZE }, cacheOptions);
+        const page = response.properties || [];
+        for (const item of page) {
+          const id = Number(item.propertyId);
+          if (Number.isInteger(id) && id > 0 && isPublicPropertyStatus(item.status)) {
+            entries.set(id, typeof item.modifiedDate === 'string' && item.modifiedDate ? item.modifiedDate : undefined);
+          }
+        }
+        if (page.length < ACTIVE_ID_PAGE_SIZE) break;
+      }
+    }
+    return Array.from(entries, ([propertyId, modifiedDate]) => ({ propertyId, modifiedDate })).sort((a, b) => a.propertyId - b.propertyId);
+  } catch (error) {
+    logTwoclicsFailure('Sitemap property ids', error);
+    return [];
+  }
+}
+
 async function getPublicPropertyByIdImpl(propertyId: number): Promise<SinglePropertyResult> {
   if (!hasConfiguredCredentials()) return { status: 'unconfigured', property: null };
 

@@ -3053,7 +3053,7 @@ describe('V2.1 — assets editoriales locales (public/developments)', () => {
     const benavidez = resolveDevelopmentAssets('benavidez-village');
     expect(Object.keys(benavidez).sort()).toEqual(['estado-obra', 'hero', 'interiores', 'masterplan', 'proyecto'].sort());
     // Evolución de obra: fotografías reales recientes, en el orden curado (exterior primero).
-    expect(benavidez['estado-obra']).toEqual([
+    expect(benavidez['estado-obra']).toMatchObject([
       { src: '/developments/benavidez-village/obra-exterior.jpg', kind: 'photo' },
       { src: '/developments/benavidez-village/obra-interior-living.jpg', kind: 'photo' },
       { src: '/developments/benavidez-village/obra-interior-abertura.jpg', kind: 'photo' },
@@ -3065,7 +3065,11 @@ describe('V2.1 — assets editoriales locales (public/developments)', () => {
     // vivienda-interior.jpg no se entregó: "Las viviendas" mantiene la foto de 2Clics.
     expect(benavidez.residencias).toBeUndefined();
     expect(existsSync('public/developments/benavidez-village/vivienda-interior.jpg')).toBe(false);
-    expect(benavidez.masterplan).toEqual([{ src: '/developments/benavidez-village/masterplan.jpg', kind: 'plan' }]);
+    expect(benavidez.masterplan).toMatchObject([{ src: '/developments/benavidez-village/masterplan.jpg', kind: 'plan' }]);
+    // SEO/accesibilidad: cada imagen editorial entregada declara su texto alternativo descriptivo.
+    for (const slug of ['benavidez-village', 'pacheco-central']) {
+      for (const slot of DEVELOPMENT_ASSET_SLOTS[slug]) expect(slot.alt, `${slug}/${slot.file}`).toBeTruthy();
+    }
 
     const pacheco = resolveDevelopmentAssets('pacheco-central');
     expect(Object.values(pacheco).flat()).toHaveLength(9);
@@ -3149,7 +3153,7 @@ describe('V2.1 — assets editoriales locales (public/developments)', () => {
     writeFileSync(path.join(publicDir, 'developments', 'pacheco-central', 'hero.jpg'), '');
     writeFileSync(path.join(publicDir, 'developments', 'pacheco-central', 'masterplan.jpg'), '');
     const assets = resolveDevelopmentAssets('pacheco-central', publicDir);
-    expect(assets).toEqual({
+    expect(assets).toMatchObject({
       hero: [{ src: '/developments/pacheco-central/hero.jpg', kind: 'render' }],
       masterplan: [{ src: '/developments/pacheco-central/masterplan.jpg', kind: 'plan' }],
     });

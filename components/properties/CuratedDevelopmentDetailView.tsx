@@ -92,7 +92,17 @@ type CuratedDevelopmentDetailViewProps = {
 
 // Imagen de la ficha: de 2Clics o un asset editorial local. Los renders/planos llevan un rótulo
 // visible para no confundirse con fotografías reales.
-type EditorialImage = PublicImage & { tag?: string };
+type EditorialImage = PublicImage & { tag?: string; alt?: string };
+
+// Texto alternativo de una imagen (SEO y accesibilidad). Los assets editoriales propios traen su
+// descripción exacta; las imágenes de 2Clics no, así que se describe con el nombre del proyecto y,
+// cuando corresponde, el rótulo de render o plano. Nunca se inventa contenido que la imagen no muestre.
+function imageAlt(image: EditorialImage, displayName: string): string {
+  if (image.alt) return image.alt;
+  if (image.tag === 'Imagen ilustrativa') return `Render ilustrativo de ${displayName}`;
+  if (image.tag === 'Plano ilustrativo') return `Plano ilustrativo de ${displayName}`;
+  return displayName;
+}
 
 function assetToImage(asset: ResolvedEditorialAsset, index: number): EditorialImage {
   return {
@@ -103,6 +113,7 @@ function assetToImage(asset: ResolvedEditorialAsset, index: number): EditorialIm
     displayUrl: asset.src,
     displayThumbnailUrl: asset.src,
     useVirtualized: false,
+    alt: asset.alt,
     tag: asset.kind === 'render' ? 'Imagen ilustrativa' : asset.kind === 'plan' ? 'Plano ilustrativo' : undefined,
   };
 }
@@ -211,7 +222,7 @@ export default function CuratedDevelopmentDetailView({
             <div className="project-open-media">
               <Image
                 src={heroImage.displayUrl}
-                alt=""
+                alt={imageAlt(heroImage, displayName)}
                 fill
                 priority
                 sizes="(max-width: 900px) 100vw, 600px"
@@ -257,7 +268,7 @@ export default function CuratedDevelopmentDetailView({
               <div className="project-block-media">
                 <Image
                   src={amenitiesImage.displayUrl}
-                  alt=""
+                  alt={imageAlt(amenitiesImage, displayName)}
                   fill
                   sizes="(max-width: 900px) 100vw, 560px"
                   style={{ objectFit: 'cover', objectPosition: 'center' }}
@@ -291,7 +302,7 @@ export default function CuratedDevelopmentDetailView({
                 <div className="project-interiors-media" key={image.id || index}>
                   <Image
                     src={image.displayUrl}
-                    alt=""
+                    alt={imageAlt(image, displayName)}
                     fill
                     sizes="(max-width: 780px) 100vw, (max-width: 1080px) 50vw, 620px"
                     style={{ objectFit: 'cover', objectPosition: 'center' }}
@@ -473,7 +484,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
         <div className="project-momento-frame">
           <Image
             src={sectionImages[0].displayUrl}
-            alt=""
+            alt={imageAlt(sectionImages[0], displayName)}
             fill
             sizes="(max-width: 1200px) 100vw, 1160px"
             style={{ objectFit: 'cover', objectPosition: 'center' }}
@@ -619,7 +630,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
     }));
     const media = (image: EditorialImage, sizes: string, key: string) => (
       <div className="project-interiors-media" key={key}>
-        <Image src={image.displayUrl} alt="" fill sizes={sizes} style={{ objectFit: 'cover', objectPosition: 'center' }} />
+        <Image src={image.displayUrl} alt={imageAlt(image, displayName)} fill sizes={sizes} style={{ objectFit: 'cover', objectPosition: 'center' }} />
         <MediaTag image={image} />
       </div>
     );
@@ -696,7 +707,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
               >
                 <Image
                   src={image.displayUrl}
-                  alt=""
+                  alt={imageAlt(image, displayName)}
                   fill
                   sizes="(max-width: 780px) 100vw, (max-width: 1080px) 50vw, 540px"
                   style={{ objectFit: image.tag === 'Plano ilustrativo' ? 'contain' : 'cover', objectPosition: 'center' }}
@@ -835,7 +846,7 @@ function renderSection(section: DevelopmentSection, ctx: SectionContext) {
           <div className={mediaClassName} style={mediaStyle}>
             <Image
               src={sectionImages[0].displayUrl}
-              alt=""
+              alt={imageAlt(sectionImages[0], displayName)}
               fill
               sizes="(max-width: 900px) 100vw, 560px"
               style={{ objectFit: 'cover', objectPosition: 'center' }}

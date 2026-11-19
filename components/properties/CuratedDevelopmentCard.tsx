@@ -48,7 +48,7 @@ export default function CuratedDevelopmentCard({ curation, source, variant = 'de
     <article className={`twoclics-card twoclics-card--development${isCompact ? ' twoclics-card--development-compact' : ''}`}>
       <Link href={href} className="development-card-link">
         <div className="development-card-media">
-          <ListingImage image={source.image} alt="" />
+          <ListingImage image={source.image} alt={displayName} />
         </div>
         <div className="development-card-body">
           <span className="development-card-eyebrow">Desarrollo</span>

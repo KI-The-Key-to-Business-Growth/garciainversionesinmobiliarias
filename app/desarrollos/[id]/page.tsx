@@ -54,6 +54,7 @@ export async function generateMetadata({ params }: DevelopmentDetailPageProps): 
       ? resolveSafeDescription(sourceProperty.description || '', editorial)
       : '';
     const description =
+      curation.seoDescription ||
       safeDescription ||
       (sourceProperty ? formatLocation(sourceProperty.location) : getDevelopmentFallbackLocation(curation.slug) || undefined);
     // Preview social = la misma imagen de apertura que muestra la ficha (render oficial local o

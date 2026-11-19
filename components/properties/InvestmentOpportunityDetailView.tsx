@@ -39,7 +39,7 @@ function ImageGroupSection({ group, images }: { group: InvestmentImageGroup; ima
             <div className="project-interiors-media" key={image.id || index}>
               <Image
                 src={image.displayUrl}
-                alt=""
+                alt={group.title}
                 fill
                 sizes="(max-width: 780px) 100vw, (max-width: 1080px) 50vw, 620px"
                 style={{ objectFit: 'cover', objectPosition: 'center' }}
@@ -107,7 +107,7 @@ export default function InvestmentOpportunityDetailView({
             <div className="project-open-media">
               <Image
                 src={openingImage.displayUrl}
-                alt=""
+                alt={opportunity.name}
                 fill
                 priority
                 sizes={`(max-width: 900px) 100vw, ${Math.min(curation.openingImage.naturalWidth, 520)}px`}
@@ -142,7 +142,7 @@ export default function InvestmentOpportunityDetailView({
             <div className="project-block-media">
               <Image
                 src={assetImage.displayUrl}
-                alt=""
+                alt={opportunity.name}
                 fill
                 sizes={`(max-width: 900px) 100vw, ${Math.min(curation.asset.image.naturalWidth, 560)}px`}
                 style={{ objectFit: 'cover', objectPosition: 'center' }}

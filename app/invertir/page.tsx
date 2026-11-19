@@ -258,7 +258,7 @@ export default async function InvertirPage() {
                     <div className="invest-opportunity-media">
                       <Image
                         src={image.displayUrl}
-                        alt=""
+                        alt={opportunity.name}
                         fill
                         sizes="(max-width: 780px) 100vw, 420px"
                         style={{ objectFit: 'cover', objectPosition: 'center' }}

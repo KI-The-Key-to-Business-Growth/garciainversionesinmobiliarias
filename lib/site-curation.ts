@@ -183,6 +183,10 @@ export type DevelopmentCuration = {
   // Nombre corto para "Volver a …" en las fichas de sus unidades (ej. "Faena"). Sin declarar se
   // usa `publicName`.
   backLabel?: string;
+  // Descripción para buscadores (meta description) redactada por García/Claude con datos ya publicados.
+  // Si existe, tiene prioridad sobre la derivada de la descripción de 2Clics. 120 a 160 caracteres,
+  // sin promesas de rentabilidad ni precios (que cambian).
+  seoDescription?: string;
   // Temporalmente NO publicado (decisión de Dirección): la definición, la curaduría editorial y los
   // assets se conservan para reactivarlo, pero queda fuera de toda la experiencia pública —
   // listado /desarrollos, selector de mercado, sitemap, selección del Home y "Volver" de sus
@@ -233,6 +237,8 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
       240587: 'UF 21',
       240588: 'UF 23',
     },
+    seoDescription:
+      'Benavídez Village: 25 viviendas de dos plantas con jardín privado, piscina y SUM, a unos 5 minutos de Panamericana, en Benavídez, Tigre. Consultá valores.',
     // Reservas comerciales de García que 2Clics no devuelve como activas: fila mínima, sin datos.
     // UF 20 no tiene propertyId confiable asociado. Al venderse una reserva: registrar la venta en
     // 2Clics y quitarla de esta lista.
@@ -279,6 +285,8 @@ export const DEVELOPMENTS: DevelopmentCuration[] = [
     humanRef: 'GAR-236682',
     propertyIds: [236682],
     market: 'US',
+    seoDescription:
+      'DOMUS Brickell Center: edificio de 35 pisos en Brickell, Miami, con FLATS terminados y amueblados, de estudio a 2 dormitorios. Consultá con un asesor.',
   },
 ];
 
