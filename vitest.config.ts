@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
 export default defineConfig({
+  // Vite 8 (Vitest 5) respeta `jsx: "preserve"` del tsconfig, pensado para Next. Para las pruebas se transforma el JSX.
+  oxc: { jsx: { runtime: 'automatic' } },
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],
