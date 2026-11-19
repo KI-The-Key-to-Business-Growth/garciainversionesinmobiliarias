@@ -1,6 +1,6 @@
 // ── Referencia técnica de WhatsApp (Ref) ─────────────────────────────────────
 // Referencia aleatoria y NO personal que viaja dentro del mensaje preparado de WhatsApp
-// («… Ref: GI-7K3F2QPXM4HVD») y se registra en `lead_attribution` (event_id = Ref) al tocar el enlace.
+// (en una línea aparte: «Código de consulta: GI-7K3F2QPXM4HVD») y se registra en `lead_attribution` (event_id = Ref) al tocar el enlace.
 // Sirve para relacionar, más adelante, un mensaje RECIBIDO con el origen guardado (WhatsApp
 // Business Platform u otra integración autorizada). Un clic NO confirma que el mensaje se envió.
 //
@@ -18,6 +18,9 @@
 
 export const WHATSAPP_NUMBER = '5491167240353';
 export const WA_REF_PREFIX = 'GI-';
+// Rótulo visible del código en el mensaje de WhatsApp. La extracción (`extractWhatsAppRef`) busca el
+// código `GI-…` en cualquier parte del texto, así que el rótulo puede cambiar sin romper la atribución.
+export const WA_CODE_LABEL = 'Código de consulta';
 // 32 símbolos sin I/O/0/1 (evitan confusiones al leer o dictar): 5 bits por símbolo.
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const REF_LENGTH = 13; // 13 × 5 bits = 65 bits (mínimo exigido: 64)
@@ -76,7 +79,8 @@ export function cleanAssetLabel(label: string | null | undefined): string {
 export function buildWhatsAppMessage(input: { label?: string | null; ref: string }): string {
   const label = cleanAssetLabel(input.label);
   const lead = label ? `Hola, quiero información sobre ${label}.` : DEFAULT_WHATSAPP_TEXT;
-  return `${lead} Ref: ${input.ref}`;
+  // El código va en su propia línea, al final: se lee como un dato de la consulta y no como parte de la frase.
+  return `${lead}\n${WA_CODE_LABEL}: ${input.ref}`;
 }
 
 // Solo los enlaces al número de García llevan referencia; cualquier otro enlace queda intacto.

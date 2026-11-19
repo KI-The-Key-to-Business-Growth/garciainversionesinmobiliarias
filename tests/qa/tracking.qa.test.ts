@@ -252,8 +252,11 @@ describe('referencia de WhatsApp (propiedades + diferencial)', () => {
       const g = gen(seed);
       const ref = generateWhatsAppRef((n) => g.bytes(n));
       const msg = buildWhatsAppMessage({ label: g.pick([g.str(120), g.evil(), null, undefined]), ref });
-      expect(msg).toContain(`Ref: ${ref}`);
-      expect(msg).not.toMatch(/[\u0000-\u001f\u007f<>]/);
+      expect(msg).toContain(`Código de consulta: ${ref}`);
+      // Un único salto de línea (el nuestro, antes del código): el nombre del activo no puede colar otro
+      // salto ni ningún otro carácter de control, ni marcado HTML.
+      expect(msg.split('\n')).toHaveLength(2);
+      expect(msg.replace('\n', '')).not.toMatch(/[\u0000-\u001f\u007f<>]/);
       const href = buildWhatsAppHref(`https://wa.me/${WHATSAPP_NUMBER}`, msg);
       expect(isGarciaWhatsAppHref(href)).toBe(true);
       expect(new URL(href).searchParams.get('text')).toBe(msg);

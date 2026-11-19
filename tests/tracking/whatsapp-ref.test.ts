@@ -96,10 +96,10 @@ describe('referencia de WhatsApp', () => {
 
   it('arma el mensaje con el activo y la referencia; sin activo conserva el texto actual', () => {
     expect(buildWhatsAppMessage({ label: 'Domus Brickell Center', ref: 'GI-7K3F2QPXM4HVD' })).toBe(
-      'Hola, quiero información sobre Domus Brickell Center. Ref: GI-7K3F2QPXM4HVD',
+      'Hola, quiero información sobre Domus Brickell Center.\nCódigo de consulta: GI-7K3F2QPXM4HVD',
     );
-    expect(buildWhatsAppMessage({ ref: 'GI-7K3F2QPXM4HVD' })).toBe(`${DEFAULT_WHATSAPP_TEXT} Ref: GI-7K3F2QPXM4HVD`);
-    expect(buildWhatsAppMessage({ label: '   ', ref: 'GI-7K3F2QPXM4HVD' })).toBe(`${DEFAULT_WHATSAPP_TEXT} Ref: GI-7K3F2QPXM4HVD`);
+    expect(buildWhatsAppMessage({ ref: 'GI-7K3F2QPXM4HVD' })).toBe(`${DEFAULT_WHATSAPP_TEXT}\nCódigo de consulta: GI-7K3F2QPXM4HVD`);
+    expect(buildWhatsAppMessage({ label: '   ', ref: 'GI-7K3F2QPXM4HVD' })).toBe(`${DEFAULT_WHATSAPP_TEXT}\nCódigo de consulta: GI-7K3F2QPXM4HVD`);
   });
 
   it('limpia el nombre del activo (marcado, saltos de línea, largo)', () => {

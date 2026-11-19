@@ -10,7 +10,7 @@ type PropertyViewTrackerProps = {
   propertyId?: number | null;
   developmentSlug?: string | null;
   market?: string | null;
-  // Nombre visible del activo: arma el texto del mensaje de WhatsApp («… sobre {nombre}. Ref: …»).
+  // Nombre visible del activo: arma el texto del mensaje de WhatsApp («… sobre {nombre}.» y, en otra línea, «Código de consulta: …»).
   assetLabel?: string | null;
 };
 
