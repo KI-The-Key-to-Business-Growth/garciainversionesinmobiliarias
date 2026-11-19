@@ -11,12 +11,12 @@ Web institucional de García Inversiones Inmobiliarias (real estate, Buenos Aire
 3. `docs/ai/` — documentación del proyecto; la tabla de `CLAUDE.md` indica qué archivo consultar.
 4. `CLAUDE.local.md` — notas de esta máquina (no versionado), si existe.
 
-## Cerebro global (carpeta superior)
-Si `../AGENTS.md` no existe, ignorar esta sección.
-- `../AGENTS.md` y `../.ai/` — perfil, seguridad, protocolos y registros globales.
-- Seguridad: `../.ai/core/SECURITY.md` es el piso. Si una regla local es más restrictiva, prevalece la local.
-- Capacidades compartidas (video, audio, browser, documentos, transcripción, etc.): `../.ai/registry/CAPABILITIES.md`, solo cuando la tarea lo requiera. No se redefinen ni se copian acá.
-- Conocimiento: aplicá `../.ai/protocols/KNOWLEDGE.md`. Lo que se aprenda sobre García (marca, negocio, CRM, web, campañas, datos, decisiones, observaciones, estado) se guarda dentro de García (`docs/ai/`), no en `.ai/`; nada se promueve a global sin ese protocolo.
+## Cerebro global (dos niveles arriba: `web/` → contenedor García → cerebro)
+Si `../../AGENTS.md` no existe, ignorar esta sección. El contenedor `../AGENTS.md` describe las demás carpetas de García (no es repo Git).
+- `../../AGENTS.md` y `../../.ai/` — perfil, seguridad, protocolos y registros globales.
+- Seguridad: `../../.ai/core/SECURITY.md` es el piso. Si una regla local es más restrictiva, prevalece la local.
+- Capacidades compartidas (video, audio, browser, documentos, transcripción, etc.): `../../.ai/registry/CAPABILITIES.md`, solo cuando la tarea lo requiera. No se redefinen ni se copian acá.
+- Conocimiento: aplicá `../../.ai/protocols/KNOWLEDGE.md`. Lo que se aprenda sobre García (marca, negocio, CRM, web, campañas, datos, decisiones, observaciones, estado) se guarda dentro de García (`docs/ai/`), no en `.ai/`; nada se promueve a global sin ese protocolo.
 
 ## Límites
 - No heredar nada de Foqus ni de otros proyectos.
