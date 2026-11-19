@@ -472,7 +472,7 @@ const doc = new Document({
 
       space(),
       h2("4.2 Problemas Detectados en el CRM"),
-      bullet("Dos emails distintos para Fabiana: fabigarciareal@gmail.com y fabianagarciareal@gmail.com"),
+      bullet("Dos emails distintos para Fabiana cargados en el CRM (direcciones omitidas de este archivo)"),
       bullet("Dos prefijos de ID de propiedad: GAR- y FAB- (debería ser sólo GAR-)"),
       bullet("Categoría 'Rivera Maya' todavía presente en el listado de tipos (México)"),
       bullet("Diseño genérico de 2Clics — no refleja la marca García"),
