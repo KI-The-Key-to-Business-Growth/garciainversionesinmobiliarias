@@ -67,8 +67,14 @@ export type ShareMetadataInput = {
   image?: string | null;
 };
 
+// Versión liviana (1200×630, JPEG) de la imagen de la ficha, servida por /share-image. Es solo para la
+// vista previa del link: no se muestra en la página. Evita que WhatsApp descarte fotos pesadas.
+export function lightShareImageUrl(source: string): string {
+  return `${CANONICAL_BASE_URL}/share-image?src=${encodeURIComponent(source)}`;
+}
+
 export function buildShareMetadata({ title, description, path, image }: ShareMetadataInput): Metadata {
-  const shareImage = absoluteShareUrl(image) || absoluteShareUrl(DEFAULT_SHARE_IMAGE)!;
+  const shareImage = lightShareImageUrl(absoluteShareUrl(image) || absoluteShareUrl(DEFAULT_SHARE_IMAGE)!);
   const summary = shareDescription(description);
   return {
     title: `${title} | ${SITE_NAME}`,
@@ -81,7 +87,7 @@ export function buildShareMetadata({ title, description, path, image }: ShareMet
       title,
       description: summary,
       url: `${CANONICAL_BASE_URL}${path}`,
-      images: [{ url: shareImage, alt: title }],
+      images: [{ url: shareImage, width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: 'summary_large_image',

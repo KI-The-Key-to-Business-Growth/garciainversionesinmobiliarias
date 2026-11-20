@@ -3343,6 +3343,7 @@ describe('V2.2 — /vender', () => {
 // ── Pre-launch V2 — Home "Oportunidades seleccionadas" + metadata social por ficha ─────────────
 describe('Pre-launch V2 — selección del Home y Open Graph por ficha', () => {
   const BASE = 'https://www.garciainversionesinmobiliarias.com.ar';
+  const lightShare = (source: string) => `${BASE}/share-image?src=${encodeURIComponent(source)}`;
 
   function item(propertyId: number, imageCount = 20, overrides: Record<string, unknown> = {}) {
     return {
@@ -3460,7 +3461,7 @@ describe('Pre-launch V2 — selección del Home y Open Graph por ficha', () => {
     const { getDevelopmentEditorialCuration: editorialOf } = await import('@/lib/desarrollos');
 
     const benavidez = await generateMetadata({ params: Promise.resolve({ id: 'benavidez-village' }) });
-    const benavidezImage = `${BASE}/developments/benavidez-village/hero.jpg`;
+    const benavidezImage = lightShare(`${BASE}/developments/benavidez-village/hero.jpg`);
     expect(benavidez.openGraph).toMatchObject({
       title: 'Benavídez Village',
       url: `${BASE}/desarrollos/benavidez-village`,
@@ -3471,7 +3472,7 @@ describe('Pre-launch V2 — selección del Home y Open Graph por ficha', () => {
 
     const domus = await generateMetadata({ params: Promise.resolve({ id: 'domus-brickell-center' }) });
     const heroIndex = editorialOf('domus-brickell-center')!.heroImageIndex;
-    const domusImage = `https://cdn.2clics.com/${DOMUS}/${heroIndex}.jpg`;
+    const domusImage = lightShare(`https://cdn.2clics.com/${DOMUS}/${heroIndex}.jpg`);
     expect(domus.openGraph).toMatchObject({ url: `${BASE}/desarrollos/domus-brickell-center`, images: [{ url: domusImage }] });
     expect(domus.twitter).toMatchObject({ images: [domusImage] });
     expect(domus.openGraph?.description).toBe(domus.twitter?.description);
@@ -3482,7 +3483,7 @@ describe('Pre-launch V2 — selección del Home y Open Graph por ficha', () => {
     await loadListings();
     const { generateMetadata } = await import('@/app/invertir/[slug]/page');
     const meta = await generateMetadata({ params: Promise.resolve({ slug: '445-n-shore-drive' }) });
-    const image = `https://cdn.2clics.com/${N_SHORE}/0.jpg`;
+    const image = lightShare(`https://cdn.2clics.com/${N_SHORE}/0.jpg`);
     expect(meta.openGraph).toMatchObject({
       title: '445 N Shore Drive · Normandy Shores',
       url: `${BASE}/invertir/445-n-shore-drive`,
@@ -3500,12 +3501,12 @@ describe('Pre-launch V2 — selección del Home y Open Graph por ficha', () => {
     const withImage = await generateMetadata({ params: Promise.resolve({ id: '187683' }) });
     expect(withImage.openGraph).toMatchObject({
       url: `${BASE}/propiedades/187683`,
-      images: [{ url: 'https://cdn.2clics.com/187683/0.jpg' }],
+      images: [{ url: lightShare('https://cdn.2clics.com/187683/0.jpg') }],
     });
-    expect(withImage.twitter).toMatchObject({ images: ['https://cdn.2clics.com/187683/0.jpg'] });
+    expect(withImage.twitter).toMatchObject({ images: [lightShare('https://cdn.2clics.com/187683/0.jpg')] });
 
     const withoutImage = await generateMetadata({ params: Promise.resolve({ id: '187669' }) });
-    const fallback = `${BASE}/assets/propiedades/condor-resort.jpeg`;
+    const fallback = lightShare(`${BASE}/assets/propiedades/condor-resort.jpeg`);
     expect(withoutImage.openGraph).toMatchObject({ url: `${BASE}/propiedades/187669`, images: [{ url: fallback }] });
     expect(withoutImage.twitter).toMatchObject({ images: [fallback] });
   });
